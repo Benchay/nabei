@@ -1,0 +1,289 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li  class="menuIndex" v-if="getMenuAuthFun('stallProcurement')">
+                <router-link :to='{path:"/stallProcurement"}'>采购入库</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('supplierManagement')">
+                <router-link :to='{path:"/supplierManagement"}'>供应商管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('purchaseStatistics')">
+                <router-link :to='{path:"/purchaseStatistics"}'>采购统计</router-link>
+            </li>
+        </ul>
+        <div class="stallProcurement">
+            <router-link :to='{path:"/stallProcurement"}' class="comeBack right">返回</router-link>
+            <div class="flex stallDetailsButton">
+                <!--根据状态显示 待签收 部分签收 显示-->
+                <a href="javascript:void(0)" class="buttonColor" v-if="stockOrderStatus==0 || stockOrderStatus==2" @click="dialogVisible = true">签收</a>
+
+                <a href="javascript:void(0)" class="buttonColor">打印</a>
+
+            </div>
+            <div class="stallTable">
+                <div class="tableTop">
+                    <div>
+                        <div>供应商：{{stockOrder.otherSideCompanyName}}</div>
+                        <div>采购员：{{stockOrder.createUserName}}</div>
+                        <div>总数量：{{stockOrder.orderNum}}</div>
+                        <div>总成本：{{stockOrder.totalStockFee}}</div>
+                        <div v-bind:class="stockOrder.status ==2?'blue2':''">{{stockOrder.status==1?'已签收':stockOrder.status==0?'待签收':stockOrder.status==2?'部分签收':''}}</div>
+                    </div>
+                    </div>
+                <el-table
+                    :data="stockOrder.details"
+                     @selection-change="handleSelectionChange"
+                    style="width: 100%">
+
+                    <el-table-column
+                        label="主图/货号">
+                        <template scope="scope">
+                            <div class="flex2" style="justify-content: start;">
+                                <img :src="scope.row.imgUrl_main" alt="">
+                                <p>{{scope.row.productCode}}</p>
+                            </div>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="colour"
+                        label="颜色">
+                    </el-table-column>
+                    <el-table-column
+                        prop="size"
+                        label="尺码">
+                    </el-table-column>
+                    <el-table-column
+                        prop="orderNum"
+                        label="采购数量">
+                    </el-table-column>
+                    <el-table-column
+                        label="采购成本/元">
+                        <template scope="scope">
+                            <el-input   class="stallInput" v-model="scope.row.price" v-if="stockOrder.status==0"></el-input>
+                            <p v-else>{{scope.row.price}}</p>
+                        </template>
+                    </el-table-column>
+                    <!--待签收 不显示-->
+                    <!---->
+                    <!--已签收 不显示-->
+                    <el-table-column
+                    	prop="onRouteStockNum"
+                    	label="在途数"
+                    	:formatter="formatOnRouteStockNum">
+                    </el-table-column>
+                        <el-table-column
+                            label="签收数">
+                            <template scope="scope">
+                                <el-input   class="stallInput" v-model="scope.row.actualNum" v-if="stockOrder.status!=1"></el-input>
+                                <p v-else>{{scope.row.checkActualNum}}</p>
+                            </template>
+                        </el-table-column>
+                    <!---->
+                </el-table>
+            </div>
+            <div class="date">
+                <p>创建时间：{{createTimeShow}}</p>
+                <!--根据状态显示-->
+                <p v-if="state == 1 ">签收时间：{{stockOrder.updateTime}}</p>
+                <!---->
+            </div>
+            <el-pagination
+                small
+                class="right"
+                style="margin-top: 20px;"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :current-page="currentPage"
+                :page-sizes="[10, 20, 30, 40]"
+                :page-size="pagesize"
+                layout="total, sizes, prev, pager, next, jumper"
+                :total="totalCount">
+            </el-pagination>
+            <a href="javascript:void(0)" class="export_excle">导出excel</a>
+        </div>
+		<el-dialog
+            title=""
+            :visible.sync="dialogVisible"
+            size="tiny"
+            custom-class="dialogSignIn">
+            <div align="center">
+                <a href="javascript:void(0)" class="buttonSignIn" @click="signIn(2)" >部分签收</a>
+                <p align="left" class="buttonSignInRemark">部分签收后，后续还可继续“签收”入库</p>
+            </div>
+            <div style="margin-top: 50px; padding-bottom: 40px;" align="center">
+            	<a href="javascript:void(0)" class="buttonSignIn" @click="signIn(1)" >终止采购</a>
+            	<p align="left" class="buttonSignInRemark">终止采购后，该订单的采购行为将终止，即使未全部签收</p>
+            </div>
+        </el-dialog>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {loadStockOrder,saveStockOrder} from '@/api/getData'
+    import {userInfo,getStore,setStore} from  '../config/mUtils'
+    import {formatDate} from '../utils/date.js'
+    import {getMenuAuth} from  '../utils/AuthMenu.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                state:2,
+                value6: '',
+                dialogVisible:false,
+                stockOrderStatus:1,
+                createTimeShow:'',
+               stockOrder:{
+                    detail:[]
+               },
+                createTime:'',
+                updateTime:'',
+                //多选数组
+                multipleSelection: [],
+            }
+        },
+
+        watch: {
+            '$route': function (route) {
+                if(route.path=='/stallProcurementStorage'){
+                    this.param = this.$route.query.param;
+                    this.loadData(this.param);
+                }
+
+            }
+        },
+        mounted(){
+            this.param = this.$route.query.param;
+            this.loadData(this.param);
+        },
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+            },
+            handleIconClick(ev) {
+                console.log(ev);
+            },
+            async loadData(param) {
+                //  /api/queryStockOrderDetail?companyId=1000&warehouseId=W001&orderType=2,3&pageIndex=1&pageSize=10
+                let  requestParam = {
+                    "stockOrderId":param
+                };
+                const res = await loadStockOrder(requestParam);
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: '加载数据成功'
+                    });
+                    this.stockOrder = res.result;
+                    this.stockOrder.details.forEach((obj) => {
+                    	if(!obj.checkActualNum){
+                    		obj.checkActualNum = 0;
+                    	}
+                    	obj.actualNum = 0;
+                    });
+                    this.stockOrderStatus = this.stockOrder.status;
+                    this.createTimeShow = formatDate(this.stockOrder.createTime,'yyyy-MM-dd hh:mm');
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            //多选响应
+            handleSelectionChange: function(val) {
+                this.multipleSelection = val;
+            },
+            async  signIn(status){
+            	this.dialogVisible = false;
+            	let submitDetails = [];
+            	let totalPrice = 0;
+            	let endFlag = true;
+            	this.stockOrder.details.forEach((item) =>{
+            		if(item.actualNum && item.actualNum*1 >0){
+            			if(!item.checkActualNum){
+	                		item.checkActualNum = 0;
+	                	}
+	                	item.checkActualNum += item.actualNum*1;
+	                	submitDetails.push(item);
+            		}
+            		if(item.checkActualNum<item.orderNum){
+            			endFlag = false;
+            		}
+            		totalPrice += item.orderNum*item.price;
+            	});
+            	if(endFlag && status == 2){
+            		status = 1;
+            	}
+                this.stockOrder.totalStockFee = totalPrice;
+                this.stockOrder.status=status;
+                this.$confirm('确认签收吗？')
+                    .then(_ => {
+                    	this.stockOrder.details = submitDetails;
+                        this.saveStockOrder(this.stockOrder);
+                    })
+                    .catch(_ => {});
+            },
+
+            async saveStockOrder(stockOrder){
+                const res = await saveStockOrder(stockOrder);
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: '签收成功!'
+                    });
+                    this.param = this.$route.query.param;
+                    this.loadData(this.param);
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+            formatOnRouteStockNum:function(row, column){
+            	if(this.stockOrderStatus == 1){
+            		return 0;
+            	}else if(row.orderNum !=null && row.checkActualNum != null){
+            		return (row.orderNum*1-row.checkActualNum*1);
+            	}else{
+            		return "";
+            	}
+            },
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/stallProcurement';
+
+    .buttonSignIn{
+    	padding: 7px 17px;
+	    border-radius: 5px;
+	    color: #fff;
+	    background: #46cfc5;
+	    border: none;
+	    font-size: 14px;
+    }
+
+    .dialogSignIn{
+    	width: 250px;
+    }
+
+    .buttonSignInRemark{
+    	margin-top: 10px;
+    }
+</style>

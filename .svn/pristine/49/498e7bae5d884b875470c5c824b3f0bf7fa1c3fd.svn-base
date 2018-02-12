@@ -1,0 +1,152 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/fastShipping2"}'>快速出货</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/returnManagement2"}'>快速退货</router-link>
+            </li>
+            <li class="menuIndex">
+                <router-link :to='{path:"/orderPurchaseStall"}'>订单管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/sellerSettlement"}'>客户结算</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/customerManagement"}'>客户管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/statisticalStatement"}'>销售统计</router-link>
+            </li>
+        </ul>
+        <div class="sellerSettlement">
+            <router-link :to='{path:"/indentManagement"}' class="right comeBack">返回</router-link>
+            <div class="details">
+                <el-col :span="24" v-for="list in info">
+                    <el-col :span="6">卖家名称：{{orderVo.busiName}}</el-col>
+                    <el-col :span="6">
+                        <div  class="flex">
+                            <p v-bind:class="[list.state ==1?'style1':list.state ==2?'style2':'']">{{list.state == 1?'周结':list.state == 2?'月结':''}}</p>
+                            <p>{{list.date}}</p>
+                        </div>
+                    </el-col>
+                    <el-col :span="6">状态：财务未结清</el-col>
+                </el-col>
+                <el-col :span="24">
+                    <el-col :span="6">当前总欠款金额：{{orderVo.debtFee}}</el-col>
+                    <el-col :span="6">已结金额：{{orderVo.alreadyPayFee}}</el-col>
+                    <el-col :span="6" class="colorText">待结金额：{{orderVo.extraFee}}</el-col>
+                    <!--已结算状态 无此按钮-->
+                    <el-col :span="6"><router-link :to='{path:"/sellerSettlementImmediately",query:{fee:orderVo.extraFee,stallName:orderVo.stallName}}' class="buttonColor">立即结算</router-link></el-col>
+                    <!---->
+                </el-col>
+            </div>
+            <div class="detailsTable">
+                <p class="tableTop">付款记录：</p>
+                <el-table
+                    :data="tableData6"
+                    style="width: 100%">
+                    <el-table-column
+                        prop="createTime"
+                        label="结算时间"
+                        :formatter="formatDate"
+                        width="180">
+                    </el-table-column>
+                    <el-table-column
+                        prop="payFee"
+                        label="本次结算金额（￥）">
+                    </el-table-column>
+                    <el-table-column
+                        prop="settlementType"
+                        :formatter="formatData"
+                        label="结算方式">
+                    </el-table-column>
+                    <el-table-column
+                        prop="actualPayFee"
+                        label="实际付款金额（￥）">
+                    </el-table-column>
+                    <el-table-column
+                        label="操作">
+                        <template scope="scope">
+                            <router-link :to='{path:"/indentManagementAccountDetails",query:{vo:tableData6[scope.$index]}}' class="blue2">查看详情</router-link>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+        </div>
+    </div>
+</template>
+<script>
+    import headTop from '../components/headTop'
+    import {queryOrderInfo} from '@/api/getData'
+    import {formatDate} from '../utils/date.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                info:[{
+                    state:1,
+                    date:'1号',
+                }],
+                orderVo:'',
+                tableData6:[]
+            }
+        },
+        mounted(){
+            this.orderId = this.$route.query.orderId;
+            let param = {
+                "orderId":this.orderId,
+                "withSettlementOrder":true
+            };
+            this.loadBasicInfo(param);
+        },
+        methods: {
+            async loadBasicInfo(param){
+                const res = await queryOrderInfo(param);
+                if(res.isSuccess){
+                    this.orderVo = res.result.data;
+                    let table = this.orderVo.settlementOrderVO;
+                    for(let i = 0 ;i<table.length;i++){
+                        this.tableData6.push(table[i]);
+                    }
+                }else{
+                    this.$message({
+                        type:'info',
+                        message:res.errorMsg
+                    });
+                }
+            },
+            formatData:function(row,column){
+                let data = row[column.property];
+                if(data==1){
+                    return "单订单结算";
+                }else if(data==2){
+                    return "多订单结算";
+                }else
+                    return "";
+            },
+            //数据格式化
+            formatDate:function(row,column) {
+                let data = row[column.property];
+                if (data == undefined||data=='') {
+                    return "";
+                }
+                var date2 = new Date(data);
+                return formatDate(date2,'yyyy-MM-dd hh:mm:ss');
+            },
+            cancelRefund(){
+                this.dialog2 = false;
+                this.$router.push('/salesReturn');
+            }
+        }
+    }
+</script>
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/sellerSettlement';
+</style>

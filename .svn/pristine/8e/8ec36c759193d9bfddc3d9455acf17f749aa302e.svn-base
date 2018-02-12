@@ -1,0 +1,108 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/stallManage"}'>档口管理</router-link>
+            </li>
+            <li class="menuIndex2">
+                <router-link :to='{path:"/stallSettlement"}'>档口结算</router-link>
+            </li>
+        </ul>
+        <div class="sellerSettlement">
+            <router-link :to='{path:"/stallSettlement"}' class="right comeBack2">返回</router-link>
+            <div class="details" v-for="list in info">
+                <el-col :span="24">
+                    <el-col :span="24">档口名称：哈哈哈哈哈</el-col>
+                    <el-col :span="6">当前总欠款：6000</el-col>
+                    <el-col :span="18">
+                        <div  class="flex">
+                            <p v-bind:class="[list.state ==1?'style1':list.state ==2?'style2':'']">{{list.state == 1?'周结':list.state == 2?'月结':''}}</p>
+                            <p>{{list.date}}</p>
+                        </div>
+                    </el-col>
+                    <el-col :span="6">已到期：2000</el-col>
+                    <el-col :span="18">未到期：2000</el-col>
+                </el-col>
+            </div>
+            <div class="detailsTable">
+                <el-table
+                    :data="tableData6"
+                    style="width: 100%">
+                    <el-table-column
+                        type="selection"
+                        width="55">
+                    </el-table-column>
+                    <el-table-column
+                        prop="orderNum"
+                        label="订单编号">
+                    </el-table-column>
+                    <el-table-column
+                        prop="money"
+                        label="已结金额">
+                    </el-table-column>
+                    <el-table-column
+                        prop="money"
+                        label="未结金额">
+                    </el-table-column>
+                    <el-table-column
+                        prop="whether"
+                        label="是否到期">
+                        <template scope="scope">
+                            <p>{{scope.row.whether == 1?'已到期':scope.row.whether == 2?'未到期':''}}</p>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        label="操作">
+                        <template scope="scope">
+                            <router-link :to='{path:"/orderPurchaseBuyDetails"}'  class="red">查看详情</router-link>
+                        </template>
+                    </el-table-column>
+                </el-table>
+                <a href="javascript:void(0)" class="buttonColor3">立即结算</a>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                checked:false,
+                info:[{
+                    state:1,
+                    date:'1号',
+                }],
+                tableData6:[{
+                    id:1,
+                    orderNum:123,
+                    money:142,
+                    whether:1
+                },{
+                    id:2,
+                    orderNum:123,
+                    money:142,
+                    whether:2
+                },{
+                    id:3,
+                    orderNum:123,
+                    money:142,
+                    whether:2
+                },]
+            }
+        },
+        methods: {
+
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/sellerSettlement';
+</style>

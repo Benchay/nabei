@@ -1,0 +1,195 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/stallManage"}'>档口管理</router-link>
+            </li>
+            <li class="menuIndex2">
+                <router-link :to='{path:"/stallSettlement"}'>档口结算</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/SettlementRecords"}'>结算单</router-link>
+            </li>
+        </ul>
+        <div class="sellerSettlement">
+            <router-link :to='{path:"/stallSettlement"}' class="right comeBack2">返回</router-link>
+            <div class="details" v-for="list in info">
+                <el-col :span="24">
+                    <el-col :span="24">档口名称：{{otherSideCompanyName}}</el-col>
+                    <el-col :span="6">当前总欠款：{{unClosedFee}}</el-col>
+                    <el-col :span="18">
+                        <div  class="flex">
+                            <p v-bind:class="[list.state==0?'现结':list.state ==1?'style1':list.state ==2?'style2':'']">{{list.state == 0?'现结':list.state == 1?'周结':list.state == 2?'月结':''}}</p>
+                            <p>{{list.date}}</p>
+                        </div>
+                    </el-col>
+                    <el-col :span="6">已到期：{{toReviceFee}}</el-col>
+                    <el-col :span="18">未到期：{{this.setUndueFee}}</el-col>
+                </el-col>
+            </div>
+            <div class="detailsTable">
+                <el-table
+                    :data="tableData6"
+                    @selection-change="handleSelectionChange"
+                    style="width: 100%">
+                    <el-table-column
+                        type="selection"
+                        width="55">
+                    </el-table-column>
+                    <el-table-column
+                        prop="orderNo"
+                        label="订单编号">
+                    </el-table-column>
+                    <el-table-column
+                        prop="closeFee"
+                        label="已结金额">
+                    </el-table-column>
+                    <el-table-column
+                        prop="money"
+                        label="未结金额">
+                        <template scope="scope">
+                            <p>{{scope.row.totalFee-scope.row.closeFee}}</p>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="hasExpireDays"
+                        label="是否到期">
+                        <!--<template scope="scope">-->
+                            <!--<p>{{scope.row.whether == 1?'已到期':scope.row.whether == 2?'未到期':''}}</p>-->
+                        <!--</template>-->
+                    </el-table-column>
+                    <el-table-column
+                        label="操作">
+                        <template scope="scope">
+                            <router-link :to='{path:"/orderPurchaseBuyDetails"}'  class="red">查看详情</router-link>
+                        </template>
+                    </el-table-column>
+                </el-table>
+                <a href="javascript:void(0)" class="buttonColor3" @click="batchSettlement">立即结算</a>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {getDebtInfo} from '@/api/getData'
+    import {userInfo} from '../config/mUtils.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                checked:false,
+                info:[],
+                tableData6:[],
+                otherSideCompanyName:'',
+                otherSideCompanyId:'',
+                unClosedFee:0,
+                toReviceFee:0,
+                undueFee:0,
+                multipleSelection:[],
+                orderIds:[],
+
+            }
+        },
+        watch:{
+            '$route': function (route) {
+//                this.unClosedFee = this.$route.query.unClosedFee;
+//                this.toReviceFee = this.$route.query.toReviceFee;
+//                this.otherSideCompanyId = this.$route.query.otherSideCompanyId;
+//                this.otherSideCompanyName = this.$route.query.otherSideCompanyName;
+//                let param = {
+//                    state:this.$route.query.settlementType,
+//                    date:this.$route.query.settlementDay
+//                };
+//                this.info.push(param);
+//                this.loadData();
+                this.$route.go(0);
+            }
+        },
+        mounted(){
+            this.unClosedFee = this.$route.query.unClosedFee;
+            this.toReviceFee = this.$route.query.toReviceFee;
+            this.otherSideCompanyId = this.$route.query.otherSideCompanyId;
+            this.otherSideCompanyName = this.$route.query.otherSideCompanyName;
+            let param = {
+                state:this.$route.query.settlementType,
+                date:this.$route.query.settlementDay
+            };
+            this.info.push(param);
+            this.loadData();
+        },
+        methods: {
+            //获取未结算金额
+            setUndueFee(){
+                if(this.unclosedFee==undefined||this.unClosedFee==''){
+                    this.unClosedFee = 0;
+                }
+                if(this.toReviceFee==undefined||this.toReviceFee==''){
+                    this.toReviceFee = 0;
+                }
+                return this.unClosedFee - this.toReviceFee;
+            },
+            //加载欠款订单
+            async loadData(){
+                this.tableData6 = [];
+                let para = {
+                    "companyId":userInfo().companyId,
+                    "saleCompanyId":this.otherSideCompanyId,
+                    "orderType":1,
+                    "withTotal":true
+                };
+                const res = await getDebtInfo(para);
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message:'数据加载成功!'
+                    });
+                    let table = res.result.results;
+                    table.forEach((obj)=>{
+                        this.tableData6.push(obj);
+                    });
+
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            handleSelectionChange(val){
+                this.multipleSelection = val;
+            },
+            //勾选订单结算
+            batchSettlement(){
+                //立即结算
+                    var sumTotalFee=0;
+                    var closeFee = 0;
+                    this.orderIds = [];
+                    this.multipleSelection.forEach((item) => {
+                        this.orderIds.push(item.id);
+                        sumTotalFee += item.totalFee;
+                        closeFee += item.closeFee;
+                    })
+                    if(this.orderIds.length <1){
+                        this.$message({
+                            duration:this.GLOBAL.MESSAGE_DISSMISS_TIME_MID,
+                            type: 'error',
+                            message: '请先勾选要结算的订单！'
+                        });
+                        return;
+                    }
+                    this.$router.push({path:"/stallSettlementImmediately",query:{orderIds:this.orderIds,saleCompanyId:this.otherSideCompanyId,otherSideCompanyName:this.otherSideCompanyName,activeName:"second",unClosedFee:sumTotalFee}});
+            },
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/sellerSettlement';
+</style>

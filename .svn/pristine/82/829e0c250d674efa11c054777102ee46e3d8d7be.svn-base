@@ -1,0 +1,54 @@
+/**
+ * Created by Administrator on 2017/9/2.
+ */
+/*
+* 根据档口采购需求得到所有选择的需求
+*/
+export function  checkSelectPurchase(stallIds) {
+    if (undefined == stallIds ) return false;
+    if(!Object.prototype.toString.call(stallIds)=='[object Array]') return false;
+    if(stallIds.length == 0) return false;
+    return true;
+};
+export function  getSelectPurchaseByStallId(stallIds,purData) {
+    var jsonArray = [];
+    if (undefined == stallIds ) return jsonArray;
+    if (undefined == purData ) return jsonArray;
+    if(!Object.prototype.toString.call(stallIds)=='[object Array]') return jsonArray;
+    if(!Object.prototype.toString.call(purData)=='[object Array]') return jsonArray;
+    for(var i=0; i<stallIds.length; i++){
+       for(var j=0;j<purData.length;j++ ){
+           if(stallIds[i]== purData[j].stallId){
+               jsonArray.push(purData);
+           }
+       }
+    }
+    return jsonArray;
+};
+/*
+*    从选择的需求中得到金额等信息
+**/
+export function  getPurchaseInfo(purData){
+    if (undefined == purData ) return "";
+    if(!Object.prototype.toString.call(purData)=='[object Array]') return '';
+    var totalFee=0;
+    var orderNum=0;
+    var totalNum=0;
+    var idsArray = [];
+    for(var i=0; i<purData.length; i++){
+        var temp=purData[i];
+        console.log(temp);
+        for(var x=0;x<temp.length;x++){
+            totalFee =totalFee + Number( temp[x].totalFee) ;
+            totalNum=totalNum+ Number(temp[x].totalNum);
+            orderNum=orderNum+ Number(temp[x].orderNum);
+            var subtemp=temp[x].purchases;
+            if(Object.prototype.toString.call(subtemp)=='[object Array]'){
+                for(var j=0;j<subtemp.length;j++){
+                    idsArray.push(subtemp[j].id);
+                }
+            }
+        }
+        return {"orderNum":orderNum, "totalFee": totalFee, "totalNum": totalNum, "idsArray":idsArray};
+    }
+}

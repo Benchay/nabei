@@ -1,0 +1,190 @@
+.fastShipping2,.takeGoods{
+    color:#666;
+    font-size: 14px;
+    margin:1px 30px;
+    background: #fff;
+    padding: 20px 30px;
+    height:100%;
+    .fastTop{
+        background:#f8f8f8;
+        width: 430px;
+        padding: 0 10px 0 6px;
+        margin-bottom: 20px;
+        height: 40px;
+        padding-left: 15px;
+        .title{
+            width: 100px;
+        }
+        .content{
+            //width: 380px;
+        }
+    }
+    .isLeft{
+        .leftList{
+            margin-bottom: 20px;
+            .isChange{
+                color:@blue2;
+                border-bottom: 1px solid @blue2;
+                margin-left: 10px;
+            }
+            .title{
+                text-align: right;
+                color:#333;
+            }
+            .content{
+                margin-left: 10px;
+                .contentTips{
+                    margin-top: 10px;
+                    a{
+                        font-size: 12px;
+                        color:#666;
+                        border:1px solid rgb(191, 203, 217);
+                        padding:3px  5px;
+                        border-radius: 5px;
+                        margin-right: 10px;
+                    }
+                }
+                .contentTips>a:hover{
+                    color: rgb(191, 203, 217);
+                }
+                .contentInfo{
+                    margin: 20px 0;
+                    img{
+                        width: 125px;
+                        height: 125px;
+                    }
+                    .infoRight{
+                        width: 300px;
+                        margin-left: 20px;
+                        p{
+                            height: 30px;
+                            line-height: 30px;
+                        }
+                    }
+                }
+            }
+        }
+        .leftList2{
+            align-items: flex-start;
+            input{
+                width: 300px;
+            }
+        }
+        .leftButton{
+            margin-top: 25px;
+        }
+        .buttonColor{
+            margin-top: 40px;
+        }
+    }
+    .isRight{
+        height:77%;
+        border-left: 1px solid #d4d4d4;
+        padding-left: 30px;
+        .rightTable{
+            margin-top: 20px;
+            color:#666;
+            .tableFirst{
+                padding: 2px;
+            }
+        }
+        .payment{
+            margin-top: 30px;
+            .paymentList{
+               li{
+                   border:1px solid #333;
+                   padding: 5px 10px;
+                   border-radius: 5px;
+                   margin-right: 10px;
+                   a{
+                       color:#333;
+                   }
+               }
+                .change9{
+                    border:1px solid @blue2;
+                    a{
+                        color:@blue2;
+                    }
+                }
+            }
+        }
+        .payButton{
+            margin-top: 30px;
+        }
+        .rightDelete{
+            height: 40px;
+        }
+        .tableImg{
+            width: 40px;
+            height: 40px;
+            margin-right: 5px;
+        }
+    }
+}
+.startRadio{
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    max-height: 300px;
+    overflow: scroll;
+    label{
+        margin-bottom: 10px;
+        padding-left: 50px;
+    }
+}
+//卖家拿货
+.takeGoods{
+    font-size: 18px;
+    .isLeft{
+        .leftTop{
+            height:200px;
+            margin-top: 10px;
+        }
+    }
+    .isRight{
+        padding: 20px 60px 80px 80px;
+        font-size: 16px;
+        .rightContent{
+            position: relative;
+            padding: 30px;
+            height:100%;
+            border:1px solid #d7d7d7;
+            .first{
+                img{
+                    width: 100px;
+                    height: 100px;
+                    border-radius: 8px;
+                    margin-right: 25px;
+
+                }
+            }
+            .second{
+                margin-top: 20px;
+                p{
+                    height: 50px;
+                    line-height: 50px;
+                }
+            }
+            .last{
+                color:@blue2;
+                position: absolute;
+                left:30px;
+                bottom: 10px;
+            }
+        }
+    }
+    .leftButton{
+        margin-top: 20px;
+        width: 140px;
+        height: 40px;
+        font-size: 18px;
+    }
+    .leftButton1{
+        width: 140px;
+        height: 30px;
+        font-size: 18px;
+    }
+    .leftButton:hover{
+        color:#fff;
+    }
+}

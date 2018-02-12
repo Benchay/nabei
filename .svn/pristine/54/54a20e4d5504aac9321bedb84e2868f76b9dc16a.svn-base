@@ -1,0 +1,361 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/fastShipping2"}'>快速出货</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/returnManagement2"}'>快速退货</router-link>
+            </li>
+            <li class="menuIndex">
+                <router-link :to='{path:"/indentManagement"}'>订单管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/sellerSettlement"}'>客户结算</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/customerManagement"}'>客户管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/statisticalStatement"}'>销售统计</router-link>
+            </li>
+        </ul>
+        <div class="purchasing-content" style="height:77%;">
+            <div class="purchasingAll">
+                <div class="right">
+                    <router-link :to='{path:"/indentManagement"}' class="comeBack">返回</router-link>
+                </div>
+                <div class="packageTabs">
+                    <ul class="flex">
+                        <li>
+                            <a href="javascript:void(0);" v-for="(obj,index) in packageList" @click="tabss(index)"  :class="{'change2':index === clickIndex2}" >{{obj.name}}</a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="orderForm">
+                    <el-col :span="8">电商卖家：{{this.busiName}}</el-col>
+                    <el-col :span="15">下单时间：{{this.formatDateInfo(this.orderTime)}}</el-col>
+                    <el-col :span="8">订单编号：{{this.orderId}}</el-col>
+                    <el-col :span="15" v-show=" this.packageId != '-1' ">包裹编号：{{this.packageId}}</el-col>
+                    <el-col :span="8">共计金额：{{this.totalFee}}</el-col>
+                    <el-col :span="15">商品数量：{{this.totalNum}}</el-col>
+                </div>
+                <div class="stocktakingTable">
+                    <el-table
+                        :data="tableData"
+                        style="width: 100%">
+                        <el-table-column
+                            v-if="clickIndex2>0"
+                            type="selection"
+                            width="55">
+                        </el-table-column>
+                        <el-table-column
+                            label="主图/货号">
+                            <template scope="scope">
+                                <div class="flex2">
+                                    <img src="../image/111.png" alt=""  class="tableImg">
+                                    <p>MG110</p>
+                                </div>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            prop="productName"
+                            width="180"
+                            label="商品名称">
+                        </el-table-column>
+                        <el-table-column
+                            prop="color"
+                            label="颜色">
+                        </el-table-column>
+                        <el-table-column
+                            prop="size"
+                            label="尺码">
+                        </el-table-column>
+                        <el-table-column
+                            prop="orderNum"
+                            label="下单数量">
+                        </el-table-column>
+                        <el-table-column
+                            prop="packedNum"
+                            label="配货数量"
+                            v-if="this.packageId=='-1'||this.packageId==''?false:true">
+                            <template scope="scope" >
+                                <el-input :value="scope.row.packedNum" class="amount"></el-input>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            prop="unitPrice"
+                            label="单价">
+                        </el-table-column>
+                    </el-table>
+                </div>
+                <div class="right"style="margin-top: 20px">
+                    <div class="purPendingButton"  v-if="clickIndex2>0">
+                        <a href="javascript:void(0)" class="buttonColor" type="info" size="small"  @click="dialogErweuma = true">打印二维码</a>
+                        <a href="javascript:void(0)" class="buttonColor" type="info" size="small"  @click="dialog = true">通知取货</a>
+                    </div>
+                    <div class="purPendingButton" v-if="this.packageId=='-1'">
+                        <router-link :to='{path:"/indentManagementReturnDetails2",query:{orderId:orderId,busiCompId:busiCompId,status:status,orderType:orderType,busiName:busiName,orderTime:orderTime}}' class="buttonColor right" >继续打包</router-link>
+                    </div>
+                </div>
+                <el-col :span="24">
+                    <a href="javascript:void(0)" class="export_excle">导出excel</a>
+                    <el-pagination
+                        small
+                        class="right"
+                        style="margin-top: 20px;"
+                        @size-change="handleSizeChange"
+                        @current-change="handleCurrentChange"
+                        :current-page="currentPage"
+                        :page-sizes="[10, 20, 30, 40]"
+                        :page-size="pageSize"
+                        layout="total, sizes, prev, pager, next, jumper"
+                        :total="totalCount">
+                    </el-pagination>
+                </el-col>
+            </div>
+        </div>
+        <el-dialog
+            title="删除包裹"
+            :visible.sync="dialogDelete"
+            size="tiny">
+            <div class="flex2">
+                <p>是否确认删除此包裹？</p>
+            </div>
+            <span slot="footer" class="dialog-footer flex2">
+                <el-button type="primary" @click="dialogVisible = false">确 定</el-button>
+                 <el-button @click="dialogVisible = false">取 消</el-button>
+              </span>
+        </el-dialog>
+        <el-dialog
+            title="移除包裹"
+            :visible.sync="dialogRemove"
+            size="tiny">
+            <div class="flex2">
+                <p>是否确认移除此包裹？</p>
+            </div>
+            <span slot="footer" class="dialog-footer flex2">
+                <el-button type="primary" @click="dialogVisible = false">确 定</el-button>
+                 <el-button @click="dialogVisible = false">取 消</el-button>
+              </span>
+        </el-dialog>
+        <el-dialog
+            title="打印二维码"
+            :visible.sync="dialogErweuma"
+            size="tiny">
+            <div class="flex2">
+                <img src="../image/erweima1.png" alt=""><p style="margin-left: 15px ">打印数量：</p><el-input-number size="small" v-model="num6" :min="1"></el-input-number>
+            </div>
+            <span slot="footer" class="dialog-footer flex2">
+                <el-button type="primary" @click="dialogVisible = false">确 定</el-button>
+                 <el-button @click="dialogVisible = false">取 消</el-button>
+              </span>
+        </el-dialog>
+        <el-dialog
+            title="通知取货"
+            :visible.sync="dialog"
+            size="tiny">
+            <div class="flex2 inform">
+                <p>取货通知已发送给商家！</p>
+            </div>
+        </el-dialog>
+    </div>
+</template>
+<script>
+    import headTop from '../components/headTop'
+    import {formatDate} from '../utils/date.js'
+    import {endOfPacked,queryPackageInfo,queryStallOrderDetail} from '@/api/getData'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                currentPage: 4,
+                dialog:false,
+                num6:1,
+                erweima:false,
+                dialogErweuma:false,
+                dialogRemove:false,
+                dialogDelete:false,
+                clickIndex2:0,
+                packageList:[],
+                items:[
+                    {title:'全部'},
+                    {title:'配货'},
+                    {title:'退货'},
+                ],
+                tableDetails:[
+                    {
+                        name:'电商买家名称名称',
+                        numbers: 'NG123',
+                        checkDate:'2017-05-11 12:21:11',
+                    }
+                ],
+                tableData: [],
+                orderId:'',
+                status:0,
+                orderTime:'',
+                busiName:'',
+                packageId:'',
+                totalFee:0.00,
+                totalNum:0,
+                pageSize:10,
+                currentPage:1,
+                totalCount:0,
+                busiCompId:'',
+                orderType:0,
+            }
+        },
+        mounted(){
+            this.orderId = this.$route.query.orderId;
+            this.status = this.$route.query.status;
+            this.busiName = this.$route.query.busiName;
+            this.busiCompId = this.$route.query.busiCompId;
+            this.orderType = this.$route.query.orderType;
+            this.orderTime = this.$route.query.orderTime;
+            this.endPacked();//结束本次打包
+            this.loadPackageInfo();//加载包裹
+        },
+        methods: {
+            async endPacked(){
+                let param = {
+                    "orderId":this.orderId
+                };
+                const res = await  endOfPacked(param);
+                if(res.isSuccess){
+                    this.$message({
+                        type:'info',
+                        message:res.result.msg
+                    });
+                }
+            },
+            //加载包裹个数
+            async loadPackageInfo(){
+                this.packageList = [];
+                let param = {
+                    "orderId":this.orderId
+                };
+                const res = await queryPackageInfo(param);
+                if(res.isSuccess){
+                    let table = res.result.data;
+                    if(table.length==0){
+                        let pa = {
+                            list:"-1",
+                            name:'未打包'
+                        };
+                        this.packageList.push(pa);
+                    }
+                    if(this.containNPacked(table)){
+                        for(var i = 0 ;i<table.length;i++){
+                            let pa = {
+                                list:table[i],
+                                name:this.checkedPackageId(table[i],i)
+                            };
+                            this.packageList.push(pa);
+                        }
+                    }else{
+                        for(var i = 0 ;i<table.length;i++){
+                            let pa = {
+                                list:table[i],
+                                name:'包裹'+(i+1)
+                            };
+                            this.packageList.push(pa);
+                        }
+                    }
+                }
+            },
+            containNPacked(table){
+                for(var i = 0 ;i<table.length;i++){
+                    if(table[i]=='-1'){
+                        return true;
+                    }
+                }
+                return false;
+            },
+            checkedPackageId(val,index){
+                if(val=='-1'){
+                    return '未打包';
+                }else{
+                    return '包裹' + index;
+                }
+            },
+
+            //加载订单详情
+            async loadOrderDetail(){
+                this.tableData = [];
+                this.totalFee = 0.00;
+                this.totalNum = 0.00;
+                let param = {
+                    "companyId":'1000',
+                    "orderId":this.orderId,
+                    "status":this.status,
+                    "orderType":this.orderType,
+                    "packageId":this.packageId,
+                    "pageIndex":this.currentPage,
+                    "pageSize":this.pageSize
+                };
+                const res = await queryStallOrderDetail(param);
+                if(res.isSuccess){
+                    let table = res.result.data.results;
+                    for(var i = 0 ;i<table.length;i++){
+                        let details = table[i].details;
+                        for(var j = 0 ;j<details.length;j++){
+                            if(this.packageId=='-1'){
+                                this.totalFee = this.totalFee + details[j].orderNum * details[j].unitPrice;
+                                this.totalNum = this.totalNum + details[j].orderNum;
+                            }else{
+                                this.totalFee = this.totalFee + details[j].packedNum * details[j].unitPrice;
+                                this.totalNum = this.totalNum + details[j].packedNum;
+                            }
+
+                            if(j==0){
+                                this.tableData.push(details[j]);
+                            }else{
+                                let data = details[j];
+                                data.imgUrl_main = '';
+                                data.productCode='';
+                                data.productName = '';
+                                this.tableData.push(details[j]);
+                            }
+                        }
+                    }
+                }else{
+                    this.$message({
+                        duration:this.GLOBAL.MESSAGE_DISSMISS_TIME_MID,
+                        type:'error',
+                        message:res.errorMsg
+                    });
+                    this.packageId = '';
+                    return ;
+                }
+            },
+
+            tabss(index){
+                this.clickIndex2 = index;
+                this.packageId = this.packageList[index].list;
+                this.loadOrderDetail();//加载订单详情
+            },
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+            },
+            //数据格式转换
+            formatDateInfo:function(val) {
+                if (val == undefined||val=='') {
+                    return "";
+                }
+                return formatDate(val*1,'yyyy-MM-dd hh:mm');
+            },
+        }
+    }
+</script>
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/purchasingManagement';
+    @import "../style/indentManagement";
+</style>

@@ -1,0 +1,362 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('currentInventory')">
+                <router-link :to='{path:"/currentInventory"}'>当前库存</router-link>
+            </li>
+            <li class="menuIndex" v-if="getMenuAuthFun('inventoryDetail')">
+                <router-link :to='{path:"/inventoryDetail"}'>库存变动</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('stocktaking')">
+                <router-link :to='{path:"/stocktaking"}'>库存盘点</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('stockTransshipment')">
+                <router-link :to='{path:"/stockTransshipment"}'>库存调拨</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('inventoryWarning')">
+                <router-link :to='{path:"/inventoryWarning"}'>库存预警</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('storeManagement')">
+                <router-link :to='{path:"/storeManagement"}'>多仓管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('inventoryInitialize')">
+                <router-link :to='{path:"/inventoryInitialize"}'>库存初始化</router-link>
+            </li>
+        </ul>
+        <div class="stocktaking">
+            <div class="stocktakingTop">
+                <div class="left flex">
+                    <el-date-picker
+                        size="small"
+                        v-model="filters.date.startDate"
+                        type="date"
+                        placeholder="选择开始日期"
+                        :picker-options="startDateBefore"
+						@change="dateQueryStart"
+					>
+                    </el-date-picker>
+                    -
+                    <el-date-picker
+                        size="small"
+                        v-model="filters.date.endDate"
+                        type="date"
+                        placeholder="选择截止日期"
+                        :picker-options="startDateAfter"
+						format="yyyy-MM-dd"
+						value-format="yyyy-MM-dd"
+                        @change="dateQueryEnd"
+                    >
+                    </el-date-picker>
+                    <!-- <el-date-picker
+                        size="small"
+                        v-model="date"
+                        type="daterange"
+                        @change="dateQuery"
+                        placeholder="选择日期范围">
+                    </el-date-picker> -->
+                    <div class="flex input2">
+                       <!--  <el-input v-model="createUserId" size="small" placeholder="操作人搜索"  icon="search" :on-icon-click="query"></el-input> -->
+                        <el-input v-model="orderNo" size="small" placeholder="订单编号搜索"   icon="search" :on-icon-click="query"></el-input>
+                    </div>
+                </div>
+
+            </div>
+            <div class="detailTable">
+                <el-table
+                    :data="tableData"
+                    style="width: 100%">
+                    <el-table-column
+                        prop="createTime"
+                        label="时间"
+                        :formatter="mydateFormat">
+                    </el-table-column>
+                    <el-table-column
+                        label="主图/货号">
+                        <template scope="scope">
+                            <div class="flex">
+                                <img :src="scope.row.imgUrl_main" alt="">
+                               {{scope.row.productCode}}
+                            </div>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="productName"
+                        label="商品名称">
+                    </el-table-column>
+                    <el-table-column
+                        prop="colour"
+                        label="颜色">
+                    </el-table-column>
+                    <el-table-column
+                        prop="size"
+                        label="尺码">
+                    </el-table-column>
+                    <el-table-column
+                        prop="changeNum"
+                        label="出入库数量">
+                    </el-table-column>
+     <!--               <el-table-column
+                        prop="createUserName"
+                        label="操作人">
+                    </el-table-column> -->
+                    <el-table-column
+                        prop="type"
+                        label="业务类型"
+                        :formatter="stockOrderTypeFormat">
+                    </el-table-column>
+                    <el-table-column
+                    	width="200"
+                        label="订单编号">
+                        <template scope="scope">
+                            {{scope.row.orderCode?scope.row.orderCode:scope.row.orderNo}}
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+            <el-pagination
+                small
+                class="right"
+                style="margin-top: 20px;"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :current-page="currentPage"
+                :page-sizes="[10, 20, 30, 40,50]"
+                :page-size="pageSize"
+                layout="total, sizes, prev, pager, next, jumper"
+                :total="totalCount">
+            </el-pagination>
+            <a href="javascript:void(0)" class="export_excle" @click="exportDataClick">导出excel</a>
+            <div style="height:160px;">
+                &nbsp;
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {queryStockChanged} from '@/api/getData'
+    import {formatDate} from '../utils/date.js'
+    import {mydateFormat,stockOrderTypeFormat} from '../utils/dataFormater.js'
+    import {export_json_to_excel} from '../vendor/Export2Excel.js'
+    import {userInfo,getStore,setStore} from  '../config/mUtils'
+    import {getMenuAuth} from  '../utils/AuthMenu.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                filters:{
+                    date:{
+                        startDate:'',
+                        endDate:''
+                    }
+                },
+                startDateBefore:{
+                    disabledDate: (time) => {
+                        let beginDateVal = this.filters.date.endDate;
+                        if (beginDateVal) {
+                            return time.getTime() > beginDateVal;
+                        }
+                    }
+                },
+                startDateAfter:{
+                    disabledDate: (time) => {
+                        let beginDateVal = this.filters.date.startDate;
+                        if (beginDateVal) {
+                            return time.getTime() < beginDateVal;
+                        }
+                    }
+                },
+                input2:'',
+                input3:'',
+                radio3:'',
+                radio4:'',
+                num6:1,
+                date:'',
+                optUser:'',
+                createUserId:'',
+                orderNo:'',
+                productCode:'',
+                tableData: [],
+                exportData:[],
+                //默认每页数据量
+                pageSize: 10,
+                //默认高亮行数据id
+                highlightId: -1,
+                //当前页码
+                currentPage: 1,
+                //查询的页码
+                start: 1,
+                //默认数据总数
+                totalCount: 0,
+            }
+        },
+        mounted(){
+            const s = document.createElement('script');
+            s.type = 'text/javascript';
+            s.src = 'http://oss.sheetjs.com/js-xlsx/xlsx.full.min.js';
+            document.body.appendChild(s);
+            let param ={
+                warehouseId:userInfo().warehouseId,
+                companyId:userInfo().companyId,
+                pageIndex:this.currentPage,
+                pageSize:this.pageSize
+            }
+            this.initloadData(param);
+        },
+        methods: {
+            getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            dateQueryStart(date){
+				if(date!=undefined){
+			    this.filters.date.startDate = date;
+                this.query();
+				}
+
+            },
+		    dateQueryEnd(date){
+                if(date!=undefined){
+			    this.filters.date.endDate = date;
+                this.query();
+				}
+            },
+
+
+            query() {
+                let date= this.date;
+				if(this.orderNo!=''){
+					this.filters.date={
+                        startDate:'',
+                        endDate:''
+                    }
+				}
+                let  param = {
+                    "companyId": userInfo().companyId,
+                    "warehouseId":userInfo().warehouseId,
+                    "pageSize": this.pageSize,
+                    "pageIndex": this.currentPage,
+                    "startDate":this.filters.date.startDate,
+					"endDate":this.filters.date.endDate,
+                    //"optUser":this.optUser,
+                    "productCode":this.productCode,
+                    "orderNo":this.orderNo,
+                    "createUserId":this.createUserId
+                };
+                this.initloadData(param);
+
+            },
+            //页码变更
+            handleSizeChange(val) {
+                this.pageSize = val;
+
+//                let start='',end='';
+//                if(this.dateRange!=''){
+//                    start = formatDate(this.dateRange[0],'yyyy-MM-dd hh:mm');
+//                    end = formatDate(this.dateRange[1],'yyyy-MM-dd hh:mm'); 
+//                }
+
+                let  param = {
+                    "companyId":userInfo().companyId,
+                    "warehouseId":userInfo().warehouseId,
+                    "pageSize": this.pageSize,
+                    "pageIndex": this.currentPage,
+//                        "start":start,
+//                        "end":end
+                };
+                this.initloadData(param);
+            },
+            handleCurrentChange: function(val) {
+                this.currentPage = val;
+                this.query();
+
+
+            },
+
+            //从服务器获取数据
+            async initloadData(param) {
+                const res = await queryStockChanged(param);
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: '数据加载成功！'
+                    });
+                    this.tableData = res.result.results;
+                    this.totalCount =  res.result.totalCount;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            async exportDataClick(){
+                let start = 1;
+				let dataSize =99999;
+				let  list =[];
+				 let date= this.date;
+				if(this.orderNo!=''){
+					this.filters.date={
+                        startDate:'',
+                        endDate:''
+                    }
+				}
+                let  param = {
+                    "companyId": userInfo().companyId,
+                    "warehouseId":userInfo().warehouseId,
+                    "pageSize": dataSize,
+                    "pageIndex": start,
+                    "startDate":this.filters.date.startDate,
+					"endDate":this.filters.date.endDate,
+                    //"optUser":this.optUser,
+                    "productCode":this.productCode,
+                    "orderNo":this.orderNo,
+                    "createUserId":this.createUserId
+                };
+				 const res = await queryStockChanged(param);
+                if (res.isSuccess == true) {
+                    list = res.result.results;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+				if(list!=[]&&list.length>0){
+					list.forEach((obj)=>{
+						obj.createTime = formatDate(obj.createTime,'yyyy-MM-dd hh:mm');
+						if(obj.orderCode==undefined||obj.orderCode==''){
+							obj.orderCode= obj.orderNo
+						}
+					})
+				}else{
+					  this.$message({
+                        type: 'error',
+                        message: '导出失败，没有可以导出的数据！'
+                    });
+				}
+                
+                const tHeader = ['时间', '货号','商品名称','颜色','尺码','出入库数量','业务类型','订单编号'];		
+                const filterVal = ['createTime', 'productCode','productName','colour','size','changeNum','type','orderCode'];
+                const data = this.formatJson(filterVal, list);
+                export_json_to_excel(tHeader, data, '库存变动表');
+            },
+            formatJson(filterVal, jsonData) {
+                return jsonData.map(v => filterVal.map(j => v[j]))
+            },
+            mydateFormat,
+            stockOrderTypeFormat,
+			formatDate
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/stocktaking';
+</style>

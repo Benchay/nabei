@@ -1,0 +1,541 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('currentInventory')">
+                <router-link :to='{path:"/currentInventory"}'>当前库存</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('inventoryDetail')">
+                <router-link :to='{path:"/inventoryDetail"}'>库存变动</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('stocktaking')">
+                <router-link :to='{path:"/stocktaking"}'>库存盘点</router-link>
+            </li>
+            <li class="menuIndex" v-if="getMenuAuthFun('stockTransshipment')">
+                <router-link :to='{path:"/stockTransshipment"}'>库存调拨</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('inventoryWarning')">
+                <router-link :to='{path:"/inventoryWarning"}'>库存预警</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('storeManagement')">
+                <router-link :to='{path:"/storeManagement"}'>多仓管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('inventoryInitialize')">
+                <router-link :to='{path:"/inventoryInitialize"}'>库存初始化</router-link>
+            </li>
+        </ul>
+        <div class="stocktaking">
+            <div class="stocktakingTop">
+                <div class="left">
+                     <el-date-picker
+                        size="small"
+                        v-model="filters.date.startDate"
+                        type="date"
+                        placeholder="选择开始日期"
+                        :picker-options="startDateBefore"
+                        value-format="yyyy-MM-dd"
+                        @change="startDateChanged"
+                    >
+                    </el-date-picker>
+                    -
+                    <el-date-picker
+                        size="small"
+                        v-model="filters.date.endDate"
+                        type="date"
+                        placeholder="选择截止日期"
+                        :picker-options="startDateAfter"
+                        @change="dateQuery"
+                    >
+                    </el-date-picker>
+                    <!-- <el-date-picker
+                        size="small"
+                        v-model="value6"
+                        type="daterange"
+                        placeholder="选择日期范围">
+                    </el-date-picker> -->
+                </div>
+                <div class="left flex input2">
+                    <!--<el-input
+                        placeholder="调入仓库搜索"
+                        size="small"
+                        v-model="searchForm.allocateWarehouseName">
+                    </el-input>
+                    <el-input
+                        placeholder="调出仓库搜索"
+                        size="small"
+                        v-model="searchForm.warehouseName">
+                    </el-input>-->
+                    <el-select
+                        v-model="searchForm.createUserId"
+                        size="small"
+                        filterable
+                        clearable
+                        remote
+                        reserve-keyword
+                        placeholder="调拨人搜索"
+                        :remote-method="querySearch"
+                        :loading="loading"
+                        icon="search"
+                        @change="query">
+                        <el-option
+                            v-for="item in userOptions"
+                            :key="item.id"
+                            :label="item.userName"
+                            :value="item.userId">
+                        </el-option>
+                    </el-select>
+                	<!--<el-button type="primary" icon="el-icon-search" size="small" @click="handleSearchClick" style="margin-left: 30px;">搜索</el-button>-->
+                </div>
+            </div>
+            <div class="warningButton">
+                <p><router-link :to='{path:"/stockTransshipmentDetails"}' class="buttonColor">开始调拨</router-link></p>
+            </div>
+            <div class="stockTabs">
+                <el-radio-group v-model="status" class="radioGreen" size="small" @change="handleQuery">
+                    <el-radio-button label="全部"></el-radio-button>
+                    <el-radio-button label="待签收"></el-radio-button>
+                    <el-radio-button label="已签收"></el-radio-button>
+                </el-radio-group>
+            </div>
+            <div class="stocktakingTable">
+                <el-table
+                    :data="tableData"
+                    style="width: 100%">
+                    <el-table-column
+                    	width="140"
+                        prop="orderNo"
+                        label="调拨编号">
+                    </el-table-column>
+                    <el-table-column
+                        prop="warehouseName"
+                        label="调出仓库"
+                        >
+                    </el-table-column>
+                    <el-table-column
+                        prop="allocateWarehouseName"
+                    label="调入仓库"
+                  >
+                    </el-table-column>
+                    <el-table-column
+                        label="调拨数">
+                        <template scope="scope">
+                            {{userInfo().warehouseId==scope.row.warehouseId?scope.row.orderNum:-scope.row.orderNum}}
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="totalStockFee"
+                        label="调拨总金额">
+                        <template scope="scope">
+                            {{scope.row.totalStockFee?parseInt(scope.row.totalStockFee).toFixed(2):''}}
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="createUserName"
+                        label="调拨人">
+                    </el-table-column>
+                    <el-table-column
+                        prop="createTime"
+                        label="调拨时间"
+                        :formatter="mydateFormat">
+                    </el-table-column>
+                    <el-table-column
+                        prop="status"
+                        label="状态">
+                        <template scope="scope">
+                            <p v-bind:class="[scope.row.status==0?'color3':'']">{{scope.row.status==0?'待签收':scope.row.status==1?'已签收':''}}</p>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        label="操作">
+                        <template scope="scope">
+                            <router-link :to='{path:"/stockTransshipmentDetails2",query:{param:scope.row.storeOrderId}}' class="blue2">查看详情</router-link>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+            <el-pagination
+                small
+                class="right"
+                style="margin-top: 20px;"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :page-sizes="[10, 20, 30, 40,50]"
+                :current-page="currentPage"
+                :page-size="pageSize"
+                layout="total,sizes, prev, pager, next, jumper"
+                :total="totalCount">
+            </el-pagination>
+            <a href="javascript:void(0)" @click="exportData" class="export_excle">导出excel</a>
+            <div style="height:160px;">
+                &nbsp;
+            </div>
+        </div>
+        <el-dialog title="修改预警" :visible.sync="dialogFormVisible" size="tiny">
+            <el-form>
+                <el-form-item label="预警值：">
+                    <el-input auto-complete="off" style="width:110px;" size="small"></el-input><span style="margin-left: 5px">元</span>
+                </el-form-item>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button type="primary" @click="dialogFormVisible = false" style="margin-right:20px;">确 定</el-button>
+                <el-button @click="dialogFormVisible = false">取 消</el-button>
+            </div>
+        </el-dialog>
+		<!--<el-dialog titile="选择盘点人" :visible.sync="dialogSelectVisible" class="creationGS"
+                   :before-close="handleCreateCompanyClose">
+			<el-table :data="tableDataUser">
+				<el-table-column
+					prop="userName"
+					label="盘点人"
+					@row-dblclick="selectOperator">
+				</el-table-column>
+			</el-table>
+		</el-dialog>-->
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    //import {setStore, getStore,userInfo} from  '../config/mUtils'
+    import {loadCompanyUserInfo,queryStockOrderForAllocation} from '@/api/getData'
+    import {userInfo} from  '../config/mUtils'
+    import {formatDate} from '../utils/date.js'
+    import {mydateFormat} from '../utils/dataFormater.js'
+    import {getMenuAuth,haveMenuAuth} from  '../utils/AuthMenu.js'
+    import {export_json_to_excel} from '../vendor/Export2Excel.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                filters:{
+                    date:{
+                        startDate:'',
+                        endDate:''
+                    }
+                },
+                startDateBefore:{
+                    disabledDate: (time) => {
+                        let beginDateVal = this.filters.date.endDate;
+                        if (beginDateVal) {
+                            return time.getTime() > beginDateVal;
+                        }
+                    }
+                },
+                startDateAfter:{
+                    disabledDate: (time) => {
+                        let beginDateVal = this.filters.date.startDate;
+                        if (beginDateVal) {
+                            return time.getTime() < beginDateVal;
+                        }
+                    }
+                },
+                searchForm:{
+                	'warehouseName':'',
+                	'allocateWarehouseName':'',
+                	'createUserName':'',
+                	'date':{
+                		'startDate':'',
+                		'endDate':''
+                	},
+                	'createUserId':''
+                },
+                dialogFormVisible:false,
+                input2:'',
+                input3:'',
+                radio1:'全部',
+                value6:'',
+                tableData: [],
+                flowStatus:'',
+                status:'全部',
+                loading:false,
+                userOptions:[],
+                //默认每页数据量
+                pageSize: 10,
+                //默认高亮行数据id
+                highlightId: -1,
+                //当前页码
+                currentPage: 1,
+                //查询的页码
+                start: 1,
+                //默认数据总数
+                totalCount: 0,
+            }
+        },
+
+        watch: {
+            '$route': function (route) {
+                if(route.path=='/stockTransshipment'){
+                    let param = {
+                        companyId:userInfo().companyId,
+                        warehouseId:userInfo().warehouseId,
+                        orderType:'2,3',
+                        pageIndex:this.currentPage,
+                        pageSize:this.pageSize
+                    }
+                    this.initloadData(param);
+                }
+            }
+        },
+        mounted(){
+            let param = {
+                companyId:userInfo().companyId,
+                warehouseId:userInfo().warehouseId,
+                orderType:'2,3',
+                pageIndex:this.currentPage,
+                pageSize:this.pageSize
+            }
+            this.initloadData(param);
+        },
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            handleSizeChange(val) {
+                this.pageSize = val;
+                this.query();
+
+            },
+            handleCurrentChange(val) {
+                this.currentPage = val;
+                this.query();
+            },
+            startDateChanged(date){
+            	if(date){
+            		this.searchForm.date.startDate = date;
+            	}else{
+            		this.searchForm.date.startDate = '';
+            	}
+				this.query();
+            },
+            dateQuery(date){
+                if(date){
+                    this.searchForm.date.endDate = date;
+                }else{
+                    this.searchForm.date.endDate = '';
+                }
+                this.query();
+            },
+            query() {
+                let param = {
+	                companyId:userInfo().companyId,
+	                warehouseId:userInfo().warehouseId,
+                    createUserId:this.searchForm.createUserId,
+                    date:JSON.stringify(this.searchForm.date),
+	                orderType:'2,3',
+	                pageIndex:this.currentPage,
+	                pageSize:this.pageSize
+	            }
+	            this.initloadData(param);
+            },
+            async querySearch(queryString){
+            	if(queryString!=''){
+            		this.loading = true;
+            		var curComp = userInfo().curCompany;
+	            	let param = {
+	            		"CompanyUser": {
+					        "compId": curComp.id,
+					        "userName":queryString.trim()
+					    },
+					    "pageIndex": 1,
+					    "pageSize": 10
+	            	}
+	            	const res = await loadCompanyUserInfo(param);
+	            	//alert(JSON.stringify(res))
+	            	window.clearTimeout(this.timeout);
+	            	this.timeout = setTimeout(() => {
+                        this.loading = false;
+                        if(res.isSuccess){
+		            		//alert(JSON.stringify(res.result.CompanyUser))
+		            		this.userOptions = res.result.CompanyUser;
+		            	}else{
+/* 		            		this.$message({
+		            			type:'error',
+		            			message:res.errorMsg
+		            		}); */
+							this.userOptions =[];
+		            	}
+                    }, 200);
+            	}else{
+            		this.userOptions = [];
+            		this.searchForm.createUserId = '';
+            	}
+            },
+            handleIconClick(ev){
+
+            },
+            handleQuery(){
+                let param = {
+                    companyId:userInfo().companyId,
+                    warehouseId:userInfo().warehouseId,
+                    orderType:'2,3',
+                    pageIndex:this.currentPage,
+                    pageSize:this.pageSize
+                }
+                if(this.status!=='全部'){
+                    if(this.status=='已签收'){
+                        param.status='1'
+                    }else if (this.status=='待签收'){
+                        param.status='0'
+                    }
+
+                }
+                this.initloadData(param)
+            },
+            async initloadData(param){
+                const res = await queryStockOrderForAllocation(param);
+            	if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message:'数据加载成功!'
+                    });
+                    this.tableData = res.result.results;
+
+                    this.totalCount = res.result.totalCount
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            formatDestWarehouse:function(row, column){
+            	let data = "";
+            	if(row.destWarehouse){
+            		data = row.destWarehouse+" - ";
+            	}
+            	if(row.destSeatname){
+            		data = data+row.destSeatname;
+            	}
+            	return data;
+            },
+            formatSource:function(row, column){
+            	let data = "";
+            	if(row.sourceWarehouse){
+            		data = row.sourceWarehouse+" - ";
+            	}
+            	if(row.sourceSeatname){
+            		data = data+row.sourceSeatname;
+            	}
+            	return data;
+            },
+            mydateFormat,
+
+            //页码变更
+            handleCurrentChange: function(val) {
+                this.currentPage = val; 
+                this.query();
+            },
+            
+            //导出文档
+			async exportData() {
+			   let param = {
+                    companyId:userInfo().companyId,
+                    warehouseId:userInfo().warehouseId,
+                    orderType:'2,3',
+                    pageIndex:1,
+                    pageSize:this.totalCount
+                }
+                if(this.status!=='全部'){
+                    if(this.status=='已签收'){
+                        param.status='1'
+                    }else if (this.status=='待签收'){
+                        param.status='0'
+                    }
+
+                }
+               const res = await queryStockOrderForAllocation(param);
+               const list = [];
+                if (res.isSuccess == true) {
+                    res.result.results.forEach(obj => {
+                    	let orderNo= '' ;//调拨编号
+                    	let warehouseName = '';//调出仓库
+                    	let allocateWarehouseName = '';//调入仓库
+                    	let orderNum = '';//调拨数
+                    	let totalStockFee = '';//调拨总金额
+                    	let createUserName = '';//调拨人
+                    	let createTime = '';//调拨时间
+                    	let status = ''; //状态
+                    	if(obj.orderNo){
+                    		orderNo = obj.orderNo;
+                    	}
+                    	if(obj.warehouseName){
+                    		warehouseName = obj.warehouseName;
+                    	}
+                    	if(obj.allocateWarehouseName){
+                    		allocateWarehouseName = obj.allocateWarehouseName;
+                    	}
+                    	if(obj.orderNum && obj.warehouseId && obj.warehouseId == userInfo().warehouseId){
+                    		orderNum = obj.orderNum;
+                    	}else if(obj.orderNum){
+                    		orderNum = -obj.orderNum;
+                    	}
+                    	if(obj.totalStockFee){
+                    		totalStockFee = obj.totalStockFee;
+                    	}
+                    	if(obj.createUserName){
+                    		createUserName = obj.createUserName;
+                    	}
+                    	if(obj.createTime){
+                    		createTime = formatDate(new Date(obj.createTime),'yyyy-MM-dd hh:mm');
+                    	}
+                    	if(obj.status && obj.status == 1){
+                    		status = "已签收";
+                    	}else{
+                    		status = "待签收";
+                    	}
+                    	let row = {
+		            		orderNo : orderNo,
+							warehouseName : warehouseName,
+							allocateWarehouseName : allocateWarehouseName,
+							orderNum : orderNum,
+							totalStockFee : totalStockFee,
+							createUserName : createUserName,
+							createTime: createTime,
+							status: status
+		            	}
+		            	list.push(row);
+                    });
+
+                    const tHeader = ['调拨编号', '调出仓库','调入仓库','调拨数','调拨总金额','调拨人','调拨时间','状态'];
+			　　　　const filterVal = ['orderNo', 'warehouseName','allocateWarehouseName','orderNum','totalStockFee','createUserName','createTime','status'];
+			　　　　const data = this.formatJson(filterVal, list);
+			　　　　export_json_to_excel(tHeader, data, '库存调拨列表');
+                }
+            },
+            
+            formatJson(filterVal, jsonData) {
+		　　　　　　return jsonData.map(v => filterVal.map(j => v[j]));
+		　　　},
+		
+            userInfo
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/stocktaking';
+	.my-autocomplete {
+	    li {
+		    line-height: normal;
+		    padding: 7px;
+
+		    .username {
+		      text-overflow: ellipsis;
+		      overflow: hidden;
+		    }
+		    .addr {
+		      font-size: 12px;
+		      color: #b4b4b4;
+		    }
+
+		    .highlighted .addr {
+		      color: #ddd;
+		    }
+	    }
+	}
+</style>

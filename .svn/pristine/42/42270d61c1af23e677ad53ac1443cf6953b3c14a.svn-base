@@ -1,0 +1,118 @@
+.moreDynamic{
+    color:#333;
+    margin:15px 30px;
+    background: #fff;
+    padding: 20px 30px;
+    height:100%;
+    .moreList{
+        margin-top: 20px;
+        li{
+            padding-left: 40px;
+            height: 60px;
+            font-size: 14px;
+            display: flex;
+            align-items:center;
+            border-bottom: 1px dashed #d4d4d4;
+            p{
+                margin-right: 50px;
+            }
+            .ListTitle{
+                width: 90px;
+            }
+            //更多公告 内容
+            .moreContent{
+                width:70%;
+                white-space:nowrap;
+                overflow:hidden;
+                text-overflow:ellipsis;
+
+            }
+        }
+        .moreImg{
+            width: 24px;
+            height: 24px;
+            background: url(../image/sprite.png) no-repeat;
+        }
+        .MoreSprite{
+            background-position-y: 0;
+        }
+        .MoreSprite2{
+            background-position-y: -24px;
+        }
+        .MoreSprite3{
+            background-position-y: -48px;
+        }
+        .MoreSprite4{
+            background-position-y: -72px;
+        }
+        .MoreSprite5{
+            background-position-y: -96px;
+        }
+        .MoreSprite6{
+            background-position-y: -120px;
+        }
+    }
+    .moreList2{
+        margin-top: 20px;
+        li{
+            padding-left: 40px;
+            height: 60px;
+            font-size: 14px;
+            display: flex;
+            align-items:center;
+            border-bottom: 1px dashed #d4d4d4;
+            p{
+                margin-right: 50px;
+            }
+            .ListTitle{
+                width: 90px;
+            }
+        }
+        .moreImg{
+            width: 24px;
+            height: 24px;
+            background: url(../image/sprite.png) no-repeat;
+            background-position-x:-24px ;
+        }
+        .MoreSprite{
+            background-position-y: 0;
+        }
+        .MoreSprite2{
+            background-position-y: -24px;
+        }
+        .MoreSprite3{
+            background-position-y: -48px;
+        }
+        .MoreSprite4{
+            background-position-y: -72px;
+        }
+        .MoreSprite5{
+            background-position-y: -96px;
+        }
+        .MoreSprite6{
+            background-position-y: -120px;
+        }
+    }
+//    更多公告
+    .el-collapse {
+        margin-top: 30px;
+        border: none;
+        //border-bottom: 1px dashed rgb(223, 230, 236);
+        border-radius: 0;
+    }
+    .el-collapse-item__header{
+        height: 55px;
+        line-height: 55px;
+        padding-left: 15px;
+        background-color: #fff;
+        color: rgb(72, 87, 106);
+        cursor: pointer;
+        border-bottom: 1px dashed rgb(223, 230, 236);
+        font-size: 13px;
+    }
+}
+.noticeTitle1{
+    width:20%;
+    display: inline-block;
+}
+

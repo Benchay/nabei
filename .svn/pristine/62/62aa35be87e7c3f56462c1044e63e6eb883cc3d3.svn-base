@@ -1,0 +1,861 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('webStoreOrderSalesBuy')">
+                <router-link :to='{path:"/webStoreOrderSalesBuy"}'>网店订单</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('purchaseRequireBuy')">
+                <router-link :to='{path:"/purchaseRequireBuy"}'>采购需求</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('orderPurchaseBuy')">
+                <router-link :to='{path:"/orderPurchaseBuy"}'>采购订单</router-link>
+            </li>
+            <!-- <li v-if="getMenuAuthFun('addShop')">
+                <router-link :to='{path:"/addShop"}'>绑定店铺</router-link>
+            </li> -->
+            <li class="menuIndex2" v-if="getMenuAuthFun('packageDetails')">
+                <router-link :to='{path:"/packageDetails"}'>包裹管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('salesForecast')">
+                <router-link :to='{path:"/salesForecast"}'>采购统计</router-link>
+            </li>
+        </ul>
+        <div class="startProcurement">
+            <div>
+                <div class="salesOrderTop">
+                    <div class="block left" style="margin-right: 10px;">
+                        <!-- <el-date-picker
+                            v-model="value1"
+                            size="small"
+                            type="daterange"
+                            placeholder="选择日期范围">
+                        </el-date-picker> -->
+                         <el-date-picker
+                        size="small"
+                        v-model="filters.date.startDate"
+                        type="date"
+                        placeholder="选择开始日期"
+                        value-format="yyyy-MM-dd-HH-mm-ss"
+                        :picker-options="startDateBefore"
+                    >
+                    </el-date-picker>
+                    -
+                    <el-date-picker
+                        size="small"
+                        v-model="filters.date.endDate"
+                        type="date"
+                        placeholder="选择截止日期"
+                        :picker-options="startDateAfter"
+                        value-format="yyyy-MM-dd-HH-mm-ss"
+                        @change="handleIconClickDate"
+                    >
+                    </el-date-picker>
+                    </div>
+                    <div class="topSearch">
+                        <el-select v-model="packagevalue" placeholder="请选择" @change="changeValue">
+                            <el-option
+                            v-for="item in packageTypes"
+                            :key="item.value"
+                            :label="item.label"
+                            :value="item.value">
+                            </el-option>
+                        </el-select>
+                        <!-- <el-input
+                            placeholder="档口名称搜索"
+                            icon="search"
+                            size="small"
+                            v-model="stallName"
+                            :on-icon-click="handleIconClick">
+                        </el-input> -->
+                        <el-input
+                            placeholder="包裹编号搜索"
+                            icon="search"
+                            size="small"
+                            v-model="packageCode1"
+                            :on-icon-click="handleIconClick1"
+                            @keyup.enter.native="handleIconClick1">
+                        </el-input>
+                        <!--
+                        <el-input
+                            placeholder="采购人搜索"
+                            icon="search"
+                            size="small"
+                            v-model="input2"
+                            :on-icon-click="handleIconClick">
+                        </el-input>-->
+                    </div>
+                </div>
+                <el-col :span="24" style="margin-bottom: 15px;">
+                    <el-button style="padding: 10px;" class="buttonColor3" @click="kongpack">新增空包裹</el-button>
+                </el-col>
+                <el-col :span="24" class="radioRed" style="margin-bottom: 20px;">
+                    <el-radio-group v-model="radio" size="small"  @change="change">
+                        <el-radio-button :label="item.label" v-for="item in statusList">{{item.value}}</el-radio-button>
+                        <!-- <el-radio-button label="10">全部</el-radio-button>
+                        <el-radio-button label="0">待拿货</el-radio-button>
+                        <el-radio-button label="1">待装车</el-radio-button>
+                        <el-radio-button label="2">待入库</el-radio-button>
+                        <el-radio-button label="3">已完成</el-radio-button> -->
+                    </el-radio-group>
+                </el-col>
+                <div class="orderTable">
+                    <el-table
+                        :data="tableData"
+                        style="width: 100%;">
+                        <el-table-column
+                            prop="packageCode"
+                            label="包裹编号"
+                            width="180">
+                        </el-table-column>
+                        <el-table-column
+                            prop="companyName"
+                            label="档口名称"
+                            width="180">
+                        </el-table-column>
+                        <el-table-column
+                            label="拿货数">
+                             <template scope="scope">
+                                <p v-if="scope.row.packageType == 0||scope.row.packageType == null">{{scope.row.productNum}}</p>
+                                <p v-if="scope.row.packageType == 1">{{scope.row.takeNum}}</p>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            label="入库数">
+                              <template scope="scope">
+                                <p v-if="scope.row.packageType == 0||scope.row.packageType == null">{{scope.row.inStockNum}}</p>
+                                <p v-if="scope.row.packageType == 1">{{scope.row.sellerPackedNum}}</p>
+                            </template>
+                        </el-table-column>
+                         <el-table-column
+                            prop="transportCarName"
+                            label="车辆">
+                        </el-table-column>
+                        <!-- <el-table-column
+                            prop="totalFee"
+                            label="采购金额">
+                        </el-table-column> -->
+                        <el-table-column
+                            prop="takeTime"
+                            label="拿货时间"
+                            :formatter="mydateFormat"
+                            width="130">
+                        </el-table-column>
+                        <el-table-column
+                            prop="pickUpCode"
+                            label="提货码"
+                        >
+                        </el-table-column>
+                        <el-table-column
+                            prop="currPackageLogState"
+                            label="状态">
+                            <template scope="scope">
+                                <p v-bind:class="[scope.row.currPackageLogState<22?'red':'']">{{scope.row.currPackageLogState==-1?'空包裹':scope.row.currPackageLogState==0?'待拿货':scope.row.currPackageLogState==1?'待装车':scope.row.currPackageLogState==2?'待卸货':scope.row.currPackageLogState==3?'已完成':scope.row.currPackageLogState==21?'卸货待入库':''}}</p>
+                            </template>
+                        </el-table-column>
+                         <el-table-column
+                            prop="packageType"
+                            label="包裹类型"
+                            :formatter="packageTypeFormat"
+                        >
+                        </el-table-column>
+                        <el-table-column
+                            label="操作">
+                            <template scope="scope">
+                                <a style="cursor: pointer;"  @click="putInpage(scope.row.packageType,scope.row.id)" class="red">查看详情</a>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </div>
+                <el-pagination
+	                small
+	                class="right"
+	                style="margin-top: 20px;"
+	                @size-change="handleSizeChange"
+	                @current-change="handleCurrentChange"
+	                :current-page="currentPage"
+                    :page-sizes="[10, 20, 30, 40]"
+	                :page-size="pageSize"
+	                layout="total,sizes, prev, pager, next, jumper"
+	                :total="totalCount">
+	            </el-pagination>
+                <a href="javascript:void(0)" class="export_excle1" @click="exportTableData">导出excel</a>
+            </div>
+            <div style="height:160px;">
+                &nbsp;
+            </div>
+        </div>
+        <!--dialog-->
+        <el-dialog
+            title="新建空包裹"
+            :visible.sync="packDialogVisible"
+            size="tiny">
+            <el-row type="flex" justify="center" align="middle">
+                <el-col :span="4">包裹数量 :</el-col>
+                <el-col :span="12" style="padding-right: 20px;">
+                    <el-input v-model="packnum" placeholder="请输入包裹数量"></el-input>
+                </el-col>
+            </el-row>
+            <el-row type="flex" justify="center">
+                <el-col :span="4">全部打印 :</el-col>
+                <el-col :span="12">
+                    <el-radio-group  v-model="putRadio" @change="changePut">
+                        <el-radio label="1">是</el-radio>
+                        <el-radio label="2">否</el-radio>
+                    </el-radio-group>
+                </el-col>
+            </el-row>
+            <div v-if="putShow">
+                <el-row type="flex" justify="center" align="middle">
+                    <el-col :span="4">尺寸规格 :</el-col>
+                    <el-col :span="12">
+                        <el-select v-model="papeSizevalue" placeholder="-请选择-">
+                        <el-option
+                            v-for="item in papeSize"
+                            :key="item.value"
+                            :label="item.label"
+                            :value="item.value">
+                        </el-option>
+                        </el-select>
+                    </el-col>
+                </el-row>
+                <el-row type="flex" justify="center" align="middle">
+                    <el-col :span="4">包裹标题 :</el-col>
+                    <el-col :span="12" style="padding-right: 20px;">
+                        <el-input v-model="packName" placeholder="请输入包裹标题"></el-input>
+                    </el-col>
+                </el-row>
+            </div>
+            <span slot="footer" class="dialog-footer">
+            <!-- <a href="javascript:void(0)" @click="addpack(false,true)" class="buttonColor3">确 定</a> -->
+            <a href="javascript:void(0)" @click="addPack" class="buttonColor3">确 定</a>
+                <a href="javascript:void(0)" @click="packDialogVisible = false" class="buttonColor2">取 消</a>
+                <!-- <a href="javascript:void(0)" @click="addpack(true,false)" class="buttonColor3">批量打印</a> -->
+          </span>
+        </el-dialog>
+        <div style="display:none;">
+             <div class="qrcodewrap" id="preview">
+                        <qrcode :value="'hmj_p_info'+packId" tag="img" :options="{ size: 110 }"></qrcode>
+                    </div>
+                    <div class="qrDetail">
+                        卖家自建包裹
+
+                        创建人：{{userName}}
+                    </div>
+        </div>
+    </div>
+</template>
+
+<script>
+
+    import {setStore,getStore,userInfo} from  '../config/mUtils'
+    import {queryPackage,batchCreateSelerPackage} from '@/api/getData'
+    import {formatDate,timeZoneCovertDay} from '../utils/date.js'
+    import {export_json_to_excel} from '../vendor/Export2Excel.js'
+    const _XLSX = require('xlsx')
+    const X = typeof XLSX !== 'undefined' ? XLSX : _XLSX;
+    import {getMenuAuth,haveMenuAuth} from  '../utils/AuthMenu.js'
+    import {format} from 'date-fns'
+    import qrcode from '@xkeshi/vue-qrcode'
+    import {printPackage} from '../utils/orderPrint.js'
+    //import { getLodop } from '../Lodop/LodopFuncs.js'
+
+    export default {
+        components: {
+        qrcode
+        },
+        filters: {
+
+        },
+        data() {
+            return {
+                  filters:{
+                    date:{
+                        startDate:'',
+                        endDate:''
+                    }
+                },
+                startDateBefore:{
+                    disabledDate: (time) => {
+                        let beginDateVal = this.filters.date.endDate;
+                        if (beginDateVal) {
+                            return time.getTime() > beginDateVal;
+                        }
+                    }
+                },
+                startDateAfter:{
+                    disabledDate: (time) => {
+                        let beginDateVal = this.filters.date.startDate;
+                        if (beginDateVal) {
+                            return time.getTime() < beginDateVal;
+                        }
+                    }
+                },
+                putRadio:"1",
+                putShow:true,
+                radio:10,
+                packnum:'',
+                packName:'',
+                packageCode1:'',
+                stallName:'',
+                checked:false,
+                value1:'',
+                packDialogVisible: false,
+                tableData: [],
+                idlist:[],
+                papeSize: [{
+                    value: '100*70',
+                    label: '100*70mm'
+                },{
+                    value: '80*50', 
+                    label: '80*50mm'
+                    }],
+                papeSizevalue:'',
+                statusList:[
+                    {
+                        value:'全部',
+                        label:10
+                    },
+                    {
+                        value:'空包裹',
+                        label:-1,
+                        method:'package_take'
+                    },
+                    {
+                        value:'待拿货',
+                        label:0,
+                        method:'package_take'
+                    },
+                     {
+                        value:'待装车',
+                        label:1,
+                        method:'package_load'
+                    },
+                    {
+                        value:'待卸货',
+                        label:2,
+                        method:'package_unload'
+                    },
+                    {
+                        value:'待入库',
+                        label:21,
+                        method:'package_stockin'
+                    },
+                    {
+                        value:'已完成',
+                        label:3
+                    },
+                    {
+                        value:'异常包裹',
+                        label:256
+                    }
+                ],
+                packageTypes: [{
+                    value: '0',
+                    label: '普通包裹'
+                    }, {
+                    value: '1',
+                    label: '卖家自建包裹'
+                }],
+                packagevalue:'',
+                //默认每页数据量
+                pageSize: 10,
+
+                //默认高亮行数据id
+                highlightId: -1,
+
+                //当前页码
+                currentPage: 1,
+
+                //查询的页码
+                start: 1,
+
+                //默认数据总数
+                totalCount: 0,
+
+                //用户登录信息暂时写死
+                 currentComp: "",
+                 vcom:{},
+                 packId:'',
+                 userName:''
+                // currentComp:{id:'1000'}
+            }
+        },
+        watch:{
+            '$route':function (route) {
+                this.initloadData();
+            },
+        },
+        mounted(){
+        	this.initStatusList();
+            this.currentComp = getStore("curCompany");
+            this.vcom = JSON.parse(this.currentComp);
+            this.userName = userInfo().userName;
+            this.initloadData();
+            console.log(this.userName)
+        },
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            haveMenuAuth,
+            initStatusList(){
+            	var table = this.statusList;
+	        	for(var i=0;i<table.length;i++){
+	        		if(table[i].method!=undefined && !this.haveMenuAuth('packageDetails',table[i].method)){
+	        			table.splice(i,1);
+	        			i--;
+	        		}
+	        	}
+            },
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+                this.currentPage = 1;
+                this.pageSize = val;
+                this.initloadData();
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+                this.currentPage = val;
+                this.initloadData();
+            },
+            //时间格式化
+            mydateFormat:function(row, column) {
+                var time = row[column.property];
+                if (time == undefined||time=='') {
+                    return "";
+                }
+                let date = new Date(time);
+                return formatDate(date,'yyyy-MM-dd hh:mm');
+            },
+            packageTypeFormat:function(row,column){
+                var type = row[column.property];
+                if(type == null||type == 0){
+                    return "普通包裹"
+                }else if(type == 1){
+                    return "卖家自建包裹"
+                }
+            },
+            // handleIconClick(){
+            //    let param =  {
+            //        stallName
+            //    }
+
+            // this.seachinitdata(param)
+            // },
+            handleIconClick1(){
+                if(!packageCode1){
+                this.$message({
+                        type: 'error',
+                        message: "请输入包裹编号"
+                    });
+                return false
+                }
+               let param =  {
+                   packageCode: this.packageCode1
+               }
+
+            this.seachinitdata(param)
+            },
+            async handleIconClickDate(){
+               this.initloadData();
+            },
+            //搜索的数据初始化
+            async seachinitdata(param){
+                 const res = await queryPackage(param);
+                if (res.isSuccess == true){
+                    this.tableData = res.result.results;
+                    this.totalCount = res.result.totalCount;
+                }else{
+                    this.$message({
+                            type: 'error',
+                            message: res.errMsg
+                        });
+                }
+            },
+            //从服务器获取数据
+            async initloadData() {
+                var startTime='';
+                var endTime='';
+                if(!this.filters.date.startDate || !this.filters.date.endDate){
+
+                }else{
+                    startTime = format(this.filters.date.startDate,'YYYY-MM-DD HH:mm:ss');
+                    this.filters.date.endDate.setHours(23);
+                    this.filters.date.endDate.setMinutes(59);
+                    this.filters.date.endDate.setSeconds(59);
+                   endTime = format(this.filters.date.endDate,'YYYY-MM-DD HH:mm:ss');
+                }
+                let param;
+                var status=this.radio;
+                if(this.radio==10){
+                 	param ={
+	                    startDate: startTime,
+	                    endDate: endTime,
+	                    packageType: this.packagevalue,
+	                    ownerCompanyId:this.vcom.id,
+	                    pageIndex:this.currentPage,
+	                    pageSize:this.pageSize,
+	                    resultCfg:{
+	                        countProduct: true
+	                    }
+	                }
+                }else if(this.radio==256){
+                    param ={
+                        hasException: 1,
+                        packageType: this.packagevalue,
+	                    ownerCompanyId:this.vcom.id,
+	                    pageIndex:this.currentPage,
+	                    pageSize:this.pageSize,
+	                    resultCfg:{
+	                        countProduct: true
+	                    }
+	                }
+                }else{
+                    if(this.radio==0){
+	                    this.status = 0
+	                }else if(this.radio==1){
+	                    this.status = 1
+	                }else if(this.radio==2){
+	                    this.status = 2
+	                }else if(this.radio==3){
+	                    this.status = 3
+	                }
+	                param ={
+                        packageType: this.packagevalue,
+	                    ownerCompanyId:this.vcom.id,
+	                    currPackageLogState:status,
+	                    pageIndex:this.currentPage,
+	                    pageSize:this.pageSize,
+	                    resultCfg:{
+	                        countProduct: true
+	                    }
+	                }
+                }
+
+                const res = await queryPackage(param);
+
+                if (res.isSuccess == true) {
+                    this.tableData = res.result.results;
+                    this.totalCount = res.result.totalCount;
+                }else{
+                    if(res.errCode=="01"){
+                        this.$message({
+                            type: 'error',
+                            message: res.errMsg
+                        });
+                    }
+                }
+            },
+            // handleCurrentChange:function(val) {
+            //     this.currentPage = val;
+            //     this.initloadData();
+            // },
+            change(){
+                console.log(this.radio);
+                this.initloadData();
+            },
+            kongpack(){
+                this.packDialogVisible = true
+            },
+            async addpack(bprint,btest){
+                if(!this.packnum){
+                    this.$message({
+                        type: 'error',
+                        message: "请输入正确的包裹数量"
+                    });
+                    return false
+                }else{
+                    if(isNaN(this.packnum)){
+                        this.$message({
+                            type: 'error',
+                            message: "请输入正确的包裹数量"
+                        });
+                        return false
+                    }
+                }
+                if(!this.papeSizevalue&&bprint){
+                    this.$message({
+                        type: 'error',
+                        message: "请输入正确的尺寸"
+                    }); 
+                    return false
+                }
+                if(!this.packName&&bprint){
+                    this.$message({
+                        type: 'error',
+                        message: "请输入包裹名称"
+                    }); 
+                    return false
+                }
+                let printSkuConfig = this.papeSizevalue.split("*");
+                let printWidth = "800";
+                let printHeight = "500";
+                if(printSkuConfig.length>1){
+                    printWidth = printSkuConfig[0]*10;
+                    printHeight = printSkuConfig[1]*10;
+                }
+                let packName = this.packName
+                let param = {
+                    companyId: '',
+                    ownerCompanyId:this.vcom.id,
+                    createNum: this.packnum,
+                    packageType: 1,
+                }
+                const res = await batchCreateSelerPackage(param);
+                if(res.isSuccess){
+                    this.idlist = res.result;
+                    if(bprint){
+                        printPackage(this.idlist,printWidth,printHeight,packName)
+                    }
+                    this.initloadData();
+                    this.$message({
+                        type: 'success',
+                        message: "创建成功"
+                    });
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errMsg
+                    });
+                }
+                    this.packDialogVisible = false
+            },
+            putqrcode(){
+                   var codeStr = document.getElementById("preview").innerHTML;
+                    var textcode = document.getElementsByClassName("qrDetail")[0].innerHTML;
+
+                    //console.log(document.getElementById("barCode"))
+                    this.LODOP = getLodop();
+
+                    LODOP.PRINT_INIT('打印测试');
+                    LODOP.SET_PRINT_PAGESIZE(0, '800', '600', 0);
+                    LODOP.ADD_PRINT_HTML(0, 15, 1000, 700, codeStr);
+                    LODOP.ADD_PRINT_TEXT(0,15,1000,700,textcode);
+                    LODOP.PREVIEW();
+            },
+            changeValue(){
+                this.initloadData();
+            },
+            putInpage(packageType,id){
+                this.packId = id;
+                if(packageType == 0 || packageType == null){
+                    this.$router.push({path:"/packageStatus",query:{packId:id}});
+                    }else if(packageType == 1){
+                    this.$router.push({path:"/emptypackage",query:{packId:id}});
+                }
+            },
+            changePut(){
+                if(this.putRadio == 1){
+                    this.putShow = true
+                }else if(this.putRadio == 2){
+                    this.putShow = false
+                }
+            },
+            addPack(){
+                 if(this.putRadio == 1){
+                    this.addpack(true,false)
+                }else if(this.putRadio == 2){
+                    this.addpack(false,true)
+                }
+            },
+             formatJson(filterVal, jsonData) {
+        　　　　　　return jsonData.map(v => filterVal.map(j => v[j]));
+        　　　},
+            async exportTableData(){
+                var startTime='';
+                var endTime='';
+                if(!this.filters.date.startDate || !this.filters.date.endDate){
+
+                }else{
+                    startTime = format(this.filters.date.startDate,'YYYY-MM-DD HH:mm:ss');
+                    this.filters.date.endDate.setHours(23);
+                    this.filters.date.endDate.setMinutes(59);
+                    this.filters.date.endDate.setSeconds(59);
+                   endTime = format(this.filters.date.endDate,'YYYY-MM-DD HH:mm:ss');
+                }
+                let param;
+                var status=this.radio;
+                if(this.radio==10){
+                    param ={
+                        startDate: startTime,
+                        endDate: endTime,
+                        packageType: this.packagevalue,
+                        ownerCompanyId:this.vcom.id,
+                        resultCfg:{
+                            countProduct: true
+                        }
+                    }
+                }else if(this.radio==256){
+                    param ={
+                        hasException: 1,
+                        packageType: this.packagevalue,
+                        ownerCompanyId:this.vcom.id,
+                        resultCfg:{
+                            countProduct: true
+                        }
+                    }
+                }else{
+                    if(this.radio==0){
+                        this.status = 0
+                    }else if(this.radio==1){
+                        this.status = 1
+                    }else if(this.radio==2){
+                        this.status = 2
+                    }else if(this.radio==3){
+                        this.status = 3
+                    }
+                    param ={
+                        packageType: this.packagevalue,
+                        ownerCompanyId:this.vcom.id,
+                        currPackageLogState:status,
+                        resultCfg:{
+                            countProduct: true
+                        }
+                    }
+                }
+                const res = await queryPackage(param);
+                 const list = [];
+                if(res.isSuccess){
+                    res.result.results.forEach(obj =>{
+                        let packageCode= '' ;//包裹编号
+                        let companyName = '';//档口名称
+                        let takeUsrName = '';//拿货人
+                        let takeNum = '';//拿货数
+                        let takeTime = '';//拿货时间
+                        let incarUsrName = '';//装车人
+                        let inCarTime = '';//装车时间
+                        let stockUsrName = '';//入库人
+                        let stockInTime = '';//入库时间
+                        let inStockNum = '';//入库数
+                        let currPackageLogState = '';//状态
+                        let transportCarName = '';//车辆
+                        let exceptionMemo = '';//异常描述
+                        let handleExceptionMemo = '';//处理备注
+                        if(obj.packageCode){
+                            packageCode = obj.packageCode;
+                        }
+                         if(obj.companyName){
+                            companyName = obj.companyName;
+                        } 
+                        if(obj.takeUsrName){
+                            takeUsrName = obj.takeUsrName;
+                        } 
+                        if(obj.takeNum){
+                            takeNum = obj.takeNum;
+                        }
+                         if(obj.takeTime){
+                            takeTime = obj.takeTime;
+                        } 
+                        if(obj.incarUsrName){
+                            incarUsrName = obj.incarUsrName;
+                        } 
+                        if(obj.inCarTime){
+                            inCarTime = obj.inCarTime;
+                        }
+                         if(obj.stockUsrName){
+                            stockUsrName = obj.stockUsrName;
+                        } 
+                        if(obj.stockInTime){
+                            stockInTime = obj.stockInTime;
+                        }
+                        if(obj.inStockNum){
+                            inStockNum = obj.inStockNum;
+                        }
+                        if(obj.currPackageLogState){
+                            currPackageLogState = obj.currPackageLogState;
+                        }
+                        if(obj.transportCarName){
+                            transportCarName = obj.transportCarName;
+                        }
+                        if(obj.exceptionMemo){
+                            exceptionMemo = obj.exceptionMemo;
+                        }
+                        if(obj.handleExceptionMemo){
+                            handleExceptionMemo = obj.handleExceptionMemo;
+                        }
+                        let row = {
+                            packageCode : packageCode,
+                            companyName : companyName,
+                            takeUsrName : takeUsrName,
+                            takeNum : takeNum,
+                            takeTime : this.formatDate(takeTime),
+                            incarUsrName : incarUsrName,
+                            inCarTime : this.formatDate(inCarTime),
+                            stockUsrName : stockUsrName,
+                            stockInTime : this.formatDate(stockInTime),
+                            inStockNum : inStockNum,
+                            currPackageLogState : this.formatState(currPackageLogState),
+                            transportCarName : transportCarName,
+                            exceptionMemo : exceptionMemo,
+                            handleExceptionMemo : handleExceptionMemo
+                        }
+                        // console.log(row)
+                        list.push(row);
+                    });
+                    const tHeader = ['包裹编号','档口名称','拿货人','拿货数','拿货时间','装车人','装车时间','入库人','入库时间','入库数','状态','车辆','异常描述','处理备注'];
+            　　　　const filterVal = ['packageCode', 'companyName','takeUsrName','takeNum','takeTime','incarUsrName','inCarTime','stockUsrName','stockInTime','inStockNum','currPackageLogState','transportCarName','exceptionMemo','handleExceptionMemo'];
+            　　　　const data = this.formatJson(filterVal, list);
+            　　　　export_json_to_excel(tHeader, data, '档口统计表');
+                }else{
+                      this.$message({
+                        type: 'error',
+                        message: res.errMsg
+                    });
+                }
+            },
+            formatDate(time){
+                 if(time==undefined||time==''){
+                    return '';
+                }
+
+                var date = new Date(time);
+                return formatDate(time,"yyyy-MM-dd hh:mm:ss");
+            },
+            formatState(status) {
+                 if(status==-1){
+                     return "空包裹";
+                }
+                else if(status==0){
+                    return "待拿货";
+                  // 0:待拿货（已打包）      1:已拿货 (待装车) 2:装车 (待入库)  3:入库 (完成 )
+               }else if(status== 1){
+                   return "待装车";
+               }else if(status== 2){
+                   return "待卸货";
+               }else if(status== 3){
+                   return "已完成";     
+               }else if(status== 21){
+                   return "卸货待入库";    
+               }
+            },
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/startProcurement';
+.el-row {
+    margin-bottom: 15px;
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+  .el-dialog__footer{
+      text-align: center;
+  }
+  .el-radio{
+    margin-left: 30px;
+  }
+  .topSearch{
+      .el-select{
+          .el-input{
+              .el-input__inner{
+                  height: 30px;
+              }
+          }
+      }
+  }
+</style>

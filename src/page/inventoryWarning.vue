@@ -1,0 +1,407 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('currentInventory')">
+                <router-link :to='{path:"/currentInventory"}'>当前库存</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('inventoryDetail')">
+                <router-link :to='{path:"/inventoryDetail"}'>库存变动</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('stocktaking')">
+                <router-link :to='{path:"/stocktaking"}'>库存盘点</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('stockTransshipment')">
+                <router-link :to='{path:"/stockTransshipment"}'>库存调拨</router-link>
+            </li>
+            <li class="menuIndex" v-if="getMenuAuthFun('inventoryWarning')">
+                <router-link :to='{path:"/inventoryWarning"}'>库存预警</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('storeManagement')">
+                <router-link :to='{path:"/storeManagement"}'>多仓管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('inventoryInitialize')">
+                <router-link :to='{path:"/inventoryInitialize"}'>库存初始化</router-link>
+            </li>
+        </ul>
+        <div class="stocktaking">
+            <div class="stocktakingTop">
+                <div class="left">
+                    <a href="javascript:void(0)" type="info" size="small" class="buttonColor"  @click="haddleBatchModifyWarningValue()">批量修改</a>
+                </div>
+                <div class="right">
+                    <el-input
+                        placeholder="商品货号搜索"
+                        size="small"
+                        icon="search"
+                        v-model="productCode"
+                        :on-icon-click="handleIconClick">
+                    </el-input>
+                </div>
+            </div>
+            <el-col :span="24" class="tabs radioGreen">
+                <el-radio-group v-model="hasWaringFilter" size="small">
+                    <el-radio-button label="true" @click.native="handleIconClick(true)" >预警商品</el-radio-button>
+                    <el-radio-button label="false" @click.native="handleIconClick(false)" >预警设置</el-radio-button>
+                </el-radio-group>
+            </el-col>
+            <div class="stocktakingTable">
+                <el-table
+                    :data="tableData"
+                    max-height="450"
+                    @selection-change="handleSelectionChange"
+                    style="width: 100%">
+                    <el-table-column
+                        type="selection"
+                        width="40">
+                    </el-table-column>
+                    <el-table-column
+                        width="150"
+                        label="主图/货号">
+                        <template scope="scope">
+                            <div class="flex">
+                            	<img v-if="scope.row.imgUrl_main != ''" :src="scope.row.imgUrl_main" alt="">
+                                <img v-else src="../image/product_default.png" alt="">
+                                <p>{{scope.row.productCode}}</p>
+                            </div>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="title"
+                        width="250"
+                        label="商品名称">
+                    </el-table-column>
+                    <el-table-column
+                        prop="colour"
+                        label="颜色">
+                    </el-table-column>
+                    <el-table-column
+                        prop="size"
+                        label="尺码">
+                    </el-table-column>
+                    <el-table-column
+                        prop="stockNum"
+                        label="库存数">
+                    </el-table-column>
+                    <el-table-column
+                        prop="safeStockNum"
+                        label="预警值">
+                    </el-table-column>
+                    <el-table-column label="操作">
+                        <template scope="scope">
+                            <a href="javascript:void(0);" class="blue2" @click="haddleModifyWarningValue(scope.$index, scope.row)"><span v-if="scope.row.safeStockNum">修改</span><span v-else>设置</span>预警值</a>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+            <el-pagination
+                small
+                class="right"
+                style="margin-top: 20px;"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :page-sizes="[10, 20, 30, 40,50]"
+                :current-page="currentPage"
+                :page-size="pageSize"
+                layout="total,sizes, prev, pager, next, jumper"
+                :total="totalCount">
+            </el-pagination>
+            <a href="javascript:void(0);" @click="exportData" class="export_excle">导出excel</a>
+            <div style="height:160px;">
+                &nbsp;
+            </div>
+        </div>
+        <el-dialog title="修改预警值" :visible.sync="dialogFormVisible" size="tiny">
+            <el-form>
+                <el-form-item label="预警值：">
+                    <el-input  v-model.number="toWarningValue" onkeypress="return event.keyCode>=48&&event.keyCode<=57" auto-complete="off" style="width:180px;" size="small"></el-input>
+                </el-form-item>
+            </el-form>
+            <div slot="footer" class="dialog-footer flex2">
+                <el-button type="primary" @click="updateWarningValue" style="margin-right:20px;">保 存</el-button>
+                <el-button @click="dialogFormVisible = false">取 消</el-button>
+            </div>
+        </el-dialog>
+
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {queryWarningStocks,updateSafeStockNum,batchUpdateSafeStockNum} from '@/api/getData'
+    import {userInfo,getStore} from  '../config/mUtils'
+    import {getMenuAuth,haveMenuAuth} from  '../utils/AuthMenu.js'
+    import {export_json_to_excel} from '../vendor/Export2Excel.js'
+    const _XLSX = require('xlsx')
+    const X = typeof XLSX !== 'undefined' ? XLSX : _XLSX;
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                radio:1,
+                dialogFormVisible:false,
+                productCode:'',
+                input3:'',
+                radio3:'',
+                radio4:'',
+                num6:1,
+                value6:'',
+                tableData: [],
+                toWarningValue:'',
+                toModifyVariantId:'',
+                //默认每页数据量
+                pageSize: 10,
+                //默认高亮行数据id
+                highlightId: -1,
+                //当前页码
+                currentPage: 1,
+                //查询的页码
+                pageIndex: 1,
+                //默认数据总数
+                totalCount: 0,
+                hasWaringFilter:false,
+                initData :{
+                    //?companyId=1000&warehouseId=W001&pageIndex=1&pageSize=10&hasWaringFilter=false
+                    companyId:userInfo().companyId,
+                    warehouseId:userInfo().warehouseId,
+                    pageIndex:1,
+                    pageSize:10,
+                    hasWaringFilter:false
+                },
+                multipleSelection :[]
+            }
+        },
+        mounted(){
+            this.loadData(this.initData);
+        },
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+                this.pageSize = val;
+                this.handleIconClick()
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+                this.currentPage = val;
+                this.handleIconClick()
+            },
+            handleIconClick(hasWaringFilter) {
+        	    if(hasWaringFilter==true||hasWaringFilter==false){
+                    this.hasWaringFilter= hasWaringFilter;
+                }else{
+                    hasWaringFilter = this.hasWaringFilter;
+                }
+                let param ={
+                    //?companyId=1000&warehouseId=W001&pageIndex=1&pageSize=10&hasWaringFilter=false
+                    productCode:this.productCode,
+                    companyId:userInfo().companyId,
+                    warehouseId:userInfo().warehouseId,
+                    pageIndex:this.currentPage,
+                    pageSize:this.pageSize,
+                    hasWaringFilter:hasWaringFilter
+                }
+
+              this.loadData(param)
+            },
+            async loadData(param) {
+
+                const res = await queryWarningStocks(param);
+                if (res.isSuccess == true) {
+                    this.tableData = res.result.results;
+                    this.totalCount = res.result.totalCount;
+                    this.$message({
+                        type: 'success',
+                        message: '数据加载成功！'
+                    });
+
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+            haddleModifyWarningValue(index,row){
+                this.dialogFormVisible =true;
+                this.toModifyVariantId = row.productVariantId;
+				this.toWarningValue = row.safeStockNum;
+            },
+
+            haddleBatchModifyWarningValue(){
+                if( this.multipleSelection.length==0){
+                    this.$message({type: 'error', message:'请勾选要设置的商品!'
+                    });
+                    return ;
+                }
+                this.dialogFormVisible =true;
+            },
+
+
+            async  updateWarningValue() {
+            	var reg = /^[1-9]\d*$/;
+            	if(!reg.test(this.toWarningValue)){
+            		this.$message({
+                        type: 'error',
+                        message:'预警值必须为正整数'
+                    });
+                    return;
+            	}
+            	if(this.toWarningValue*1<=0){
+            		this.$message({
+                        type: 'error',
+                        message:'预警值必须为正整数'
+                    });
+                    return;
+            	}
+                if(this.multipleSelection.length>0){
+                    return this.batchUpdateWarningValue();
+                }
+
+                let param ={
+                    "companyId":userInfo().companyId,
+                    "productVariantId": this.toModifyVariantId,
+                    "warehouseId":userInfo().warehouseId,
+                    "safeNum":this.toWarningValue
+                }
+
+                const res = await updateSafeStockNum(param);
+                if (res.result == true) {
+                    this.$message({
+                        type: 'success',
+                        message: '修改成功！'
+                    });
+                    this.loadData(this.initData);
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message:res.errorMsg
+                    });
+                }
+               this.dialogFormVisible = false;
+            },
+            async  batchUpdateWarningValue() {
+                let param ={
+                    "companyId":userInfo().companyId,
+                    "productVariantIds": this.multipleSelection,
+                    "warehouseId":userInfo().warehouseId,
+                    "safeNum":this.toWarningValue
+                }
+                const res = await batchUpdateSafeStockNum(param);
+                if (res.result == true) {
+                    this.$message({
+                        type: 'success',
+                        message: '修改成功！'
+                    });
+                    this.timeout = setTimeout(() => {
+                        this.loadData(this.initData);
+                    }, 2000);
+
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message:res.errorMsg
+                    });
+                }
+                this.dialogFormVisible = false;
+            },
+
+            //页码变更
+            handleCurrentChange: function(val) {
+                this.currentPage = val;
+                let param = {
+                    companyId:userInfo().companyId,
+                    warehouseId:userInfo().warehouseId,
+                    pageIndex: this.currentPage,
+                    pageSize:this.pageSize,
+                    hasWaringFilter:this.hasWaringFilter
+                }
+                this.loadData(param);
+            },
+            //多选响应
+            handleSelectionChange: function(val) {
+                let productVariantIds =[];
+                val.forEach((obj)=>{
+                    productVariantIds.push(obj.productVariantId)
+                })
+                this.multipleSelection = productVariantIds;
+            },
+            
+            //导出文档
+			async exportData() {
+               let param ={
+    				companyId:userInfo().companyId,
+                    warehouseId:userInfo().warehouseId,
+                    pageIndex:1,
+                    pageSize:this.totalCount,
+                    hasWaringFilter:false
+            	}
+                const res = await queryWarningStocks(param);
+                const list = [];
+                if (res.isSuccess == true) {
+                    res.result.results.forEach(obj => {
+                    	let productCode= '' ;//商品货号
+                    	let title = '';//商品名称
+                    	let colour = '';//颜色
+                    	let size = '';//尺码
+                    	let stockNum = '0';//库存数
+                    	let safeStockNum = '';//预警值
+                    	if(obj.productCode){
+                    		productCode = obj.productCode;
+                    	}
+                    	if(obj.title){
+                    		title = obj.title;
+                    	}
+                    	if(obj.colour){
+                    		colour = obj.colour;
+                    	}
+                    	if(obj.size){
+                    		size = obj.size;
+                    	}
+                    	if(obj.stockNum){
+                    		stockNum = obj.stockNum+"";
+                    	}
+                    	if(obj.safeStockNum){
+                    		safeStockNum = obj.safeStockNum+"";
+                    	}
+                    	let row = {
+		            		productCode : productCode,
+							title : title,
+							colour : colour,
+							size : size,
+							stockNum : stockNum,
+							safeStockNum : safeStockNum
+		            	}
+		            	list.push(row);
+                    });
+
+                    const tHeader = ['商品货号', '商品名称','颜色','尺码','库存数','预警值'];
+			　　　　const filterVal = ['productCode', 'title','colour','size','stockNum','safeStockNum'];
+			　　　　const data = this.formatJson(filterVal, list);
+			　　　　export_json_to_excel(tHeader, data, '库存预警列表');
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            
+            formatJson(filterVal, jsonData) {
+		　　　　　　return jsonData.map(v => filterVal.map(j => v[j]));
+		　　　},
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/stocktaking';
+</style>

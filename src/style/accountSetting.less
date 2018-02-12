@@ -1,0 +1,215 @@
+.accountSetting{
+    color:#333;
+    margin:0 30px;
+    background: #fff;
+    padding: 20px 30px;
+    height:100%;
+    .safetyLevel{
+        color:#333;
+        font-size: 13px;
+        background: #f4f4f4;
+        width: 80%;
+        height: 40px;
+        .level{
+            width: 220px;
+        }
+        p{
+            font-size: 12px;
+            color:@orange;
+            padding-left: 30px;
+        }
+        span{
+            margin: 0 5px;
+        }
+    }
+    .verification{
+        height: 250px;
+        font-size: 16px;
+        color:#333;
+        width:80%;
+        div{
+            justify-content: flex-start;
+            height: 50px;
+        }
+        .succeed{
+            width: 30px;
+            height: 30px;
+            background: url("../image/econfirm.png")no-repeat center;
+        }
+        .not{
+            width: 30px;
+            height: 30px;
+            background: url("../image/eprompting.png")no-repeat center;
+        }
+        span{
+            width:500px;
+            font-size: 14px;
+            color:#666;
+        }
+        .tit{
+            font-size: 16px;
+            width: 150px;
+            display: inline-block;
+            text-align: center;
+            color:#333;
+        }
+        a{
+            color:@blue;
+        }
+    }
+//    设置密码
+    .bindingMobile{
+        height: 300px;
+        font-size: 14px;
+        width:600px;
+        margin:10% 0 0 30%;
+        .tit{
+            width:120px;
+            text-align: right;
+            margin-right: 30px;
+            span{
+                color:@red;
+            }
+        }
+        .box{
+            display: flex;
+            justify-content: flex-start;
+            span{
+                width: 100px;
+                margin-top: 5px;
+                span{
+                    color:@red;
+                }
+            }
+            input{
+                width: 250px;}
+        }
+        div>div{
+           margin-bottom: 12px;
+        }
+        .bindingButton{
+            margin-top: 30px;
+            margin-left: 190px;
+        }
+        .bindingFoot{
+            margin-top: 20px;
+            .title{
+                color:@orange;
+                margin-left: 5px;
+                font-size: 12px;
+            }
+            p{
+                margin-left: 16px;
+            }
+        }
+    }
+//    更换手机
+    .changeMobile{
+        div{
+            ul>li{
+                font-size: 14px;
+                width: 212px;
+                height: 40px;
+                line-height: 41px;
+                text-align: center;
+                background: url("../image/cw2_a.png") no-repeat center;
+                background-size: 100%;
+                margin-left: -14px;
+            }
+            .changesteps{
+                ul>li:first-child{
+                    font-size: 14px;
+                    width: 212px;
+                    height: 40px;
+                    line-height: 41px;
+                    text-align: center;
+                    background-size: 100%;
+                    margin-left: 0;
+                    color:#fff;
+                    background: url("../image/cw1_a.png") no-repeat center;
+                }
+            }
+            .changestepss{
+                ul>li:first-child{
+                    background: url("../image/cw1_b.png") no-repeat center;
+                }
+                ul>li:nth-child(2){
+                    font-size: 14px;
+                    width: 212px;
+                    height: 40px;
+                    line-height: 41px;
+                    text-align: center;
+                    background-size: 100%;
+                    color:#fff;
+                    background: url("../image/cw2_b.png") no-repeat center;
+                }
+            }
+            .changestepsss{
+                ul>li:first-child{
+                    background: url("../image/cw1_b.png") no-repeat center;
+                }
+                ul>li:nth-child(3){
+                    font-size: 14px;
+                    width: 212px;
+                    height: 40px;
+                    line-height: 41px;
+                    text-align: center;
+                    background-size: 100%;
+                    color:#fff;
+                    background: url("../image/cw2_b.png") no-repeat center;
+                }
+            }
+            .changestepssss{
+                ul>li:first-child{
+                    background: url("../image/cw1_b.png") no-repeat center;
+                }
+                ul>li:nth-child(4){
+                    font-size: 14px;
+                    width: 212px;
+                    height: 40px;
+                    line-height: 41px;
+                    text-align: center;
+                    background-size: 100%;
+                    color:#fff;
+                    background: url("../image/cw2_b.png") no-repeat center;
+                }
+            }
+
+        }
+        .newMobile{
+            font-size: 14px;
+            .title1{
+                width: 200px;
+                text-align: right;
+            }
+            .newList{
+                height:200px;
+                margin-top: 50px;
+                .twoMobile{
+                    flex-direction: column;
+                    p{
+                        height: 40px;
+                    }
+                }
+            }
+            .newList>div>div{
+                height:40px;
+            }
+        }
+        .newFoot{
+            margin-top: 70px;
+            a{
+                color: #ffffff;
+            };
+        }
+    }
+    .changeBack{
+        text-align: right;
+        margin-bottom: 20px;
+        a{
+            font-size: 12px;
+            color:@blue;
+            border-bottom: 1px solid @blue;
+        }
+    }
+}

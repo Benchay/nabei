@@ -1,0 +1,188 @@
+<template>
+    <div class="fillcontain">
+        <ul class="sessionMenu">
+            <li>
+                <router-link :to='{path:"/messageManagement"}'>消息管理</router-link>
+            </li>
+            <li>
+                <a href="javascript:void(0);">会话管理</a>
+            </li>
+        </ul>
+        <div style="overflow: hidden;" class="sessionManagement">
+            <div class="sessionTop">
+                <el-date-picker
+                    v-model="dateRange"
+                    type="daterange"
+                    @change="handleIconClick"
+                    placeholder="选择日期范围"
+                    :picker-options="pickerOptions2">
+                </el-date-picker>
+                <el-input
+                    class="dinanciaSearch"
+                    style="margin-left: 10px;"
+                    placeholder="搜索"
+                    v-model="criteria"
+                    icon="search"
+                    @change="handleIconClick">
+                </el-input>
+            </div>
+            <div class="sessionButton">
+                <el-button type="info" @click="dialogDelete= true">批量删除</el-button>
+            </div>
+            <div class="sessionTable">
+                <el-table
+                    ref="multipleTable"
+                    :data="tableData3"
+                    border
+                    tooltip-effect="dark"
+                    style="width: 100%"
+                    @selection-change="handleSelectionChange">
+                    <el-table-column
+                        type="selection"
+                       >
+                    </el-table-column>
+                    <el-table-column
+                        prop="name"
+                        label="会话者1"
+                       >
+                    </el-table-column>
+                    <el-table-column
+                        prop="receivingObject"
+                        label="会话者2"
+                        >
+                    </el-table-column>
+                    <el-table-column
+                        prop="content"
+                        label="当前会话状态"
+
+                        show-overflow-tooltip>
+                    </el-table-column>
+                    <el-table-column
+                        prop="date"
+                        label="最近会话时间"
+                        >
+                    </el-table-column>
+                    <el-table-column
+                        label="操作"
+                        show-overflow-tooltip>
+                        <template scope="scope">
+                            <el-button
+                                size="small"
+                                type="danger"
+                                @click.native.prevent="deleteRow(scope.$index, tableData3)">删除</el-button>
+                        </template>
+                    </el-table-column>
+                </el-table>
+                <el-pagination
+                    style="margin-top: 20px"
+                    class="right"
+                    layout="prev, pager, next"
+                    :total="50">
+                </el-pagination>
+                <el-button class="export_excle">导出excle</el-button>
+            </div>
+        </div>
+        <el-dialog
+            title="提示"
+            :visible.sync="dialogDelete"
+            size="tiny">
+            <span>确定要全部删除？</span>
+            <span slot="footer" class="dialog-footer">
+    <el-button @click="dialogDelete = false">取 消</el-button>
+    <el-button type="primary" @click="dialogDelete = false">确 定</el-button>
+  </span>
+        </el-dialog>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return{
+                dateRange:'',
+                criteria:'',
+                dialogDelete:false,
+                pickerOptions2: {
+                    shortcuts: [{
+                        text: '最近一周',
+                        onClick(picker) {
+                            const end = new Date();
+                            const start = new Date();
+                            start.setTime(start.getTime() - 3600 * 1000 * 24 * 7);
+                            picker.$emit('pick', [start, end]);
+                        }
+                    }, {
+                        text: '最近一个月',
+                        onClick(picker) {
+                            const end = new Date();
+                            const start = new Date();
+                            start.setTime(start.getTime() - 3600 * 1000 * 24 * 30);
+                            picker.$emit('pick', [start, end]);
+                        }
+                    }, {
+                        text: '最近三个月',
+                        onClick(picker) {
+                            const end = new Date();
+                            const start = new Date();
+                            start.setTime(start.getTime() - 3600 * 1000 * 24 * 90);
+                            picker.$emit('pick', [start, end]);
+                        }
+                    }]
+                },
+                tableData3: [{
+                    name:'用户名',
+                    date: '2016-05-03',
+                    receivingObject: '档口',
+                    content: '会话中'
+                }, {
+                    name:'用户名',
+                    date: '2016-05-03',
+                    receivingObject: '档口',
+                    content: '已结束'
+                },{
+                    name:'用户名',
+                    date: '2016-05-03',
+                    receivingObject: '档口',
+                    content: '已结束'
+                },{
+                    name:'用户名',
+                    date: '2016-05-03',
+                    receivingObject: '档口',
+                    content: '已结束'
+                },{
+                    name:'用户名',
+                    date: '2016-05-03',
+                    receivingObject: '档口',
+                    content: '已结束'
+                },],
+                multipleSelection: []
+            }
+        },
+        methods: {
+            handleIconClick(ev) {
+
+            },
+            handleSelectionChange(val) {
+                this.multipleSelection = val;
+            },
+            handleRemove(file, fileList) {
+                console.log(file, fileList);
+            },
+            handlePictureCardPreview(file) {
+                this.dialogImageUrl = file.url;
+                this.dialogVisible = true;
+            },
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/sessionManagement';
+</style>

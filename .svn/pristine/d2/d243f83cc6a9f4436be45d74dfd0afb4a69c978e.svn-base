@@ -1,0 +1,189 @@
+<template>
+    <div class="fillcontain">
+        <ul :class="[identity ==1 ?'stallShareMenu':identity ==2 ?'sellerShareMenu':'']">
+            <li v-if="getMenuAuthFun('financialManagement')">
+                <router-link :to='{path:"/financialManagement"}'>账户总览</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('financialManagement2')">
+                <router-link :to='{path:"/financialManagement2"}'>财务交易记录</router-link>
+            </li>
+            <li class="ListMenu" v-if="getMenuAuthFun('accountSetting')">
+                <router-link :to='{path:"/accountSetting"}'>账户设置</router-link>
+            </li>
+        </ul>
+        <div class="accountSetting">
+           <div class="flex2">
+               <div class="safetyLevel flex2">
+                   <div>安全等级：</div>
+                   <el-progress :percentage=this.getSafeNum() class="level" :show-text="false"></el-progress>
+                   <span>{{getSafeLevel()}}</span>
+                   <p>建议您开启全部安全设置，以保障您的账户和资金安全！</p>
+               </div>
+           </div>
+            <div class="flex2">
+                <div style="overflow: auto;" class="verification  flex2">
+                   <div>
+                       <!--<div class="flex2">-->
+                           <!--<i class="succeed"></i>-->
+                           <!--<span class="tit">真实姓名：</span>-->
+                           <!--<span>赵晓华</span>-->
+                       <!--</div>-->
+                       <div class="flex2">
+                           <i :class="hasPayPassword()? 'succeed':'not'"></i>
+                           <span class="tit">支付密码：</span>
+                           <span>{{pwTip}}</span>
+                           <router-link :to='{path:"/setPassword"}'>{{pwOptTip}}</router-link>
+                       </div>
+                       <div class="flex">
+                           <i :class="hasMobile()? 'succeed':'not'"></i>
+                           <span class="tit">手机绑定：</span>
+                           <span>{{mobileTip}}<br/>
+                            若已丢失或停机，请立即更换，避免帐号被盗</span>
+                           <router-link :to='{path:"/changeMobile",query:{bindMobile:bindMobile}}'>{{mobileOptTip}}</router-link>
+                       </div>
+                   </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {queryPlatformAccount,getMobileCode} from '@/api/getData'
+    import {userInfo,getStore,setStore} from  '../config/mUtils'
+    import {isNullObject,getCompanyType} from  '../utils/common'
+    import {getMenuAuth,haveMenuAuth} from  '../utils/AuthMenu.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+//               1为档口、2为卖家身份
+                identity:1,
+
+                platformAccountVO: {
+                    companyId: '',
+                    status: '',
+                    bindMobile:'',
+                    payPassword:''
+                },
+                pwTip:'您还没有设置密码',
+                mobileTip:'您的账号还未绑定安全手机',
+                mobileOptTip:'绑定手机',
+                pwOptTip:'设置密码',
+                safeNum:0,
+                safeLevel:'低',
+                bindMobile:'',
+
+            }
+        },
+        mounted(){
+        	this.identity =getCompanyType(getStore("curCompany"));
+            this.queryPlatformAccountInfo();
+        },
+        watch: {
+            '$route': function () {
+                this.queryPlatformAccountInfo();
+            }
+        },
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            //从服务器读取数据
+            async queryPlatformAccountInfo() {
+                let param ={companyId:userInfo().companyId};
+                const res = await queryPlatformAccount(param);
+               // console.log( " userInfo.companyId:"+userInfo.companyId);
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: '加载数据成功'
+                    });
+                    this.platformAccountVO = res.result;
+                    this.safeNum = this.getSafeNum();
+                    this.safeLevel = this.getSafeLevel();
+					if(this.platformAccountVO.bindMobile){
+						this.bindMobile = this.platformAccountVO.bindMobile;
+					}
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+            hasMobile(){
+                let mobile =  this.platformAccountVO.bindMobile;
+                if(mobile){
+                    if(mobile=''){
+                        return false;
+                    }else{
+                        this.mobileTip ='已绑定手机号' + this.toTel(this.platformAccountVO.bindMobile)
+                        this.mobileOptTip ='更改手机号'
+                        return true;
+                    }
+                }else{
+                    return false;
+                }
+            },
+
+            hasPayPassword(){
+                let payPassword =  this.platformAccountVO.payPassword;
+                if(payPassword){
+                    if(payPassword=''){
+                        return false;
+                    }else{
+                        this.pwTip='您已经设置支付密码';
+                        this.pwOptTip='重置密码';
+                        return true;
+                    }
+                }else{
+                    return false;
+                }
+
+            },
+
+            getSafeNum(){
+               let   progress=0;
+               if(this.hasMobile()){
+                   progress = progress+50;
+               }
+               if(this.hasPayPassword()){
+                   progress = progress+50;
+               }
+                return progress;
+            },
+
+            getSafeLevel(){
+                if(this.getSafeNum()>=80){
+                    return '髙'
+                }
+                if(this.getSafeNum()>=50){
+                    return '中'
+                }
+                return '低'
+            },
+            toTel(str) {
+                let start = str.slice(0, 3);
+                let end = str.slice(-4);
+
+                return `${start}****${end}`;
+
+            }
+        },
+
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/accountSetting';
+</style>

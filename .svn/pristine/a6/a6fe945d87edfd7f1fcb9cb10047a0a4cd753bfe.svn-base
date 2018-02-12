@@ -1,0 +1,72 @@
+<template>
+    <div class="preview" style="height: 560px;overflow-y: auto">
+            <div>
+               <div>
+                   <p class="bigFont"><b>胖胖哥&文艺男</b></p>
+                   <p><img src="../image/preview001.png" alt=""></p>
+                   <p class="smallFont1">规格：黑色；2XL</p>
+                   <p class="smallFont2">2017-02-17 15：00：00</p>
+               </div>
+            </div>
+            <div class="print" style="width:100%;">
+                <el-button>打印</el-button> <el-button>打印设计</el-button>
+            </div>
+        </div>
+</template>
+
+<script>
+
+
+    export default {
+        data(){
+            return {
+
+            }
+        },
+        mounted(){
+
+        },
+
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+   @import '../style/common';
+    .preview{
+        background: #525659;
+        width:100%;
+        height:100%;
+        display: flex;
+        align-content:flex-start;
+        flex-wrap:wrap;
+        &.preview>div{
+            width:23%;
+        }
+        &.preview>div>div{
+            border-radius: 10px;
+            box-sizing: border-box;
+            background: #fff;
+            width:260px;
+            height: 160px;
+            padding: 10px 30px;
+            margin: 15px;
+            img{
+                width:100%;
+            }
+        }
+        .bigFont{
+            font-size: 18px;
+        }
+        .smallFont1{font-size: 16px;
+            height: 30px;line-height: 30px}
+        .smallFont2{font-size: 12px;text-align: center;
+            height: 30px;line-height: 30px;}
+        .print{
+            width:100%;
+            margin-top: 20px;
+            padding-left: 15px;
+        }
+    }
+
+</style>

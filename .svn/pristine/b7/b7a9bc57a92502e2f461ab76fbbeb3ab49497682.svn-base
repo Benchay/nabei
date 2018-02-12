@@ -1,0 +1,150 @@
+.manage_page{
+
+}
+.manage-company{
+    margin-top: 10px;
+    padding-left: 30px;
+}
+.manage-content{
+    height:60px;
+    width:100%;
+    background:#fff;
+    /*box-sizing: border-box;*/
+}
+.manage-top-menu>li{
+    float: left;
+    width:90px;
+    height:60px;
+    line-height:60px;
+    margin-right: 15px;
+}
+.manage-logo{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    img{
+        display: block;
+        width: 160px;
+        margin-top: 6px;
+    }
+}
+.topMenuLists,.hand-user{
+    display: flex;
+    align-items: center;
+    color:#333;
+    font-size: 14px;
+    .handOut{
+        margin-left: 10px;
+    }
+}
+.topMenuLists>span{
+    padding: 0 5px;
+}
+.avator{
+    margin-right: 10px;
+}
+.icon{
+    width:20px;
+    height:20px;
+    display: inline-block;
+    background-repeat: no-repeat;
+}
+.icon-finance{
+    background-image: url("../image/finance.png");
+}
+.icon-finance01{
+    background-image: url("../image/finance01.png");
+}
+.icon-goods{
+    background-image: url("../image/goods.png");
+}
+.icon-goods01{
+    background-image: url("../image/goods01.png");
+}
+.icon-homepage{
+    background-image: url("../image/homepage.png");
+}
+.icon-homepage01{
+    background-image: url("../image/homepage01.png");
+}
+.icon-order{
+    background-image: url("../image/order.png");
+}
+.icon-order01{
+    background-image: url("../image/order01.png");
+}
+.icon-procurement{
+    background-image: url("../image/procurement.png");
+}
+.icon-procurement01{
+    background-image: url("../image/procurement01.png");
+}
+.icon-return{
+    background-image: url("../image/return.png");
+}
+.icon-return01{
+    background-image: url("../image/return01.png");
+}
+.icon-storehouse{
+    background-image: url("../image/storehouse.png");
+}
+.icon-storehouse01{
+    background-image: url("../image/storehouse01.png");
+}
+.icon-systems{
+    background-image: url("../image/systems.png");
+}
+.icon-systems01{
+    background-image: url("../image/systems01.png");
+}
+.icon-dk{
+    background-image: url("../image/dk.png");
+}
+.icon-dk01{
+    background-image: url("../image/dk01.png");
+}
+.icon-dk{
+    background-image: url("../image/dk.png");
+}
+.icon-dk01{
+    background-image: url("../image/dk01.png");
+}
+.manage-menu{
+    display: flex;
+    align-items: center;
+    width:80%;
+    span{
+        text-indent: 10px;
+        a{
+            color:rgb(191, 203, 217);
+        }
+    }
+}
+
+.iconRight{
+    width: 22px;
+    height:22px;
+    background-image: url("../image/lshrink.png");
+    margin-right: 15px;
+}
+.iconLeft{
+    width: 22px;
+    height:22px;
+    background-image: url("../image/lstretch.png");
+    margin-right:20px;
+}
+.button-left{
+    width:100%;
+    height:40px;
+    padding-top: 10px;
+}
+.manageList{
+    overflow:scroll;
+    max-height: 690px;
+}
+::-webkit-scrollbar
+{
+    width: 0;
+    height: 0;
+}

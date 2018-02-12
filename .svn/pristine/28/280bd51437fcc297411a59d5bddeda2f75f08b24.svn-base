@@ -1,0 +1,315 @@
+<template>
+    <div class="fillcontain">
+        <div class="homeSeller">
+            <el-col :span="15" class="isLeft">
+                <div>
+                    <el-carousel trigger="click">
+                        <el-carousel-item v-for="img in data">
+                            <img :src="img.image">
+                        </el-carousel-item>
+                    </el-carousel>
+                </div>
+                <div class="leftStatistics flex">
+                    <div class="flex">
+                        <img src="../image/statistics.png" alt="">
+                        <p class="title">数据统计</p>
+                    </div>
+                    <ul class="flex">
+                        <li v-for="(obj,index) in items" @click="salesTabs(index)"><a href="javascript:void(0)" :class="{'checked':index === clickIndex}" class="cheked1">{{obj.title}}</a></li>
+                    </ul>
+                </div>
+                <ul class="leftStatisticsList flex">
+                    <li>
+                       <div>
+                           <div>待采商品数（个）</div>
+                           <div class="bigText">{{this.formatData(this.purchaseRequireVO.requireCnt)}}</div>
+                           <div><img :src="formatImages(this.purchaseRequireVO.requireCntChangeRate)" alt=""><span class="up">{{this.requireCntChangeRate}}%</span>{{this.title}}</div>
+                       </div>
+                    </li>
+                    <li>
+                       <div>
+                           <div>采购订单数数（个）</div>
+                           <div class="bigText">{{this.formatData(this.purchaseRequireVO.orderNum)}}</div>
+                           <div><img :src="formatImages(this.purchaseRequireVO.orderNumChangeRate)" alt=""><span class="up">{{this.orderNumChangeRate}}%</span>{{this.title}}</div>
+                       </div>
+                    </li>
+                    <li>
+                       <div>
+                           <div>采购金额（元）</div>
+                           <div class="bigText">{{this.formatData(this.purchaseRequireVO.totalFee)}}</div>
+                           <div><img :src="formatImages(this.purchaseRequireVO.totalFeeChangeRate)" alt=""><span class="descend">{{this.totalFeeChangeRate}}%</span>{{this.title}}</div>
+                       </div>
+                    </li>
+                    <li>
+                       <div>
+                           <div>商品（个）</div>
+                           <div class="bigText">{{this.formatData(this.purchaseRequireVO.totalNum)}}</div>
+                           <div><img :src="formatImages(this.purchaseRequireVO.totalNumChangeRate)" alt=""><span class="up">{{this.totalNumChangeRate}}%</span>{{this.title}}</div>
+                       </div>
+                    </li>
+                </ul>
+                <div class="leftStatistics">
+                    <div class="flex">
+                        <img src="../image/ssfunction.png" alt="">
+                        <p class="title">常用功能</p>
+                    </div>
+                    <div class="leftFunction">
+                        <ul class="flex2">
+                            <li>
+                                <div>
+                                    <div class="icon1 icon"><img src="../image/icon01.png" alt=""></div>
+                                    <div>快捷采购</div>
+                                </div>
+                            </li>
+                            <li>
+                               <div>
+                                   <div class="icon2 icon"><img src="../image/icon02.png" alt=""></div>
+                                   <div>订单采购</div>
+                               </div>
+                            </li>
+                            <li>
+                               <div>
+                                   <div class="icon3 icon"><img src="../image/icon03.png" alt=""></div>
+                                   <div>待处理</div>
+                               </div>
+                            </li>
+                            <li>
+                               <div>
+                                   <div class="icon4 icon"><img src="../image/icon04.png" alt=""></div>
+                                   <div>退货</div>
+                               </div>
+                            </li>
+                            <li>
+                                <div>
+                                    <div class="icon5 icon"><img src="../image/icon05.png" alt=""></div>
+                                    <div>财务统计</div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+            </el-col>
+            <el-col :span="9" class="isRight">
+                <div class="newNotice">
+                   <div class="flex">
+                       <img src="../image/tmessage03.png" alt="">
+                       <p class="title">最新公告</p>
+                   </div>
+                    <ul class="noticeList" >
+                        <li v-for="item in bulletins">{{item.label}}</li>
+                    </ul>
+                    <div class="right noticeButton"><router-link :to='{path:"/systemNotice",query:{applicationId:"5"}}'>查看更多 》</router-link></div>
+                </div>
+                <div class="newDynamic">
+                    <div class="flex">
+                        <img src="../image/tmessage03.png" alt="">
+                        <p class="title">最新动态</p>
+                    </div>
+                    <ul class="DynamicList">
+                        <li class="flex" v-for="item in orderLogList">
+                            <div class="listHead">
+                                <img src="../image/sprite01.png" alt="">
+                            </div>
+                            <div class="state">
+                                <p class="flex"><span class="listState">{{item.description}}</span><span class="listNum">{{item.stallName}}</span></p>
+                                <p class="flex"><span class="listState">{{formatDate(item.createTime)}}</span><span class="listNum">订单编号：{{item.orderId}}</span></p>
+                            </div>
+                        </li>
+                    </ul>
+                    <div class="right noticeButton"><router-link :to='{path:"/moreDynamic",query:{companyId:this.roleForm.compId}}'>查看更多 》</router-link></div>
+                </div>
+                <div class="greenHand">
+                    <p class="title">新手入门</p>
+                    <div class="greenHandImg">
+                        <img src="../image/timg2.png" alt="">
+                    </div>
+                </div>
+            </el-col>
+        </div>
+    </div>
+</template>
+
+<script>
+	import headTop from '../components/headTop'
+	import {apiCount, userCount, orderCount, apiAllCount, getUserCount, getOrderCount, adminDayCount, adminCount,statisticsPurchaseInfo,queryBulletin,queryNewestOrderLog} from '@/api/getData'
+    import {getStore} from  '../config/mUtils'
+    import {formatDate} from '../utils/date.js'
+
+    export default {
+    	data(){
+    		return {
+                roleForm: {
+                    userId: '',
+                    roleId: '',
+                    compId:''
+                },
+    		    data:[
+                    {
+                        image:require("../image/banner.png"),
+                    },{
+                        image:require("../image/timg.jpg"),
+                    },
+                ],
+                clickIndex:0,
+                items:[
+                    {title:'今日'},
+                    {title:'本周'},
+                    {title:'本月'},
+                ],
+                title:'',
+                purchaseRequireVO:'',
+                bulletins:[],
+                image_up:require("../image/up.png"),
+                image_descend:require("../image/descend.png"),
+                pageIndex:1,
+                pageSize:8,
+                requireCntChangeRate:'',
+                totalNumChangeRate:'',
+                totalFeeChangeRate:'',
+                orderNumChangeRate:'',
+                orderLogList:'',
+    		}
+    	},
+        mounted(){
+            var userInfo=getStore("user_info_user");
+            var vjson = JSON.parse(userInfo);
+            this.roleForm.userId=vjson.id;
+            this.roleForm.compId=vjson.curCompany.id;
+            this.title = '环比昨日';
+    	    let param = {
+    	        "checkedDate":'1',
+                "companyId":this.roleForm.compId
+            };
+    	    this.loadPurchaseInfo(param);//采购信息统计
+
+    	    let bulletinParam = {
+    	        "applicationId":'5',
+                "pageIndex":this.pageIndex,
+                "pageSize":3
+            };
+    	    this.loadBulletinInfo(bulletinParam);//公告信息
+
+
+            let pa = {
+                "companyId":this.roleForm.compId,
+                "pageIndex":1,
+                "pageSize":3
+            };
+            this.loadOrderLogInfo(pa);
+        },
+    	methods: {
+            salesTabs(index) {
+                this.clickIndex = index;
+                if(this.clickIndex==0){
+                    this.title = '环比昨日';
+                    let param = {
+                        "checkedDate":'1',
+                        "companyId":this.roleForm.compId
+                    };
+                    this.loadPurchaseInfo(param);
+                }else if(this.clickIndex ==1){
+                    this.title = '环比上周';
+                    let param = {
+                        "checkedDate":'7',
+                        "companyId":this.roleForm.compId
+                    };
+                    this.loadPurchaseInfo(param);
+                }else if(this.clickIndex ==2){
+                    this.title = '环比上月';
+                    let param = {
+                        "checkedDate":'30',
+                        "companyId":this.roleForm.compId
+                    };
+                    this.loadPurchaseInfo(param);
+                }
+            },
+            async loadPurchaseInfo(param){
+                const res = await statisticsPurchaseInfo(param);
+                if(res.isSuccess){
+                    this.purchaseRequireVO = res.result.data;
+                    this.requireCntChangeRate = this.formatNum(this.purchaseRequireVO.requireCntChangeRate);
+                    this.totalNumChangeRate = this.formatNum(this.purchaseRequireVO.totalNumChangeRate);
+                    this.totalFeeChangeRate = this.formatNum(this.purchaseRequireVO.totalFeeChangeRate);
+                    this.orderNumChangeRate = this.formatNum(this.purchaseRequireVO.orderNumChangeRate);
+                }else{
+                    this.$message({
+                        type:'error',
+                        message:res.errorMsg
+                    });
+                }
+            },
+            async loadBulletinInfo(param){
+                const res = await queryBulletin(param);
+                if(res.isSuccess){
+                    let data = res.result.data;
+                    for(let i = 0;i<data.length;i++){
+                        let pa = {
+                            "label":'【'+ this.formatDate(data[i].createTime) + '】' + '公告标题：' + data[i].title,
+                            "value":data[i].id
+                        };
+                        this.bulletins.push(pa);
+                    }
+                }else{
+                    this.$message({
+                        type:'error',
+                        message:res.errorMsg
+                    });
+                }
+            },
+            async loadOrderLogInfo(param){
+                this.orderLogList = [];
+                const res = await queryNewestOrderLog(param);
+                if(res.isSuccess){
+                    this.orderLogList = res.result.results;
+
+                }else{
+                    this.$message({
+                        type:'error',
+                        message:res.errorMsg
+                    });
+                }
+            },
+            formatData(data){
+                if(data==''){
+                    return "0";
+                }else{
+                    return data;
+                }
+            },
+            //数据格式化
+            formatDate:function(date) {
+                if (date == undefined||date=='') {
+                    return "";
+                }
+                var date2 = new Date(date);
+                return formatDate(date2,'yyyy-MM-dd');
+            },
+            formatImages(param){
+                if(param>0){
+                    return this.image_up;
+                }else if(param<0){
+                    return this.image_descend;
+                }
+
+            },
+            formatNum(param){
+                if(param==undefined){
+                    return "0";
+                }
+                if(param<0){
+                    return -param;
+                }else{
+                    return param;
+                }
+            }
+    	}
+    }
+</script>
+
+<style lang="less">
+	@import '../style/mixin';
+	@import "../style/common";
+    @import "../style/homeSeller";
+
+</style>

@@ -1,0 +1,18 @@
+.customerManagement{
+    color:#333;
+    margin:0 30px;
+    background: #fff;
+    padding: 20px 30px;
+    .customerTop{
+        div{
+            margin-right: 10px;
+            margin-bottom: 20px;
+        }
+    }
+    .customerTable{
+        img{
+            width: 40px;
+            height: 40px;
+        }
+    }
+}

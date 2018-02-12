@@ -1,0 +1,134 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/stallManage"}'>档口管理</router-link>
+            </li>
+            <li class="menuIndex2">
+                <router-link :to='{path:"/stallSettlement"}'>档口结算</router-link>
+            </li>
+        </ul>
+        <div class="sellerSettlement">
+            <div class="sellerTop">
+                <el-input v-model="input" placeholder="档口名称"></el-input>
+                <el-select v-model="value" placeholder="结算方式">
+                    <el-option
+                        v-for="item in options"
+                        :key="item.value"
+                        :label="item.label"
+                        :value="item.value">
+                    </el-option>
+                </el-select>
+            </div>
+            <div class="sellerTable">
+                <el-table
+                    :data="tableData3"
+                    style="width: 100%">
+                    <el-table-column
+                        prop="sellerName"
+                        label="档口名称"
+                        width="180">
+                    </el-table-column>
+                    <el-table-column
+                        prop="newDebt"
+                        label="当前总欠款">
+                    </el-table-column>
+                    <el-table-column
+                        prop="expireDebt"
+                        label="到期欠款">
+                    </el-table-column>
+                    <el-table-column
+                        label="结算日期">
+                        <template scope="scope">
+                            <div class="flex2">
+                                <p v-bind:class="[scope.row.state ==1?'style1':scope.row.state ==2?'style2':'']">{{scope.row.state == 1?'周结':scope.row.state == 2?'月结':''}}</p>
+                                <p>{{scope.row.date}}</p>
+                            </div>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="orderQuantity"
+                        label="订单总数">
+                    </el-table-column>
+                    <el-table-column
+                        prop="refund"
+                        label="退款">
+                    </el-table-column>
+                    <el-table-column
+                        prop="newDate"
+                        label="最近付款时间">
+                    </el-table-column>
+                    <el-table-column
+                        width="220"
+                        label="操作">
+                        <template scope="scope">
+                            <div class="flex2 stallOperation">
+                                <router-link :to='{path:"/stallSettlementDetails"}'>查看</router-link>
+                                <router-link :to='{path:"/stallSettlementImmediately"}'>立即结算</router-link>
+                                <router-link :to='{path:"/stallSettlementRecord"}'>结算记录</router-link>
+                            </div>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+            <el-pagination
+                class="right"
+                style="margin-top: 20px"
+                layout="prev, pager, next"
+                :total="50">
+            </el-pagination>
+            <a href="javascript:void(0)" class="export_excle" @click="exportTableData">导出excle</a>
+
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                input:'',
+                options: [{
+                    value: '1',
+                    label: '周结'
+                }, {
+                    value: '2',
+                    label: '月结'
+                }],
+                value: '',
+                tableData3:[{
+                    sellerName:'我是名称',
+                    newDebt:120,
+                    expireDebt:120,
+                    orderQuantity:123,
+                    refund:-50,
+                    newDate:'2017-02-18',
+                    state:1,
+                    date:'周一'
+                },{
+                    sellerName:'我是名称',
+                    newDebt:120,
+                    expireDebt:120,
+                    orderQuantity:123,
+                    refund:-50,
+                    newDate:'2017-02-18',
+                    state:2,
+                    date:'1号'
+                }]
+            }
+        },
+        methods: {
+
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/sellerSettlement';
+</style>

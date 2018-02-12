@@ -1,0 +1,185 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('currentInventory')">
+                <router-link :to='{path:"/currentInventory"}'>当前库存</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('inventoryDetail')">
+                <router-link :to='{path:"/inventoryDetail"}'>库存变动</router-link>
+            </li>
+            <li class="menuIndex" v-if="getMenuAuthFun('stocktaking')">
+                <router-link :to='{path:"/stocktaking"}'>库存盘点</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('stockTransshipment')">
+                <router-link :to='{path:"/stockTransshipment"}'>库存调拨</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('inventoryWarning')">
+                <router-link :to='{path:"/inventoryWarning"}'>库存预警</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('storeManagement')">
+                <router-link :to='{path:"/storeManagement"}'>多仓管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('inventoryInitialize')">
+                <router-link :to='{path:"/inventoryInitialize"}'>库存初始化</router-link>
+            </li>
+        </ul>
+        <div class="stocktaking">
+            <div class="stocktakingTop">
+                <div class="right">
+                    <router-link :to='{path:"/stocktaking"}' class="comeBack">返回</router-link>
+                </div>
+            </div>
+            <div class="stocktakingTable">
+                <div class="tableTop">
+                    <div class="flex left">
+                        <div>盘点编号：{{orderNo}}</div>
+                        <div>盘点时间：{{formatDate(tableData.createTime,'yyyy-MM-dd hh:mm')}}</div>
+                        <div>盘点人：{{tableData.createUserName}}</div>
+                    </div>
+                    <div class="right" v-bind:class="state ==0?'blue2':''">{{state==1?'完成盘点':state==0?'盘点未完成':''}}</div>
+                </div>
+                <el-table
+                    :data="tableData.details"
+                    style="width: 100%">
+                    <el-table-column
+                        label="主图/货号">
+                        <template scope="scope">
+                            <div class="flex">
+                                <img src="../image/111.png" alt="">
+                                <p>{{scope.row.productCode}}</p>
+                            </div>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="colour"
+                        label="颜色">
+                    </el-table-column>
+                    <el-table-column
+                        prop="size"
+                        label="尺码">
+                    </el-table-column>
+                    <el-table-column
+                        prop="stockNum"
+                        label="库存数">
+                        <template scope="scope">
+                           {{scope.row.checkActualNum-scope.row.orderNum}}
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="checkActualNum"
+                        label="盘点数">
+                    </el-table-column>
+                    <el-table-column
+                        prop="orderNum"
+                        label="盈亏数">
+                    </el-table-column>
+                    <el-table-column
+                        prop="price"
+                        label="盈亏金额">
+                    </el-table-column>
+                    <el-table-column
+                        prop="memo"
+                        width="220"
+                        label="备注">
+                    </el-table-column>
+                </el-table>
+            </div>
+            <!--状态已完成盘点 不显示-->
+
+            <div class="Continue" v-if="state==0">
+                <router-link :to='{path:"/startCounting",query:{param:param}}' class="buttonColor right">继续盘点</router-link>
+            </div>
+            <el-pagination
+                small
+                class="right"
+                style="margin-top: 20px;"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :current-page="currentPage"
+                :page-size="pagesize"
+                layout="total, prev, pager, next, jumper"
+                :total="totalCount">
+            </el-pagination>
+            <a href="javascript:void(0)" class="export_excle">导出excel</a>
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {loadUserInfo,queryStockOrderGroupByProductCode,loadStockOrder} from '@/api/getData'
+    import {userInfo,getStore,setStore} from  '../config/mUtils'
+	import {formatDate} from '../utils/date.js'
+	import {getMenuAuth} from  '../utils/AuthMenu.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+            	userInfo:'',
+                state:'',
+                value6: '',
+                tableData: {},
+                param:'',
+                pagesize:10,
+                currentPage:1,
+                totalCount:0
+            }
+        },
+        mounted(){
+            this.param = this.$route.query.param;
+			this.orderNo = this.$route.query.orderNo;
+            this.loadData(this.param);
+        },
+		watch: {
+            '$route': function (route) {
+                if(route.path=='/stocktakingRecord'){
+                    this.param = this.$route.query.param;
+					this.orderNo = this.$route.query.orderNo;
+					this.loadData(this.param);
+                }
+
+            }
+        },
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            handleIconClick(ev) {
+                console.log(ev);
+            },
+            async loadData(param) {
+
+                  //  /api/queryStockOrderDetail?companyId=1000&warehouseId=W001&orderType=2,3&pageIndex=1&pageSize=10
+                let  requestParam = {
+                    "stockOrderId":param
+                };
+                const res = await loadStockOrder(requestParam);
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: '加载数据成功'
+                    });
+                    this.tableData = res.result;
+                    this.state= res.result.status;
+              
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+			formatDate
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/stocktaking';
+</style>

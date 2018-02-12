@@ -1,0 +1,105 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li class="menuIndex2" v-if="getMenuAuthFun('logToolsSeller')">
+                <router-link :to='{path:"/logToolsSeller"}'>日志查看</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('MSConfigSeller')">
+                <router-link :to='{path:"/MSConfigSeller"}'>系统配置</router-link>
+            </li>
+        </ul>
+        <div class="logTools">
+            <div class="logToolsTop">
+                <el-date-picker
+                    size="small"
+                    v-model="value6"
+                    type="daterange"
+                    placeholder="选择日期范围">
+                </el-date-picker>
+                <el-input
+                    size="small"
+                    placeholder="用户名称搜索"
+                    icon="search"
+                    v-model="input2"
+                    :on-icon-click="handleIconClick">
+                </el-input>
+            </div>
+            <div class="logToolsTable">
+                <el-table
+                    :data="tableData"
+                    style="width: 100%">
+                    <el-table-column
+                        prop="number"
+                        label="序号"
+                        width="110">
+                    </el-table-column>
+                    <el-table-column
+                        prop="name"
+                        label="用户名">
+                    </el-table-column>
+                    <el-table-column
+                        prop="operationModule"
+                        label="操作模块">
+                    </el-table-column>
+                    <el-table-column
+                        prop="operationType"
+                        label="操作类型">
+                    </el-table-column>
+                    <el-table-column
+                        prop="operationDate"
+                        label="操作时间">
+                    </el-table-column>
+                    <el-table-column
+                        prop="operationContent"
+                        label="操作内容"
+                        width="300">
+                    </el-table-column>
+                </el-table>
+            </div>
+            <div style="height:160px;">
+                &nbsp;
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {queryApplications,queryLogDetail,queryCompInfoByIds} from '@/api/getData'
+    import {mapActions, mapState} from 'vuex'
+    import {formatDate} from '../utils/date.js'
+    import {getMenuAuth} from  '../utils/AuthMenu.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                value6:'',
+                input2:'',
+                tableData:[{
+                    number:1,
+                    name:'admin',
+                    operationModule:'商品管理',
+                    operationType:'新增',
+                    operationDate:'2017-8-18 15：00',
+                    operationContent:'',
+                }]
+            }
+        },
+        methods:{
+			getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            }
+
+        },
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/logTools';
+</style>

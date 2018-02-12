@@ -1,0 +1,25 @@
+.productManagement{
+    margin:0 30px;
+    background: #fff;
+    padding: 20px 40px;
+    .salesButton>button{
+        width:88px;
+        margin-bottom: 20px;
+    }
+    .productInfoTable{
+        padding-top: 50px;
+        .headImg{
+            width:40px;
+            height:40px;
+        }
+    }
+    .export_excle{
+        margin: 10px 0;
+        margin-left: 10px;
+    }
+}
+.btn_batchOP{
+    padding-top: 20px;
+    width:100%;
+    overflow: hidden;
+}

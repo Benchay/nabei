@@ -1,0 +1,706 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li class="menuIndex">
+                <router-link :to='{path:"/stallProductManagement"}'>商品管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/classificationGoods"}'>商品分类</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/"}'>商品统计</router-link>
+            </li>
+        </ul>
+        <div class="addGoods">
+            <router-link :to='{path:"/stallProductManagement"}' class="comeBack right">返回</router-link>
+            <div class="addFrom">
+                <el-form :model="addProductform" :rules="addProductformRule" ref="addProductform" label-width="130px">
+                    <el-col :span="24">
+                        <el-form-item label="上传商品展示图：">
+                            <el-upload
+                                action="https://jsonplaceholder.typicode.com/posts/"
+                                list-type="picture-card"
+                                :on-preview="handlePictureCardPreview"
+                                :on-remove="handleRemove">
+                                <i class="el-icon-plus"></i>
+                            </el-upload>
+                            <el-dialog v-model="dialogVisible1" size="tiny">
+                                <img width="100%" :src="dialogImageUrl" alt="">
+                            </el-dialog>
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="12">
+                        <el-form-item label="商品名称：" prop="productName">
+                            <el-input v-model="addProductform.productName"></el-input>
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="12">
+                        <el-form-item label="商品货号：" prop="productCode">
+                            <el-input v-model="addProductform.productCode"></el-input>
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="12">
+                        <el-form-item prop="productPrice" label="商品售价：">
+                            <el-input v-model="addProductform.price"></el-input>
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="12">
+                        <el-form-item label="存放位置：">
+                           <div class="flex">
+                               <el-select v-model="addProductform.warehouseSeatId" placeholder="请选择存放位置">
+                                   <el-option v-for="item in warehouseTags" :label="item.name" :value="item.id"></el-option>
+                               </el-select>
+                           </div>
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="12">
+                        <el-form-item label="商品分类：">
+                            <el-select v-model="value" placeholder="分类至">
+                                <el-option
+                                    v-for="item in options"
+                                    :key="item.value"
+                                    :label="item.label"
+                                    :value="item.value">
+                                </el-option>
+                            </el-select>
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="12">
+                        <el-form-item label="商品规格：">
+                            <!--未添加规格 显示-->
+                            <a href="javascript:void(0)" class="buttonColor" @click="dialogVisible = true">添加商品规格</a>
+                            <!---->
+
+                            <!--已添加规格 显示-->
+                            <a href="javascript:void(0)" class="blue2" @click="dialogVisible = true">+继续添加</a>
+                            <ul class="pricingList1 flex">
+                                <li>{{totalColors}}</li><span v-if="totalSizes != ''">；</span>
+                                <li>{{totalSizes}}</li>
+                            </ul>
+                            <!---->
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="12">
+                        <el-form-item label="上架：">
+                            <el-switch on-text="" off-text="" on-color="#46cfc5" v-model="addProductform.delivery"></el-switch>
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="12">
+                        <el-form-item label="商品描述：">
+                            <el-input type="textarea" v-model="addProductform.description"></el-input>
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="12">
+                        <el-form-item label="特定商家定价：">
+                            <!--未添加商家 显示-->
+                            <a href="javascript:void(0)" class="buttonColor" @click="addCompanyDia">选择待定商家</a>
+                            <!---->
+
+                            <!--已添加商家 显示-->
+                            <a href="javascript:void(0)" class="blue2" @click="addCompanyDia">+继续添加</a>
+                            <ul v-for="item in dynamicCompanyTags">
+                                <li class="pricingList">
+                                    <p>{{item.name}}</p>
+                                    <p class="flex">￥<el-input v-model="item.price" size="mini"></el-input></p>
+                                    <p @click="deleteCompanyTag(item.companyId)"><img src="../image/delete03.png" alt=""></p>
+                                </li>
+                            </ul>
+                            <!---->
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="12">
+                        <el-form-item label="供货工厂：">
+                            <!--未添加工厂 显示-->
+                            <a href="javascript:void(0)" class="buttonColor" @click="dialogVisible2 = true">选择供货工厂</a>
+                            <!---->
+
+                            <!--已添加工厂 显示-->
+                            <!--<a href="javascript:void(0)" class="blue2" @click="dialogVisible = true">+继续添加</a>-->
+                            <ul v-if="supplierName != ''">
+                                <li class="pricingList">
+                                    <p>{{supplierName}}</p>
+                                    <p class="flex">￥<el-input v-model="supplierPrice" size="mini"></el-input></p>
+                                    <p @click="deleteSupplier"><img src="../image/delete03.png" alt=""></p>
+                                </li>
+                            </ul>
+                            <!---->
+                        </el-form-item>
+                    </el-col>
+                   <el-col :span="24" class="goodsLast">
+                       <el-form-item>
+                           <a href="javascript:void(0)" @click="submitForm('addProductform')" class="buttonColor">保存</a>
+                           <!--<a href="javascript:void(0)" @click="resetForm('addProductform')" class="buttonColor">重置</a>-->
+                           <router-link :to='{path:"/stallProductManagement"}' class="buttonColor">取消</router-link>
+                       </el-form-item>
+                   </el-col>
+                </el-form>
+            </div>
+        </div>
+        <el-dialog
+            title="添加商品规格"
+            :visible.sync="dialogVisible"
+            size="tiny"
+            :before-close="handleClose">
+            <div>
+               <div class="addSpecification" style="margin-bottom: 20px">
+                   <el-col :span="4" class="tite">颜色：</el-col>
+                   <el-col :span="18">
+                       <el-tag
+                           style="margin: 0 10px 10px 0"
+                           :key="tag"
+                           type="gray"
+                           v-for="tag in dynamicColorTags"
+                           :closable="true"
+                           :close-transition="false"
+                           @close="handleCloseColor(tag)">
+                           {{tag}}
+                       </el-tag>
+                       <el-input
+                           class="input-new-tag"
+                           v-if="inputColorVisible"
+                           v-model="inputColorValue"
+                           ref="saveColorTagInput"
+                           size="mini"
+                           @keyup.enter.native="handleInputColorConfirm"
+                           @blur="handleInputColorConfirm">
+                       </el-input>
+                       <el-button v-else class="button-new-tag" size="small" @click="showInputColor">自定义</el-button>
+                   </el-col>
+               </div>
+                <div class="addSpecification">
+                    <el-col :span="4">尺码：</el-col>
+                    <el-col :span="18">
+                        <el-tag
+                            style="margin: 0 10px 10px 0"
+                            :key="tag"
+                            type="gray"
+                            v-for="tag in dynamicSizeTags"
+                            :closable="true"
+                            :close-transition="false"
+                            @close="handleClose1(tag)">
+                            {{tag}}
+                        </el-tag>
+                        <el-input
+                            class="input-new-tag"
+                            v-if="inputSizeVisible"
+                            v-model="inputSizeValue"
+                            ref="saveTagInput"
+                            size="mini"
+                            @keyup.enter.native="handleInputSizeConfirm"
+                            @blur="handleInputSizeConfirm">
+                        </el-input>
+                        <el-button v-else class="button-new-tag" size="small" @click="showInputSize">自定义</el-button>
+                    </el-col>
+                </div>
+            </div>
+            <span slot="footer" class="dialog-footer flex2">
+                <a href="javascript:void(0)" @click="confirmProductVail" class="buttonColor">确 定</a>
+                <a href="javascript:void(0)" @click="cancelProductVail" class="buttonColor2">取 消</a>
+              </span>
+        </el-dialog>
+        <el-dialog
+            title="特定商家定价"
+            :visible.sync="dialogVisible1"
+            size="tiny"
+            :before-close="handleClose">
+            <el-form ref="form" :model="form" label-width="110px" class="merchantsPricing">
+                <el-form-item label="商家名：">
+                    <el-autocomplete v-model="companySpecialName" :fetch-suggestions="querySearchAsync" placeholder="请输入内容" @select="handleSelect"></el-autocomplete>
+                </el-form-item>
+
+                <el-form-item label="商家定价：">
+                    <el-input v-model="companySpecialPrice"></el-input>
+                </el-form-item>
+            </el-form>
+            <span slot="footer" class="dialog-footer flex2">
+                 <a href="javascript:void(0)" @click="confirmCompany" class="buttonColor">确 定</a>
+                <a href="javascript:void(0)" @click="dialogVisible1 = false" class="buttonColor2">取 消</a>
+              </span>
+        </el-dialog>
+        <el-dialog
+            title="供货工厂"
+            :visible.sync="dialogVisible2"
+            size="tiny"
+            :before-close="handleClose">
+            <el-form ref="form" :model="form" label-width="110px" class="merchantsPricing">
+                <el-form-item label="工厂名称：">
+                    <el-autocomplete v-model="supplierName" :fetch-suggestions="querySupplierSearchAsync" placeholder="请输入工厂名称" @select="handleSupplierSelect"></el-autocomplete>
+                </el-form-item>
+                <el-form-item label="进价：">
+                    <el-input v-model="supplierPrice"></el-input>
+                </el-form-item>
+            </el-form>
+            <span slot="footer" class="dialog-footer flex2">
+                 <a href="javascript:void(0)" @click="dialogVisible2 = false" class="buttonColor">确 定</a>
+                <a href="javascript:void(0)" @click="cancelSupplier" class="buttonColor2">取 消</a>
+              </span>
+        </el-dialog>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {findCompanysByNameAndMoblie,querySupplier,queryWarehouse,addProductForStall,updateProductForStall,queryWarehouseSeatForStall} from '@/api/getData'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+        	//校验所需金额
+        	var validateProductPrice = (rule, value, cb) => {
+                var pattern = /^(-?\d+)(\.\d+)?$/;
+                var pattern2 = /^-?\d+\.?\d{0,2}$/;
+                if (!pattern.test(value)) {
+                    cb(new Error('商品售价必须为数字'))
+                }else if(value <0){
+                	cb(new Error('商品售价必须为正数'))
+                }else if(!pattern2.test(value)){
+                	cb(new Error('商品售价不能超过两位小数'))
+                }else{
+                	cb();
+                }
+            }
+            return {
+            	addProductformRule:{
+
+            	},
+                input2:'',
+                dialogImageUrl: '',
+                dialogVisible1: false,
+                dialogVisible:false,
+                dialogVisible2: false,
+                inputColorValue:'',
+                inputSizeValue:'',
+
+                timeout:  null,
+
+                //商家集合
+                restaurants: [],
+
+                //工厂集合
+                suppliers:[],
+
+                totalColors:'',
+
+                totalSizes:'',
+
+//                弹窗标签
+				dynamicColorTags:[],
+				dynamicSizeTags:[],
+				dynamicCompanyTags:[],
+				supplierName:'',
+				supplierPrice:'',
+
+				warehouseTags:[],
+
+
+                dynamicTags: [],
+                inputVisible: false,
+                inputColorVisible: false,
+                inputSizeVisible: false,
+                inputValue: '',
+                companySpecialName:'',
+                companySpecialPrice:'',
+                companySpecialId:'',
+                oldCompanyName:'',
+                companyFactoryName:'',
+//
+                form: {
+                    name: '',
+                    region: '',
+                    type: '',
+                    telephone:'',
+                    sum:'',
+                },
+                ruleForm: {
+                    name: '',
+                    number:'',
+                    region: '',
+                    date1: '',
+                    date2: '',
+                    delivery: false,
+                    type: [],
+                    resource: '',
+                    desc: ''
+                },
+                addProductform:{
+                	productName:'',
+                	productCode:'',
+                	price:'',
+                	warehouseSeatId:'',
+                	description:'',
+                	dynamicColorTags:[],
+                	dynamicSizeTags:[],
+                	dynamicCompanyTags:[],
+                	supplierName:'',
+                	supplierPrice:'',
+                	companyId:'',
+                	warehouseId:'',
+                	delivery: true
+                },
+                rules: {
+                    name: [
+                        {required: true, message: '请输入活动名称', trigger: 'blur'},
+                        {min: 3, max: 5, message: '长度在 3 到 5 个字符', trigger: 'blur'}
+                    ],
+                    region: [
+                        {required: true, message: '请选择活动区域', trigger: 'change'}
+                    ],
+                    date1: [
+                        {type: 'date', required: true, message: '请选择日期', trigger: 'change'}
+                    ],
+                    date2: [
+                        {type: 'date', required: true, message: '请选择时间', trigger: 'change'}
+                    ],
+                    type: [
+                        {type: 'array', required: true, message: '请至少选择一个活动性质', trigger: 'change'}
+                    ],
+                    resource: [
+                        {required: true, message: '请选择活动资源', trigger: 'change'}
+                    ],
+                    desc: [
+                        {required: true, message: '请填写活动形式', trigger: 'blur'}
+                    ]
+                },
+                options: [{
+                    value: '1',
+                    label: '女装'
+                }, {
+                    value: '2',
+                    label: '男装'
+                }],
+                value: '',
+                input:'45',
+                handleClose:'11'
+            }
+        },
+        watch:{
+            '$route':function (route) {
+            	if(this.$route.query.status=='OK'){
+                   this.addProductform.productCode = this.$route.query.object1.productCode;
+    	           this.addProductform.productName = this.$route.query.object1.title;
+                   this.addProductform.price = this.$route.query.object1.purchasePrice;
+                   this.addProductform.description = this.$route.query.object1.description;
+                }else{
+                   this.addProductform.productCode = '';
+    	           this.addProductform.productName = '';
+                   this.addProductform.price = '';
+                   this.addProductform.description = '';
+                }
+            }
+        },
+        mounted(){
+        	this.initCompany();
+			this.initSupplier();
+			this.initWarehouse();
+        },
+        
+        methods: {
+            handleIconClick(){
+                console.log(1)
+            },
+      
+
+            async initCompany(){ 
+		      	let param = {
+        			pageSize:100,
+        			pageIndex:1
+        		}
+		      	let result = [];
+        		const res = await findCompanysByNameAndMoblie(param);
+                if (res.isSuccess == true) {
+                	res.result.data.results.forEach((obj) => {
+                		let row = {
+                			value:obj.nickName,
+                			address:obj.nickName,
+                			compId:obj.compId
+                		}
+                		this.restaurants.push(row);
+                	});
+                }
+		    },
+
+		    async initSupplier(){
+		    	
+		      	let param = {
+		      		param:{
+						companyId:"1000"
+					},
+        			pageSize:100,
+        			pageIndex:1
+        		}
+		      	let result = [];
+        		const res = await querySupplier(param);
+                if (res.isSuccess == true) {
+                	res.result.results.forEach((obj) => {
+                		let row = {
+                			value:obj.name,
+                			address:obj.linkMan
+                		}
+                		this.suppliers.push(row);
+                	});
+                }
+		    },
+
+		    async initWarehouse(){
+		      	let param = {
+		      		warehouseId:"W001"
+        		}
+		      	let result = [];
+        		const res = await queryWarehouseSeatForStall(param);
+                if (res.isSuccess == true) {
+                	this.warehouseTags = res.result;
+                }
+		    },
+
+            async submitForm(formName){
+            	var res;
+            	this.$refs[formName].validate(async (valid) => {
+					if (valid) {
+						this.addProductform.dynamicColorTags = this.dynamicColorTags;
+		            	this.addProductform.dynamicSizeTags = this.dynamicSizeTags;
+		            	this.addProductform.dynamicCompanyTags = this.dynamicCompanyTags;
+		            	this.addProductform.supplierName = this.supplierName;
+		            	this.addProductform.supplierPrice = this.supplierPrice;
+		            	this.addProductform.companyId = userInfo().companyId;
+		            	this.addProductform.warehouseId = 'W001';
+	            	if(this.$route.query.status=='OK'){		            		
+	            		res = await updateProductForStall(this.addProductform);
+	            		this.status = false;
+	            	}else{
+	            	    res = await addProductForStall(this.addProductform);
+	            	}
+						if (res.isSuccess == true) {
+						    this.$message({
+						        type: 'success',
+						        message: res.result.msg
+						    });
+						     this.configAccountPaypalForm = false;
+						     this.initloadData();
+						}else{
+						    this.$message({
+						        type: 'error',
+						        message: res.errorMsg
+						    });
+						}
+					} else {
+
+						return false;
+					}
+				});
+          },
+            resetForm(formName) {
+                this.$refs[formName].resetFields();
+            },
+            handleRemove(file, fileList) {
+                console.log(file, fileList);
+            },
+            handlePictureCardPreview(file) {
+                this.dialogImageUrl = file.url;
+                this.dialogVisible = true;
+            },
+//            标签事件
+            handleClose1(tag) {
+            	alert(tag);
+                this.dynamicTags.splice(this.dynamicTags.indexOf(tag), 1);
+            },
+
+            handleCloseColor(tag) {
+            	let tempTag = [];
+            	this.dynamicColorTags.forEach((obj) => {
+		    		if(obj != "" && obj != tag){
+		    			tempTag.push(obj);
+		    		}
+		    	});
+                this.dynamicColorTags = tempTag;
+            },
+
+            showInput() {
+                this.inputVisible = true;
+                this.$nextTick(_ => {
+                    this.$refs.saveTagInput.$refs.input.focus();
+                });
+            },
+
+            showInputColor(){
+            	this.inputColorVisible = true;
+            	this.$nextTick(_ => {
+                    this.$refs.saveColorTagInput.$refs.input.focus();
+                });
+            },
+
+            showInputSize() {
+                this.inputSizeVisible = true;
+                this.$nextTick(_ => {
+                    this.$refs.saveSizeTagInput.$refs.input.focus();
+                });
+            },
+
+
+
+            handleInputConfirm() {
+                let inputValue = this.inputValue;
+                if (inputValue) {
+                    this.dynamicTags.push(inputValue);
+                }
+                this.inputVisible = false;
+                this.inputValue = '';
+            },
+
+            handleInputColorConfirm() {
+                let inputValue = this.inputColorValue;
+                if (inputValue) {
+                    this.dynamicColorTags.push(this.inputColorValue);
+                }
+                this.inputColorVisible = false;
+                this.inputColorValue = '';
+            },
+
+            handleInputSizeConfirm() {
+                let inputValue = this.inputSizeValue;
+                if (inputValue) {
+                    this.dynamicSizeTags.push(this.inputSizeValue);
+                }
+                this.inputSizeVisible = false;
+                this.inputSizeValue = '';
+            },
+
+		      querySearchAsync(queryString, cb) {
+		        var restaurants = this.restaurants;
+		        var results = queryString ? restaurants.filter(this.createStateFilter(queryString)) : restaurants;
+
+		        clearTimeout(this.timeout);
+		        this.timeout = setTimeout(() => {
+		          cb(results);
+		        }, 3000 * Math.random());
+		      },
+		      createStateFilter(queryString) {
+		        return (state) => {
+		          return (state.value.indexOf(queryString.toLowerCase()) === 0);
+		        };
+		      },
+		      handleSelect(item) {
+		        console.log(item);
+		      },
+
+		      querySupplierSearchAsync(queryString, cb) {
+		        var restaurants = this.suppliers;
+		        var results = queryString ? restaurants.filter(this.createSupplierStateFilter(queryString)) : restaurants;
+
+		        clearTimeout(this.timeout);
+		        this.timeout = setTimeout(() => {
+		          cb(results);
+		        }, 3000 * Math.random());
+		      },
+		      createSupplierStateFilter(queryString) {
+		        return (state) => {
+		          return (state.value.indexOf(queryString.toLowerCase()) === 0);
+		        };
+		      },
+		      handleSupplierSelect(item) {
+		        console.log(item);
+		      },
+		      cancelProductVail(){
+		      	this.dynamicColorTags = [];
+		      	this.dynamicSizeTags = [];
+		      	this.totalColors.split("/").forEach((obj) => {
+		      		if(obj != ""){
+		      			this.dynamicColorTags.push(obj);
+		      		}
+		      	});
+		      	this.totalSizes.split("/").forEach((obj) => {
+		      		if(obj != ""){
+		      			this.dynamicSizeTags.push(obj);
+		      		}
+		      	})
+		      	this.dialogVisible = false;
+		      },
+
+		    confirmProductVail(){
+		    	this.totalColors = "";
+		    	this.totalSizes = "";
+		    	this.dynamicColorTags.forEach((obj) => {
+		    		if(obj != ""){
+		    			this.totalColors = this.totalColors + "/" + obj;
+		    		}
+		    	});
+		    	this.dynamicSizeTags.forEach((obj) => {
+		    		if(obj != ""){
+		    			this.totalSizes = this.totalSizes + "/" + obj;
+		    		}
+		    	});
+		    	if(this.totalColors.startsWith("/")){
+		    		this.totalColors = this.totalColors.substring(1);
+		    	}
+		    	if(this.totalSizes.startsWith("/")){
+		    		this.totalSizes = this.totalSizes.substring(1);
+		    	}
+		    	this.dialogVisible = false;
+		    },
+
+		    confirmCompany(){
+		    	if(this.companySpecialName != ""){
+		    		let compId = '';
+		    		this.restaurants.forEach((obj) => {
+		    			if(obj.value == this.companySpecialName){
+		    				compId = obj.compId;
+		    			}
+		    		});
+		    		let flag = true;
+		    		this.dynamicCompanyTags.forEach((obj) => {
+			    		if(obj.name == this.companySpecialName){
+			    			flag = false;
+			    		}
+			    	});
+			    	if(flag){
+			    		let row = {
+		    				name:this.companySpecialName,
+		    				price:this.companySpecialPrice,
+		    				companyId:compId
+		    			}
+			    		this.dynamicCompanyTags.push(row);
+			    	};
+		    	};
+		    	this.dialogVisible1 = false
+		    },
+
+		    cancelSupplier(){
+		    	this.supplierName = '';
+		    	this.supplierPrice = '';
+		    	this.dialogVisible2 = false;
+		    },
+
+		    deleteSupplier(){
+		    	this.supplierName = '';
+		    	this.supplierPrice = '';
+		    },
+
+		    deleteCompanyTag(companyId){
+		    	let tempCompanyTag = [];
+		    	this.dynamicCompanyTags.forEach((obj) => {
+		    		if(obj.companyId != companyId){
+		    			tempCompanyTag.push(obj);
+		    		}
+		    	});
+		    	this.dynamicCompanyTags = tempCompanyTag;
+		    },
+
+		    addCompanyDia(){
+		    	this.companySpecialName = '';
+		    	this.companySpecialPrice = '';
+		    	this.dialogVisible1 = true;
+		    }
+//
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/stallProductManagement';
+    .el-form-item__content {
+        position: static;
+    }
+</style>

@@ -1,0 +1,323 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/fastShipping2"}'>快速出货</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/returnManagement2"}'>快速退货</router-link>
+            </li>
+            <li class="menuIndex">
+                <router-link :to='{path:"/orderPurchaseStall"}'>订单管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/sellerSettlement"}'>客户结算</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/customerManagement"}'>客户管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/statisticalStatement"}'>销售统计</router-link>
+            </li>
+        </ul>
+        <div class="indentManagement">
+            <div style="height: 45px;">
+                <div class="flex2 left" style="margin-right: 50px">
+                    <el-date-picker
+                        size="small"
+                        v-model="value6"
+                        type="daterange"
+                        placeholder="选择日期范围">
+                    </el-date-picker>
+                </div>
+                <div class="left flex2">
+                    <el-input v-model="input1" size="small" placeholder="订单号搜索" style="margin-right: 10px" ></el-input>
+                    <el-input v-model="input3" size="small" placeholder="电商卖家搜索"></el-input>
+                </div>
+               <el-col :span="24" class="indentList radioGreen">
+                   <el-radio-group v-model="radio" size="small">
+                       <el-radio-button label="1">全部</el-radio-button>
+                       <el-radio-button label="2">待处理</el-radio-button>
+                       <el-radio-button label="3">已完成</el-radio-button>
+                   </el-radio-group>
+               </el-col>
+            </div>
+            <el-table
+                :data="tableData"
+                style="width: 100%">
+                <el-table-column
+                    prop="number"
+                    label="序号">
+                </el-table-column>
+                <el-table-column
+                    prop="orderNumber"
+                    label="订单编号">
+                </el-table-column>
+                <el-table-column
+                    prop="seller"
+                    label="电商卖家">
+                </el-table-column>
+                <el-table-column
+                    prop="orderQuantity"
+                    label="订单数量">
+                </el-table-column>
+                <el-table-column
+                    prop="orderMoney"
+                    label="订单金额">
+                </el-table-column>
+                <el-table-column
+                    prop="date"
+                    width="180"
+                    label="下单时间">
+                </el-table-column>
+                <el-table-column
+                    prop="clearing"
+                    label="结算方式">
+                </el-table-column>
+                <el-table-column
+                    label="状态">
+                    <template scope="scope">
+                        <p>{{scope.row.state==1?'配货待确认':scope.row.state==2?'待签收':scope.row.state==3?'待配货':scope.row.state==4?'已配货':scope.row.state==5?'部分配货':scope.row.state==6?'待入库':scope.row.state==7?'退货待确认':scope.row.state==8?'退货完成':scope.row.state ==9?'已完成':''}}</p>
+                    </template>
+                </el-table-column>
+                <el-table-column
+                    label="操作">
+                    <template scope="scope">
+                        <a href="javascript:void(0);" class="color4" @click="Stateialog(scope.row.state)">
+                            {{scope.row.state==1?'立即确认':scope.row.state==2?'立即签收':scope.row.state==3?'立即配货':scope.row.state==4?'查看':scope.row.state==5?'继续配货':scope.row.state==6?'立即入库':scope.row.state==7?'立即确认':scope.row.state==8?'查看':scope.row.state==9?'查看':''}}
+                        </a>
+                        <a href="javascript:void(0);" class="color4" v-if="scope.row.state==4" @click="dialog = true">通知取货</a>
+                    </template>
+                </el-table-column>
+            </el-table>
+            <el-pagination
+                small
+                class="right"
+                style="margin-top: 20px;"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :current-page="currentPage"
+                :page-sizes="[10, 20, 30, 40]"
+                :page-size="pagesize"
+                layout="total, sizes, prev, pager, next, jumper"
+                :total="totalCount">
+            </el-pagination>
+            <a href="javascript:void(0)" class="export_excle" @click="exportTableData">导出excel</a>
+        </div>
+        <el-dialog
+            title="通知取货"
+            :visible.sync="dialog"
+            size="tiny">
+            <div class="flex2 inform">
+                <p>取货通知已发送给商家！</p>
+            </div>
+        </el-dialog>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {formatDate} from '../utils/date.js'
+    import {export_json_to_excel} from '../vendor/Export2Excel.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                dialog:false,
+                radio:1,
+                selects:false,
+                value6:'',
+                input:'',
+                input1: '',
+                input2: '',
+                input3: '',
+                tableData2:[{
+                    name:'名称名称',
+                    item:'NY110',
+                    color:'白色',
+                    size:'XXL',
+                    price:30,
+                    number:12,
+                },{
+                    name:'',
+                    item:'',
+                    color:'白色',
+                    size:'XXL',
+                    price:30,
+                    number:12,
+                },{
+                    name:'名称名称',
+                    item:'NY110',
+                    color:'白色',
+                    size:'XXL',
+                    price:30,
+                    number:12,
+                },{
+                    name:'名称名称',
+                    item:'NY110',
+                    color:'白色',
+                    size:'XXL',
+                    price:30,
+                    number:12,
+                },
+                ],
+                options: [{
+                    value: '1',
+                    label: '确认退货'
+                }, {
+                    value: '2',
+                    label: '拒绝退货'
+                }],
+                value: '1',
+                tableData: [{
+                    number:1,
+                    orderNumber:123132,
+                    seller:'我是卖家',
+                    orderQuantity:20,
+                    orderMoney:1000,
+                    date:'2017-04-11 15:00',
+                    clearing:'月结',
+                    state:1,
+                 },{
+                    number:2,
+                    orderNumber:123132,
+                    seller:'我是卖家',
+                    orderQuantity:20,
+                    orderMoney:1000,
+                    date:'2017-04-11 15:00',
+                    clearing:'月结',
+                    state:2,
+                },{
+                    number:3,
+                    orderNumber:123132,
+                    seller:'我是卖家',
+                    orderQuantity:20,
+                    orderMoney:1000,
+                    date:'2017-04-11 15:00',
+                    clearing:'月结',
+                    state:3,
+                },{
+                    number:4,
+                    orderNumber:123132,
+                    seller:'我是卖家',
+                    orderQuantity:20,
+                    orderMoney:1000,
+                    date:'2017-04-11 15:00',
+                    clearing:'月结',
+                    state:4,
+                },{
+                    number:5,
+                    orderNumber:123132,
+                    seller:'我是卖家',
+                    orderQuantity:20,
+                    orderMoney:1000,
+                    date:'2017-04-11 15:00',
+                    clearing:'月结',
+                    state:5,
+                },{
+                    number:6,
+                    orderNumber:123132,
+                    seller:'我是卖家',
+                    orderQuantity:20,
+                    orderMoney:1000,
+                    date:'2017-04-11 15:00',
+                    clearing:'月结',
+                    state:6,
+                },{
+                    number:7,
+                    orderNumber:123132,
+                    seller:'我是卖家',
+                    orderQuantity:20,
+                    orderMoney:1000,
+                    date:'2017-04-11 15:00',
+                    clearing:'月结',
+                    state:7,
+                },{
+                    number:8,
+                    orderNumber:123132,
+                    seller:'我是卖家',
+                    orderQuantity:20,
+                    orderMoney:1000,
+                    date:'2017-04-11 15:00',
+                    clearing:'月结',
+                    state:8,
+                },{
+                    number:9,
+                    orderNumber:123132,
+                    seller:'我是卖家',
+                    orderQuantity:20,
+                    orderMoney:1000,
+                    date:'2017-04-11 15:00',
+                    clearing:'月结',
+                    state:9,
+                }]
+
+            }
+        },
+        mounted() {
+            const s = document.createElement('script');
+			s.type = 'text/javascript';
+			s.src = 'http://oss.sheetjs.com/js-xlsx/xlsx.full.min.js';
+			document.body.appendChild(s);
+        },
+        methods: {
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+            },
+            handleIconClick(ev) {
+                console.log(ev);
+            },
+            Stateialog(state){
+                if(state == 2 || state == 1 || state == 6|| state == 7|| state == 9){
+                    this.$router.push('/indentManagementReturnDetails');
+                }else
+                if(state == 3 || state == 5){
+                    this.$router.push('/indentManagementReturnDetails2');
+                }else if(state ==4){
+                    this.$router.push('/indentManagementPackageDetails');
+                }else if(state == 8){
+                    this.$router.push('/indentManagementComplete');
+                }
+
+            },
+            async exportTableData() {
+            	for(let i=0;i<this.tableData.length;i++){
+            		let data1 = this.tableData[i];
+            		if(data1.state && data1.state == 1){
+            			data1.showState = '待配货';
+            		}else if(data1.state && data1.state == 2){
+            			data1.showState = '已配货';
+            		}else if(data1.state && data1.state == 3){
+            			data1.showState = '待确认';
+            		}else if(data1.state && data1.state == 4){
+            			data1.showState = '待收货';
+            		}else if(data1.state && data1.state == 5){
+            			data1.showState = '待付款';
+            		}else if(data1.state && data1.state == 6){
+            			data1.showState = '待入库';
+            		}
+                }
+            	const list = this.tableData;
+                const tHeader = ['订单编号', '电商卖家','订单数量','订单金额','下单时间','结算方式','状态'];
+			　　　const filterVal = ['orderNumber', 'seller','orderQuantity','orderMoney','date','clearing','showState'];
+			　　　const data = this.formatJson(filterVal, list);
+			　　　export_json_to_excel(tHeader, data, '订单管理表');
+            },
+            formatJson(filterVal, jsonData) {
+		　　　　　　return jsonData.map(v => filterVal.map(j => v[j]))
+		　　　　},
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/indentManagement';
+</style>

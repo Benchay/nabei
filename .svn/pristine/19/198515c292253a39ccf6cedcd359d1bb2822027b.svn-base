@@ -1,0 +1,692 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/sellReturn"}'>销售退货</router-link>
+            </li>
+            <li class="menuIndex">
+                <router-link :to='{path:"/returnManagement2"}'>快速退货</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/returnManagement2"}'>退货统计</router-link>
+            </li>
+        </ul>
+        <div class="fastShipping2">
+            <div class="fastTop flex2">
+                <div class="title">退货卖家：</div>
+                <div class="content">
+                    <span>{{name}}</span>
+                    <a href="javascript:void(0)" class="comeBack" @click="handleSelectSupplier">选择</a>
+                </div>
+            </div>
+            <el-col :span="10" class="isLeft">
+                <el-col :span="24" class="leftList leftList2">
+                    <div class="flex">
+                        <el-col :span="4" class="title">货号：</el-col>
+                        <el-col :span="19" class="content" style="width:300px">
+                            <el-input icon="search" v-model="input3" placeholder="请输入货号..." :on-icon-click="searchProduct"></el-input>
+                        </el-col>
+                    </div>
+                    <el-col :span="4">&nbsp;</el-col>
+                    <el-col :span="19" class="content">
+                        <div class="contentTips flex">
+                            <el-col :span="18" class="content" v-show="codes.length > 0">
+                                <el-radio-group v-model="radio5" @change="selectCode">
+                                    <el-radio-button :label="item.value" v-for="item in codes" >{{item.value}}</el-radio-button>
+                                </el-radio-group>
+                            </el-col>
+                        </div>
+                        <div class="contentInfo flex">
+                            <img src="../image/111.png" alt="">
+                            <div class="infoRight">
+                                <p>仓库位置：{{this.location}}</p>
+                                <p>库存(件)：{{this.totalStockNum}}</p>
+                                <p>单价(元)：{{this.price}}</p>
+                            </div>
+                        </div>
+                    </el-col>
+                </el-col>
+                <el-col :span="24" class="flex leftList">
+                    <el-col :span="4" class="title">颜色：</el-col>
+                    <el-col :span="18" class="content" v-show="colors.length > 0">
+                        <el-radio-group v-model="radio3" @change="selectColor">
+                            <el-radio-button :label="item.value" v-for="item in colors" >{{item.value}}</el-radio-button>
+                        </el-radio-group>
+                    </el-col>
+                </el-col>
+                <el-col :span="24" class="flex leftList">
+                    <el-col :span="4" class="title">尺码：</el-col>
+                    <el-col :span="18" class="content" v-show="sizes.length > 0">
+                        <el-radio-group v-model="radio4" @change="selectSize">
+                            <el-radio-button :label="item.value" v-for="item in sizes" >{{item.value}}</el-radio-button>
+                        </el-radio-group>
+                    </el-col>
+                </el-col>
+                <el-col :span="24" class="flex leftList">
+                    <el-col :span="4" class="title">数量：</el-col>
+                    <el-col :span="18" class="content" >
+                        <el-input-number v-model="num6" :min="1" :max="this.totalStockNum" ></el-input-number>
+                    </el-col>
+                </el-col>
+                <el-col :span="24" class="flex2 leftButton">
+                    <a href="javascript:void(0)" class="buttonColor" @click="addToList">加入退货清单</a>
+                </el-col>
+            </el-col>
+            <el-col :span="14" class="isRight">
+                <div>退货清单</div>
+                <div class="rightDelete right"><a href="javascript:void(0)"  class="buttonColor" @click="batchDeleteConfig">删除</a></div>
+                <el-table
+                    :data="tableData"
+                    border
+                    class="rightTable"
+                    @selection-change="handleSelectionChange"
+                    show-summary
+                    height="400"
+                    style="width: 100%">
+                    <el-table-column
+                        type="selection"
+                        width="55">
+                    </el-table-column>
+                    <el-table-column
+                        label="主图/货号">
+                        <template scope="scope">
+                            <div class="flex2 tableFirst">
+                                <img src="../image/111.png" alt=""  class="tableImg">
+                                <p>YH112</p>
+                            </div>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="color"
+                        label="颜色">
+                    </el-table-column>
+                    <el-table-column
+                        prop="size"
+                        label="尺码">
+                    </el-table-column>
+                    <el-table-column
+                        prop="orderNum"
+                        label="数量">
+                    </el-table-column>
+                    <el-table-column
+                        prop="closeFee"
+                        label="金额">
+                    </el-table-column>
+                </el-table>
+                <div class="payment">
+                    <div class="flex">
+                        <p>选择付款方式（现结）：</p>
+                        <div>
+                            <ul class="paymentList flex2">
+                                <li v-for="(obj,index) in typeList" @click="selectAccountType(index)" :class="{'change9':index === clickIndex}">
+                                    <a href="javascript:void(0);" >{{obj.label}}</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <el-col :span="24" class="flex2 payButton">
+                    <a href="javascript:void(0)" class="buttonColor" @click="quickSalesReturn">确认退货</a>
+                </el-col>
+            </el-col>
+        </div>
+        <el-dialog
+            title="所有卖家"
+            :visible.sync="dialogVisible"
+            size="tiny">
+            <div>
+                <el-input
+                    class="startInput"
+                    placeholder="卖家名称"
+                    icon="search"
+                    v-model="supplierName"
+                    :on-icon-click="selectedSupplier">
+                </el-input>
+                <div class="startRadio">
+                    <el-radio class="radio" :ref='list.id' v-model="radio" :label="list.id" v-for="list in supplierList">{{list.name}}</el-radio>
+                </div>
+            </div>
+            <span slot="footer" class="dialog-footer flex2">
+                <a href="javascript:void(0)" class="buttonColor" @click="confirmed">确 定</a>
+            </span>
+        </el-dialog>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {queryProductInfo,queryWarehouseInfo,queryWarehouseSeatInfo,quickSalesReturn2,queryCompany,createStockOrder,auditStockOrder,queryWarehouse,createOffLineFinanceRecord} from '@/api/getData'
+    import {getStore} from  '../config/mUtils'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return{
+                dialogVisible:false,
+                supplierName:'',
+                radio:1,
+                roleForm: {
+                    userId: '',
+                    roleId: '',
+                    compId:''
+                },
+                num1:1,
+                input3:'',
+                radio3:'1',
+                radio4:'1',
+                radio5:'1',
+                imgUrl_main:'',
+                color:'',
+                size:'',
+                orderNum:'',
+                closeFee:'',
+                colors:[],
+                sizes:[],
+                tableData: [],
+                location:'',
+                totalStockNum:0,
+                price:0.00,
+                totalNum:0,
+                array:[],
+                warehouseId:'',
+                warehouseName:'',
+                productInfo:'',
+                multipleSelection:[],
+                id:0,
+                productCode:'',
+                productVariantId:'',
+                codes:[],
+                productId:'',
+                supplierList:[],
+                userId:'',
+                defaultWarehouseIds:[],
+                defaultWarehouseId:'',
+                orderInfo:'',
+                accountType:'03',
+                typeList:[
+                    {
+                        label:'支付宝',
+                        value:'03'
+                    },{
+                        label:'微信',
+                        value:'04'
+                    },{
+                        label:'现金',
+                        value:"06"
+                    },
+                    {
+                        label:'银行卡',
+                        value:'05'
+                    }
+                ],
+                clickIndex:0,
+                changeFee:0.00,
+                compId:'',
+                name:'',
+            }
+        },
+        mounted() {
+            var userInfo=getStore("user_info_user");
+            var vjson = JSON.parse(userInfo);
+            this.roleForm.userId=vjson.id;
+            this.roleForm.compId=vjson.curCompany.id;
+        },
+        methods: {
+            selectAccountType(index){//选择账户类型
+                this.clickIndex = index;
+                this.accountType = this.typeList[index].value;
+            },
+            async queryDefaultWarehouse(){
+                this.defaultWarehouseIds = [];
+                let param = {
+                    "params":{"companyId":this.roleForm.compId,"isStall":1}
+                };
+                const res=await queryWarehouse(param);
+                if (res.isSuccess == true) {
+                    this.defaultWarehouseIds = res.result.results;
+                    for(let i = 0 ;i<this.defaultWarehouseIds.length;i++){
+                        if(this.defaultWarehouseIds[i].isStall==1){
+                            this.defaultWarehouseId = this.defaultWarehouseIds[i].id;
+                        }
+                    }
+                    this.warehouseId = this.defaultWarehouseId;
+                    this.search();
+                }else{
+                    this.$message({
+                        duration:this.GLOBAL.MESSAGE_DISSMISS_TIME_MID,
+                        type:'error',
+                        message:'获取仓库失败'
+                    });
+                }
+            },
+            async selectedSupplier(){
+                this.supplierList = [];
+                let param = {
+                    "company":{"name":this.supplierName,"type":2},
+                    "pageIndex":1,
+                    "pageSize":10000
+                };
+                const res = await queryCompany(param);
+                if(res.isSuccess){
+                    let data = res.result.data;
+                    for(var i = 0 ; i < data.length;i++){
+                        let pa= {
+                            id:data[i].id,
+                            name:data[i].name
+                        };
+                        this.supplierList.push(pa);
+                    }
+                }
+
+            },
+            confirmed(){
+                this.compId = this.radio;
+                this.dialogVisible = false;
+                for(var i = 0 ; i < this.supplierList.length;i++){
+                    if(this.radio == this.supplierList[i].id){
+                        this.name = this.supplierList[i].name;
+                        return;
+                    }
+                }
+                this.supplierList = [];
+                this.supplierName = '';
+            },
+            handleSelectSupplier(){
+                if(this.tableData.length!=0){
+                    this.$message({
+                        type:'info',
+                        message:'您已选过商家，刷新后重新操作，或者确认退货/取消退货后可再次选择'
+                    });
+                    this.dialogVisible = false;
+                }else{
+                    this.dialogVisible = true;
+                }
+            },
+            selectCode(){
+                this.input3 = this.radio5;
+                this.searchProduct();
+            },
+            //多选响应
+            handleSelectionChange: function (val) {
+                this.multipleSelection = val;
+            },
+            batchDeleteConfig() {
+                if (this.multipleSelection == undefined || this.multipleSelection.length == 0) {
+                    this.$message({
+                        type: 'error',
+                        message: '请先勾选要删除的行！'
+                    });
+                    return;
+                }
+                var array = [];
+                this.multipleSelection.forEach((item) => {
+                    array.push(item.id);
+                })
+                if (array.length < 1) {
+                    this.$message({
+                        type: 'error',
+                        message: '请先勾选要删除的行！'
+                    });
+                    return;
+                }
+                this.$confirm('是否确认删除选中的信息?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    this.batchDelete(array);
+                }).catch(() => {
+
+                });
+            },
+            async batchDelete(array) {
+                let table = [];
+                for(let i = 0 ;i<this.tableData.length;i++){
+                    let flag = this.contains(array,this.tableData[i].id);
+                    if(!flag){
+                        table.push(this.tableData[i]);
+                    }
+                }
+                this.tableData = table;
+            },
+            contains(array,str){
+                for(let i=0;i<array.length;i++){
+                    if(array[i] == str){
+                        return true;
+                    }
+                }
+                return false;
+            },
+            containsCode(param){
+                for(let i = 0 ;i< this.codes.length;i++){
+                    if(this.codes[i].value == param.value){
+                        return true;
+                    }
+                }
+                return false;
+            },
+            delCode(param){
+                let table = [];
+                for(let i = 0 ; i<this.codes.length;i++){
+                    if(this.codes[i].value!=param.value){
+                        table.push(this.codes[i]);
+                    }
+                }
+                this.codes = table;
+            },
+            async searchProduct() {
+                if(this.codes.length>=5){
+                    let table = [];
+                    for(let i = 1; i<this.codes.length;i++){
+                        table.push(this.codes[i]);
+                    }
+                    this.codes = table;
+                    let param = {
+                        "label":this.input3,
+                        "value":this.input3
+                    };
+                    this.codes.push(param);
+                }else{
+                    let param = {
+                        "label":this.input3,
+                        "value":this.input3
+                    };
+                    if(!this.containsCode(param)){
+                        this.codes.push(param);
+                    }else{
+                        this.delCode(param);
+                        this.codes.push(param);
+                    }
+                }
+
+                this.colors = [];
+                this.sizes = [];
+                this.price = 0;
+                this.location = '';
+
+                this.queryDefaultWarehouse();//获取默认仓库
+
+            },
+            async search(){
+                let param = {companyId:this.roleForm.compId,warehouseId:this.warehouseId,productCode:this.input3};
+                const res = await queryProductInfo(param);
+                if (res.isSuccess) {
+                    let list = res.result;
+                    if(list.length==0){
+                        this.$message({
+                            duration:this.GLOBAL.MESSAGE_DISSMISS_TIME_MID,
+                            type:'info',
+                            message:'当前商品库存为0'
+                        });
+                        return ;
+                    }
+                    this.productInfo = res.result;
+                    let totalStock = 0;
+                    for(var a = 0;a<list.length;a++){
+                        totalStock = totalStock + list[a].stockNum;
+                        let color = {
+                            value:list[a].colour,
+                            label:a
+                        }
+
+                        let size = {
+                            value:list[a].size,
+                            label:a
+                        }
+
+                        if(!this.distinctColor(list[a].colour)){
+                            this.colors.push(color);
+                        }
+
+                        if(!this.distinctSize(list[a].size)){
+                            this.sizes.push(size);
+                        }
+                    }
+                    this.totalStockNum = totalStock;
+                }
+            },
+            distinctColor(val) {
+                for (let i = 0; i < this.colors.length; i++) {
+                    let item = this.colors[i];
+                    if (item.value.indexOf(val) > -1) {
+                        return true;
+                    }
+                }
+                return false;
+            },
+            distinctSize(val) {
+                for (let i = 0; i < this.sizes.length; i++) {
+                    let item = this.sizes[i];
+                    if (item.value.indexOf(val) > -1) {
+                        return true;
+                    }
+                }
+                return false;
+            },
+            selectColor() {
+                this.sizes = [];
+                let totalNum = 0;
+                for (var i = 0; i < this.productInfo.length; i++) {
+                    if (this.productInfo[i].colour.indexOf(this.radio3) > -1) {
+                        let size = {label: i, value: this.productInfo[i].size}
+                        if(!this.distinctSize(this.productInfo[i].size)){
+                            this.sizes.push(size);
+                        }
+                        totalNum = totalNum + this.productInfo[i].stockNum;
+                    }
+                }
+                this.totalStockNum = totalNum;
+            },
+            selectSize() {
+                for (var i = 0; i < this.productInfo.length; i++) {
+                    if (this.productInfo[i].colour.indexOf(this.radio3) > -1 && this.productInfo[i].size.indexOf(this.radio4) > -1) {
+                        this.productVariantId = this.productInfo[i].productVariantId;
+                        this.productId = this.productInfo[i].productId;
+                        this.price =  this.productInfo[i].unitPrice;
+                        this.productCode = this.productInfo[i].productCode;
+                        let seatId = this.productInfo[i].warehouseSeatId;
+                        this.location = this.productInfo[i].warehouseSeatName;
+                    }
+                }
+            },
+            async queryWarehouseInfo(val) {
+                const res = await queryWarehouseSeatInfo({warehouseSeatId: val});
+                if (res.isSuccess) {
+                    this.location = res.result.name;
+                } else {
+                    this.$message({
+                        type: 'info',
+                        message: '获取仓库失败'
+                    });
+                    this.location = '';
+                }
+            },
+            addToList() {
+                if(this.price==0||this.num6==0){
+                    this.$message({
+                        type:'info',
+                        message:'请选择规格'
+                    });
+                    return;
+                }
+                this.id = this.id + 1;
+                this.closeFee = this.price * this.num6;
+                let param = {
+                    "id":this.id,
+                    "productId":this.productId,
+                    "companyId":this.roleForm.compId,
+                    "productVariantId": this.productVariantId,
+                    "imgUrl_main": '',
+                    "color": this.radio3,
+                    "size": this.radio4,
+                    "orderNum": this.num6,
+                    "closeFee": this.closeFee,
+                    "productCode":this.productCode,
+                    "busiCompId":this.compId
+                };
+                this.tableData.push(param);
+            },
+            async quickSalesReturn(){
+                if(this.multipleSelection == undefined || this.multipleSelection.length==0){
+                    this.$message({
+                        type: 'error',
+                        message: '请先勾选要选择的行！'
+                    });
+                    return;
+                }
+                var array = [];
+                this.multipleSelection.forEach((item) => {
+                    array.push(item.id);
+                })
+                if(array.length <1){
+                    this.$message({
+                        type: 'error',
+                        message: '请先勾选要选择的行！'
+                    });
+                    return;
+                }
+                var str = '';
+                if(array.length==1){
+                    str = '确认该商品退货吗？';
+                }else if(array.length > 1){
+                    str = '确认这些商品退货吗？';
+                }
+                this.$confirm(str, '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    this.quickSalesReturnInfo(array);
+                }).catch(() => {
+
+                });
+            },
+            async quickSalesReturnInfo(array){
+                if(this.accountType==undefined||this.accountType==''){
+                    this.$message({
+                        duration:this.GLOBAL.MESSAGE_DISSMISS_TIME_MID,
+                        type: 'error',
+                        message: '请先选择支付方式'
+                    });
+                    return;
+                }
+                let params = [];
+                let stockOrderParam = [];
+                var totalFee = 0;
+                for(let i = 0 ; i<this.tableData.length;i++){
+                    if(this.contains(array,this.tableData[i].id)){
+                        let orderDetailVO ={
+                            "companyId":this.roleForm.compId,
+                            "productId":this.tableData[i].productId,
+                            "productVariantId": this.tableData[i].productVariantId,
+                            "orderNum": this.tableData[i].orderNum,
+                            "closeFee": this.tableData[i].closeFee,
+                            "orderType":4,
+                            "productCode":this.productCode,
+                            "busiCompId":this.tableData[i].busiCompId
+                        };
+                        params.push(orderDetailVO);
+                        totalFee = totalFee + this.tableData[i].closeFee;
+                        let details = {
+                            "companyId": this.roleForm.compId,
+                            "memo": "",
+                            "orderNum": this.tableData[i].orderNum,
+                            "price": this.tableData[i].closeFee,
+                            "productBarcode": "",
+                            "productCode": this.productCode,
+                            "productId": this.tableData[i].productId,
+                            "productVariantId":this.tableData[i].productVariantId
+                        };
+                        stockOrderParam.push(details);
+                    }
+                }
+                this.changeFee = totalFee;
+                const res = await quickSalesReturn2({orderDetailVO:params});//退货
+                if(res.isSuccess) {
+                    this.orderInfo = res.result.data;
+                    this.tableData = [];
+                    let pa = {
+                        "type": 6,
+                        "warehouseId": this.warehouseId,
+                        "totalStockFee": totalFee,
+                        "orderCode":this.orderInfo.orderCode,
+                        "details": stockOrderParam
+                    };
+                    const data = await createStockOrder(pa);//生成库存订单
+                    let stockOrderId = '';
+                    if (data.isSuccess) {
+                        stockOrderId = data.result;
+
+                        //自动审核订单
+                        let par = {
+                            "stockOrderId": stockOrderId,
+                            "auditFlag": 1
+                        };
+                        const audit = await auditStockOrder(par);
+                        if (audit.isSuccess) {
+
+                        } else {
+                            this.$message({
+                                type: 'error',
+                                message: res.result.msg
+                            });
+                            return ;
+                        }
+                    }
+                    this.radio3 = '';
+                    this.radio4 = '';
+                    //生成流水记录
+                    let lp = {
+                        "financeItemCode": "02",
+                        "memo": "快速退货结算",
+                        "orderId":this.orderInfo.id,
+                        "companyId":this.roleForm.compId,
+                        "accountType":this.accountType,
+                        "recordType":"03",
+                        "changeFee":this.changeFee,
+                        "otherCompanyId":this.radio
+                    };
+                    const record = await createOffLineFinanceRecord(lp);
+                    if(record.isSuccess){
+
+                    }else{
+                        this.$message({
+                            duration:this.GLOBAL.MESSAGE_DISSMISS_TIME_MID,
+                            type:'error',
+                            message:record.errorMsg
+                        });
+                        return ;
+                    }
+                    //提示退货成功
+                    this.$message({
+                        duration:this.GLOBAL.MESSAGE_DISSMISS_TIME_MID,
+                        type: 'info',
+                        message: '退货成功'
+                    });
+                    this.radio = '';
+                } else {
+                        this.$message({
+                            duration:this.GLOBAL.MESSAGE_DISSMISS_TIME_MID,
+                            type: 'error',
+                            message: res.errorMsg
+                        });
+                }
+                this.compId = '';
+            },
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/fastShipping2';
+    .el-radio-button__orig-radio:checked + .el-radio-button__inner {
+        color: #fff;
+        background-color: @blue2;
+        border-color: @blue2;
+        box-shadow: -1px 0 0 0 @blue2;
+    }
+</style>

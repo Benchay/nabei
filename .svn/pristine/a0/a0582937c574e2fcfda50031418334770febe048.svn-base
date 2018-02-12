@@ -1,0 +1,239 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/fastShipping2"}'>快速出货</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/returnManagement2"}'>快速退货</router-link>
+            </li>
+            <li class="menuIndex">
+                <router-link :to='{path:"/orderPurchaseStall"}'>订单管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/sellerSettlement"}'>客户结算</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/customerManagement"}'>客户管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/statisticalStatement"}'>销售统计</router-link>
+            </li>
+        </ul>
+        <div class="purchasing-content" style="height:77%;">
+            <div class="purchasingAll">
+                <div class="right">
+                    <router-link :to='{path:"/indentManagement"}' class="comeBack">返回</router-link>
+                </div>
+                <div class="packageTabs">
+                    <ul class="flex">
+                        <li>
+                            <a href="javascript:void(0);" v-for="(obj,index) in packageList" @click="tabss(index)"  :class="{'change2':index === clickIndex2}" >{{obj.name}}</a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="orderForm">
+                    <el-col :span="8">电商卖家：名称名称名称</el-col>
+                    <el-col :span="15">下单时间：2017-08-11 14：00 </el-col>
+                    <el-col :span="8">订单编号：111123454564</el-col>
+                    <el-col :span="15">包裹编号：111123454564</el-col>
+                    <el-col :span="8">共计金额：3000</el-col>
+                    <el-col :span="15">商品数量：200</el-col>
+                </div>
+                <div class="stocktakingTable">
+                    <el-table
+                        :data="tableData"
+                        style="width: 100%">
+                        <el-table-column
+                            v-if="clickIndex2>0"
+                            type="selection"
+                            width="55">
+                        </el-table-column>
+                        <el-table-column
+                            label="主图/货号">
+                            <template scope="scope">
+                                <div class="flex2">
+                                    <img src="../image/111.png" alt=""  class="tableImg">
+                                    <p>MG110</p>
+                                </div>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            prop="productName"
+                            width="180"
+                            label="商品名称">
+                        </el-table-column>
+                        <el-table-column
+                            prop="color"
+                            label="颜色">
+                        </el-table-column>
+                        <el-table-column
+                            prop="size"
+                            label="尺码">
+                        </el-table-column>
+                        <el-table-column
+                            prop="amount"
+                            label="配货数量">
+                            <template scope="scope">
+                                <el-input :value="scope.row.amount" class="amount"></el-input>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            prop="price"
+                            label="单价">
+                        </el-table-column>
+                    </el-table>
+                </div>
+                <div class="right"style="margin-top: 20px">
+                    <div class="purPendingButton"  v-if="clickIndex2>0">
+                        <a href="javascript:void(0)" class="buttonColor" type="info" size="small"  @click="dialogErweuma = true">打印二维码</a>
+                        <a href="javascript:void(0)" class="buttonColor" type="info" size="small"  @click="dialog = true">通知取货</a>
+                    </div>
+                    <div class="purPendingButton" v-if="clickIndex2==0">
+                        <router-link :to='{path:"/indentManagementReturnDetails2"}' class="buttonColor right" >继续打包</router-link>
+
+                    </div>
+                </div>
+                <el-col :span="24">
+                    <a href="javascript:void(0)" class="export_excle">导出excel</a>
+                    <el-pagination
+                        small
+                        class="right"
+                        style="margin-top: 20px;"
+                        @size-change="handleSizeChange"
+                        @current-change="handleCurrentChange"
+                        :current-page="currentPage"
+                        :page-sizes="[10, 20, 30, 40]"
+                        :page-size="pagesize"
+                        layout="total, sizes, prev, pager, next, jumper"
+                        :total="totalCount">
+                    </el-pagination>
+                </el-col>
+            </div>
+        </div>
+        <el-dialog
+            title="删除包裹"
+            :visible.sync="dialogDelete"
+            size="tiny">
+            <div class="flex2">
+                <p>是否确认删除此包裹？</p>
+            </div>
+            <span slot="footer" class="dialog-footer flex2">
+                <el-button type="primary" @click="dialogVisible = false">确 定</el-button>
+                 <el-button @click="dialogVisible = false">取 消</el-button>
+              </span>
+        </el-dialog>
+        <el-dialog
+            title="移除包裹"
+            :visible.sync="dialogRemove"
+            size="tiny">
+            <div class="flex2">
+                <p>是否确认移除此包裹？</p>
+            </div>
+            <span slot="footer" class="dialog-footer flex2">
+                <el-button type="primary" @click="dialogVisible = false">确 定</el-button>
+                 <el-button @click="dialogVisible = false">取 消</el-button>
+              </span>
+        </el-dialog>
+        <el-dialog
+            title="打印二维码"
+            :visible.sync="dialogErweuma"
+            size="tiny">
+            <div class="flex2">
+                <img src="../image/erweima1.png" alt=""><p style="margin-left: 15px ">打印数量：</p><el-input-number size="small" v-model="num6" :min="1"></el-input-number>
+            </div>
+            <span slot="footer" class="dialog-footer flex2">
+                <el-button type="primary" @click="dialogVisible = false">确 定</el-button>
+                 <el-button @click="dialogVisible = false">取 消</el-button>
+              </span>
+        </el-dialog>
+        <el-dialog
+            title="通知取货"
+            :visible.sync="dialog"
+            size="tiny">
+            <div class="flex2 inform">
+                <p>取货通知已发送给商家！</p>
+            </div>
+        </el-dialog>
+    </div>
+</template>
+<script>
+    import headTop from '../components/headTop'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                currentPage: 4,
+                dialog:false,
+                num6:1,
+                erweima:false,
+                dialogErweuma:false,
+                dialogRemove:false,
+                dialogDelete:false,
+                clickIndex2:0,
+                packageList:[
+                    {
+                        list:1,
+                        name:'未打包'
+                    },
+                    {
+                        list:2,
+                        name:'包裹1'
+                    },
+                    {
+                        list:3,
+                        name:'包裹2'},
+                ],
+                items:[
+                    {title:'全部'},
+                    {title:'配货'},
+                    {title:'退货'},
+                ],
+                tableDetails:[
+                    {
+                        name:'电商买家名称名称',
+                        numbers: 'NG123',
+                        checkDate:'2017-05-11 12:21:11',
+                    }
+                ],
+                tableData: [{
+                    productName:'名称名称名称名称名称',
+                    color:'红色',
+                    size:'L',
+                    price:100,
+                    amount:20,
+                },{
+                    productName:'名称名称名称名称名称',
+                    color:'红色',
+                    size:'L',
+                    price:100,
+                    amount:20,
+                    state:2,
+                },
+
+
+                ],
+            }
+        },
+        methods: {
+            tabss(index){
+                this.clickIndex2 = index;
+            },
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+            },
+        }
+    }
+</script>
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/purchasingManagement';
+    @import "../style/indentManagement";
+</style>

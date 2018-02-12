@@ -1,0 +1,294 @@
+.MSConfig{
+    color:#666;
+    font-size: 14px;
+    margin:1px 30px;
+    background: #fff;
+    padding: 1px  30px;
+    height:100%;
+    //修改切换页
+    .el-tabs__item.is-active {
+        color: @blue2;
+    }
+    .el-tabs__active-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 3px;
+        background-color: @blue2;
+        z-index: 1;
+        transition: transform .3s cubic-bezier(.645,.045,.355,1);
+        list-style: none;
+    }
+    .el-tabs__header {
+        border-bottom: none;
+        padding: 0;
+        position: relative;
+        margin: 0 0 15px;
+    }
+//切换内容
+    .firstContent{
+        padding-bottom: 20px;
+        a{
+            display: inline-block;
+        }
+        .FitstList{
+            margin-top: 20px;
+            img{
+                width: 36px;
+                height: 36px;
+                padding-top: 5px;
+            }
+            .trefresh>img {
+                width: 25px;
+                height: 25px;
+            }
+            .delete{
+                margin-top: 20px;
+                font-size: 12px;
+            }
+            .viewDetails{
+                color:@blue;
+            }
+        }
+    }
+    .secondContent{
+        height: 200px;
+        color:#666;
+        .secondTop{
+            margin-top: 25px;
+            p{
+                width: 120px;
+            }
+            .secondInput{
+                width: 120px;
+                text-align: center;
+            }
+            span{
+                margin: 0 10px;
+            }
+        }
+        .secondButton{
+            margin-top: 50px;
+            a{
+                width: 120px;
+                text-align: center;
+                margin: 0 50px;
+            }
+        }
+    }
+    .secondTips{
+        margin-top: 50px
+    }
+    .secondTips>div>div{
+        height: 36px;
+    }
+    .MCtips{
+        color:@orange;
+        font-size: 12px;
+    }
+}
+.MSConfigSeller{
+    color:#666;
+    font-size: 14px;
+    margin:1px 30px;
+    background: #fff;
+    padding: 1px  30px;
+    height:100%;
+    //修改切换页
+    .el-tabs__item.is-active {
+        color: @red;
+    }
+    .el-tabs__active-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 3px;
+        background-color: @red;
+        z-index: 1;
+        transition: transform .3s cubic-bezier(.645,.045,.355,1);
+        list-style: none;
+    }
+    .el-tabs__header {
+        border-bottom: none;
+        padding: 0;
+        position: relative;
+        margin: 0 0 15px;
+    }
+    //切换内容
+    .firstContent{
+        padding-bottom: 20px;
+        a{
+            display: inline-block;
+        }
+        .FitstList{
+            margin-top: 20px;
+            img{
+                width: 36px;
+                height: 36px;
+                padding-top: 5px;
+            }
+            .trefresh>img {
+                width: 25px;
+                height: 25px;
+            }
+            .delete{
+                margin-top: 20px;
+                font-size: 12px;
+            }
+            .viewDetails{
+                color:@blue;
+            }
+        }
+    }
+    .secondContent{
+        height: 200px;
+        color:#666;
+        .secondTop{
+            margin-top: 25px;
+            p{
+                width: 120px;
+            }
+            .secondInput{
+                width: 120px;
+                text-align: center;
+            }
+            span{
+                margin: 0 10px;
+            }
+        }
+        .secondButton{
+            margin-top: 50px;
+            a{
+                width: 200px;
+                text-align: center;
+                margin: 0 50px;
+            }
+        }
+    }
+    .secondTips{
+        margin-top: 50px;
+    }
+    .secondTips>div>div{
+        height: 36px;
+    }
+}
+.tc{
+    .el-input__inner{
+        text-align: center;
+        &:disabled{
+            color: #666666;
+            background-color: #f4f4f4;
+        }
+    }
+}
+.goodscontent{
+    display: flex;
+    padding: 0 50px;
+    margin: 50px 20px;
+    .sidegood{
+        width: 80px;
+        &:first-child{
+            margin-right: 35px;
+        }
+        &:last-child{
+            margin-left: 35px;
+        }
+        .sideimgwarp{
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;     
+        }
+        p{
+            text-align: center;
+            margin-top: 15px;
+        }
+    }
+    .gooditem{
+        flex: 1;
+        min-width: 226px;
+        font-size: 0;
+        margin-right: 10px;
+        text-align: center;
+        padding-top: 25px;
+        .mdimgwrap{
+            display: inline-block;
+            vertical-align: top;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            box-sizing: border-box;
+            border: 1px solid #dcdcdc;
+            margin-right: 10px;
+            cursor: pointer;
+            position: relative;
+            img{
+                position: absolute;
+                top: -1px;
+                left: -1px;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+            }
+        }
+        .describetion{
+            font-size: 14px;
+            display: inline-block;
+            vertical-align: top;
+            margin-top: 9px;
+        }
+        .line{
+            display: inline-block;
+            vertical-align: top;
+            margin-top: 16px;
+            width: 110px;
+            margin-left: 10px;
+            box-sizing: border-box;
+            border-bottom: 1px dashed #dcdddc;
+        }
+    }
+    .lastitem{
+        width: 113px;
+        padding-top: 25px;
+           .mdimgwrap{
+            display: inline-block;
+            vertical-align: top;
+            width: 40px;
+            height: 40px;
+            box-sizing: border-box;
+            border-radius: 50%;
+            border: 1px solid #dcdcdc;
+            margin-right: 10px;
+            cursor: pointer;
+            position: relative;
+            img{
+                position: absolute;
+                top: -1px;
+                left: -1px;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+            }
+        }
+        .describetion{
+            font-size: 14px;
+            display: inline-block;
+            vertical-align: top;
+            margin-top: 9px;
+        }
+    }
+}
+        .btngroup{
+                margin-top: 50px;
+            a{
+                width: 200px;
+                text-align: center;
+                margin: 0 50px;
+            }
+        }
+.remarks{
+    margin:0 70px;
+    padding-top: 50px; 
+    .remarkItem{
+        margin-top: 20px;
+    }
+}

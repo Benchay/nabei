@@ -1,0 +1,375 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('fastShipping2')">
+                <router-link :to='{path:"/fastShipping2"}'>快速出货</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('indentManagement')">
+                <router-link :to='{path:"/indentManagement"}'>订单管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('takeGoods')">
+                <router-link :to='{path:"/takeGoods"}'>取货码</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('sellerSettlement')">
+                <router-link :to='{path:"/sellerSettlement"}'>客户结算</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('SettlementRecordsStall')">
+                <router-link :to='{path:"/SettlementRecordsStall"}'>结算单</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('customerManagement')">
+                <router-link :to='{path:"/customerManagement"}'>客户管理</router-link>
+            </li>
+            <li class="menuIndex" v-if="getMenuAuthFun('statisticalStatement')">
+                <router-link :to='{path:"/statisticalStatement"}'>销售统计</router-link>
+            </li>
+        </ul>
+        <div class="commodityStatistics">
+            <!--1225-修改-->
+            <div class="firstRadio">
+                <el-radio-group v-model="radio3" class="radioGreen" size="small">
+                    <el-radio-button label="1">每日统计（按商品）</el-radio-button>
+                    <!--<el-radio-button label="2">每日统计（按客户）</el-radio-button>-->
+                </el-radio-group>
+                <!--@change="handleIconClickDate"-->
+            </div>
+            <div v-if="radio3 == '1'">
+              <div class="marketTop">
+                  <el-date-picker
+                      size="small"
+                      v-model="startDate"
+                      type="date"
+                      @change="handleIconClickDate"
+                      format="yyyy-MM-dd"
+                      placeholder="选择日期"
+                  >
+                  </el-date-picker>
+                  <el-input  v-model="itemNo" size="small" style="width: 200px;"  placeholder="货号搜索"  @change="remoteMethod"></el-input>
+
+              </div>
+              <div class="marketContent">
+                  <div>
+                      <span>商品总销量：{{orderNub}}</span>
+                  </div>
+                  <div>
+                      <span>已出货总数量：{{allocateProductNum}}</span>
+                  </div>
+                  <div>
+                      <span>待出货总数量：{{orderNub-allocateProductNum}}</span>
+                  </div>
+              </div>
+              <div class="marketTable">
+                  <p class="title">当日商品销售榜</p>
+                  <el-table
+                      :data="tableData"
+                      style="width: 100%">
+                      <el-table-column
+                          width="80"
+                          label="排名">
+                          <template scope="scope">
+                              <p>{{(scope.$index+1)+(currentPage-1)*pagesize}}</p>
+                          </template>
+                      </el-table-column>
+                      <el-table-column
+                          label="主图+商品名称"
+                          width="280">
+                          <template scope="scope">
+                             <div class="flex">
+                                 <img :src="scope.row.imgUrl_main" alt="">
+                                 <p>{{ scope.row.productName }}</p>
+                             </div>
+                          </template>
+                      </el-table-column>
+                      <el-table-column
+                          prop="productCode"
+                          label="货号">
+                      </el-table-column>
+                      <el-table-column
+                          label="颜色/尺码">
+                          <template scope="scope">
+                              <div v-for="item in scope.row.details">
+                                  <p>{{item.color}}/{{item.size}}</p>
+                              </div>
+                          </template>
+                      </el-table-column>
+                      <el-table-column
+                          prop=""
+                          label="已出货量">
+                          <template scope="scope">
+                              <div v-for="item in scope.row.details">
+                                  <p>{{item.allocateProductNum}}</p>
+                              </div>
+                          </template>
+                      </el-table-column>
+                      <el-table-column
+                          prop=""
+                          label="待出货数量">
+                          <template scope="scope">
+                              <div v-for="item in scope.row.details">
+                                  <p>{{item.orderNum-item.allocateProductNum }}</p>
+                              </div>
+                          </template>
+                      </el-table-column>
+                      <el-table-column
+                          prop="allocateProductNum"
+                          label="商品总销量">
+                          <template scope="scope">
+                             <p>{{scope.row.orderNub}}</p>
+                          </template>
+                      </el-table-column>
+                  </el-table>
+              </div>
+                <el-pagination
+                    small
+                    class="right"
+                    style="margin-top: 20px;"
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :page-sizes="[10, 20, 30, 40,50]"
+                    :current-page="currentPage"
+                    :page-size="pagesize"
+                    layout="total, sizes,prev, pager, next, jumper"
+                    :total="totalCount">
+                </el-pagination>
+          </div>
+            <div v-if="radio3 == '2'">
+                <div class="marketTop">
+                    <el-date-picker
+                        size="small"
+                        v-model="startDate"
+                        type="date"
+                        placeholder="选择日期"
+                    >
+                    </el-date-picker>
+                    <el-input v-model="itemNo" size="small" icon="search" placeholder="请输入客户名称" style="margin:0 10px;width: 200px;" :on-icon-click="handleIconClickCode"></el-input>
+                </div>
+                <div class="marketContent">
+                    <div>
+                        <span>采购总数量：1</span>
+                    </div>
+                    <div>
+                        <span>出货总数量：1234</span>
+                    </div>
+                    <div>
+                        <span>待出货总数量：12333</span>
+                    </div>
+                </div>
+                <div class="marketTable">
+                    <p class="title">每日客户进货榜</p>
+                    <el-table
+                        :data="tableData"
+                        style="width: 100%">
+                        <el-table-column
+                            prop=""
+                            label="排名"
+                            width="180">
+                            <template scope="scope">
+                                <p></p>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            prop=""
+                            label="客户信息"
+                            width="180">
+                        </el-table-column>
+                        <el-table-column
+                            prop=""
+                            label="总采购数">
+                        </el-table-column>
+                        <el-table-column
+                            prop=""
+                            label="已配货数">
+                        </el-table-column>
+                        <el-table-column
+                            prop=""
+                            label="未配货数">
+                        </el-table-column>
+                    </el-table>
+                </div>
+                <el-pagination
+                    small
+                    class="right"
+                    style="margin-top: 20px;"
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :page-sizes="[10, 20, 30, 40,50]"
+                    :current-page="currentPage"
+                    :page-size="pagesize"
+                    layout="total, sizes,prev, pager, next, jumper"
+                    :total="totalCount">
+                </el-pagination>
+            </div>
+            <div style="height: 210px;">
+                &nbsp;
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    import {getMenuAuth,haveMenuAuth} from  '../utils/AuthMenu.js'
+    import {queryOrderDetailSales} from '@/api/getData'
+    import {userInfo} from  '../config/mUtils'
+
+    export default {
+        components: {
+        },
+        data() {
+            return {
+                startDate: new Date(),
+                itemNo: '',
+                roleForm: {
+                    userId: '',
+                    roleId: '',
+                    compId: ''
+                },
+                radio3: '1',
+                radio: 0,
+                value6: '',
+                input1: '',
+                input3: '',
+                tableData: [],
+                pagesize: 10,
+                //默认高亮行数据id
+                highlightId: -1,
+                //当前页码
+                currentPage: 1,
+                //查询的页码
+                start: 1,
+                //默认数据总数
+                totalCount: 0,
+                allocateProductNum: 0,
+                orderNub: 0,
+                today:'',
+                tomorrow:'',
+                query:''
+            }
+        },
+        watch:{
+            '$route':function (route) {
+                this.startDate = new Date();
+                    this.itemNo = '';
+                this.initData();
+            }
+        },
+        mounted() {
+            this.roleForm.compId = userInfo().companyId;
+            this.roleForm.userId = userInfo().userId;
+            this.initData();
+        },
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            handleIconClickCode(){
+        	    console.log(1)
+            },
+            async initData(param){
+                if (param == undefined){
+                    this.today =  new Date();
+                    this.today.setHours(8);
+                    this.today.setMinutes(0);
+                    this.today.setSeconds(0);
+                    this.today.setMilliseconds(0);
+                    this.tomorrow = new Date();
+                    this.tomorrow.setHours(31);
+                    this.tomorrow.setMinutes(59);
+                    this.tomorrow.setSeconds(59);
+                    this.tomorrow.setMilliseconds(59);
+                    param={
+                        "companyId":this.roleForm.compId,
+                        "startTime":this.today,
+                        "endTime":this.tomorrow,
+                        "searchKey":this.query,
+                        "getHeader":"1",
+                        "pageIndex":this.currentPage,
+                        "pageSize":this.pagesize
+                    }
+                }
+
+                const res = await queryOrderDetailSales(param);
+                if (res.isSuccess == true){
+                     let table= res.result.pageResult.results;
+                    this.tableData = table;
+                    this.orderNub = res.result.salesCount.orderNub;
+                    this.allocateProductNum = res.result.salesCount.allocateProductNum;
+                     this.totalCount =  res.result.pageResult.totalCount;
+                }
+            },
+            handleIconClickDate(date){
+                this.tableData = [];
+                let newTime = date;
+               this.today = newTime +' 00:00:00';
+               this.tomorrow = newTime +' 23:59:59';
+                let param={
+                    "companyId":this.roleForm.compId,
+                    "startTime":this.today,
+                    "endTime":this.tomorrow,
+                    "searchKey":this.query,
+                    "getHeader":"1",
+                    "pageIndex":this.currentPage,
+                    "pageSize":this.pagesize
+                }
+                this.initData(param)
+            },
+            //远程搜索模糊查询货号
+            async remoteMethod(query){
+                this.query = query;
+                    let param = {
+                        "companyId":this.roleForm.compId,
+                        "startTime":this.today,
+                        "endTime":this.tomorrow,
+                        "searchKey":this.query,
+                        "getHeader":"1",
+                        "pageIndex":this.currentPage,
+                        "pageSize":this.pagesize
+                    };
+                    const res = await queryOrderDetailSales(param);
+                    if (res.isSuccess == true){
+                        let table= res.result.pageResult.results;
+                        this.tableData = table;
+                        this.orderNub = res.result.salesCount.orderNub;
+                        this.allocateProductNum = res.result.salesCount.allocateProductNum;
+                        this.totalCount =  res.result.pageResult.totalCount;
+                    }
+
+            },
+            handleSizeChange(val) {
+                this.pagesize = val;
+                let param = {
+                    "companyId":this.roleForm.compId,
+                    "startTime":this.today,
+                    "endTime":this.tomorrow,
+                    "searchKey":this.query,
+                    "getHeader":"1",
+                    "pageIndex":this.currentPage,
+                    "pageSize":this.pagesize
+                };
+                this.initData(param)
+            },
+            handleCurrentChange(val) {
+                this.currentPage = val;
+                let param = {
+                    "companyId":this.roleForm.compId,
+                    "startTime":this.today,
+                    "endTime":this.tomorrow,
+                    "searchKey":this.query,
+                    "getHeader":"1",
+                    "pageIndex":this.currentPage,
+                    "pageSize":this.pagesize
+                };
+                this.initData(param)
+            },
+            getTime(date){
+                this.time = date;
+                console.log(this.time);
+            }
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/commodityStatistics';
+</style>

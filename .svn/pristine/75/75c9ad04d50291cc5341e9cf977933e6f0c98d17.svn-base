@@ -1,0 +1,354 @@
+/**
+ * Created by Administrator on 2017/9/2.
+ */
+export function getAuth(auths) {
+    //var classMap = {"purchasingManagement":'manage-menu',"financialManagement":'manage-menu'};
+    var iconmap = { "purchasingManagement": 'icon-procurement icon', "financialManagement": 'icon-finance icon' };
+    var mainIndexMap = { "purchasingManagement": '10', "financialManagement": '20' };
+    var subIndexMap = { "addShop": "addShop", "startProcurement": "startProcurement" };
+    var jsonArray = [];
+    if (undefined == auths) return jsonArray;
+    if (!Object.prototype.toString.call(auths) == '[object Array]') return jsonArray;
+    for (var i = 0; i < auths.length; i++) {
+        //for(var resultData in resdata){
+        var resultData = auths[i];
+        if (resultData.type == '1' && resultData.parentAuthId == null) { //一级菜单
+            resultData.className = 'manage-menu';
+            resultData.iconClassName = iconmap[resultData.funPath];
+            resultData.index = mainIndexMap[resultData.funPath];
+        } else if (resultData.type == '1' && resultData.parentAuthId != null) {
+            resultData.index = subIndexMap[resultData.funPath];
+        }
+        jsonArray.push(resultData);
+    }
+    return jsonArray;
+};
+/*
+ * 是否有下级菜单
+ *levelData1  二级
+ * checkId    一级菜单id
+ */
+function bhaveSub(levelData1, checkId) {
+    for (var i = 0; i < levelData1.length; i++) {
+        if (levelData1[i].isShowed == 0) { //如果下级不显示
+            //continue;
+        }
+        if (levelData1[i].parentAuthId == checkId) {
+            return true;
+        }
+    }
+    return false;
+}
+/*
+ * 排序
+ */
+function compare(propertyName) {
+    return function(object1, object2) {
+        var value1 = object1[propertyName];
+        var value2 = object2[propertyName];
+        if (value2 < value1) {
+            // return -1;
+            return 1;
+        } else if (value2 > value1) {
+            // return 1;
+            return -1;
+        } else {
+            return 0;
+        }
+    }
+}
+/*
+ * 整理菜单
+ */
+export function getMenuAuth(resdata) {
+    var iconmap = {
+        "munu_mj_001": 'icon-home1 icon',
+        "munu_mj_002": 'icon-procurement1 icon',
+        "munu_mj_003": 'icon-commodity1 icon',
+        "munu_mj_004": 'icon-dk1 icon',
+        "munu_mj_005": 'icon-lgoods1 icon',
+        "munu_mj_006": 'icon-finance1 icon',
+        "munu_mj_007": 'icon-other1 icon',
+        "munu_mj_008": 'icon-other1 icon',
+        "munu_mj_009": 'icon-other1 icon',
+        "munu_mj_010": 'icon-other1 icon',
+        "munu_dk_001": 'icon-home1 icon',
+        "munu_dk_002": 'icon-order1 icon',
+        "munu_dk_003": 'icon-lgoods1 icon',
+        "munu_dk_004": 'icon-procurement1 icon',
+        "munu_dk_005": 'icon-warehouse1 icon',
+        "munu_dk_006": 'icon-finance1 icon',
+        "munu_dk_007": 'icon-other1 icon',
+        "munu_dk_008": 'icon-commodity1 icon',
+        "munu_yy_001": 'icon-home1 icon',
+        "munu_yy_002": 'icon-procurement1 icon',
+        "munu_yy_003": 'icon-commodity1 icon',
+        "munu_yy_004": 'icon-finance1 icon',
+        "munu_yy_005": 'icon-other1 icon',
+        "munu_yy_006": 'icon-commodity1 icon',
+        "munu_yy_007": 'icon-commodity1 icon',
+        "munu_yy_008": 'icon-commodity1 icon',
+        "munu_yy_009": 'icon-commodity1 icon',
+        "munu_yy_010": 'icon-commodity1 icon'
+    };
+    var iconmapSelect = {
+        "munu_mj_001": 'icon-home icon',
+        "munu_mj_002": 'icon-procurement icon',
+        "munu_mj_003": 'icon-commodity icon',
+        "munu_mj_004": 'icon-dk icon',
+        "munu_mj_005": 'icon-lgoods icon',
+        "munu_mj_006": 'icon-finance icon',
+        "munu_mj_007": 'icon-other icon',
+        "munu_mj_008": 'icon-other icon',
+        "munu_mj_009": 'icon-other icon',
+        "munu_mj_010": 'icon-other icon',
+        "munu_dk_001": 'icon-home icon',
+        "munu_dk_002": 'icon-order icon',
+        "munu_dk_003": 'icon-lgoods icon',
+        "munu_dk_004": 'icon-procurement icon',
+        "munu_dk_005": 'icon-warehouse icon',
+        "munu_dk_006": 'icon-finance icon',
+        "munu_dk_007": 'icon-other icon',
+        "munu_dk_008": 'icon-commodity icon',
+        "munu_yy_001": 'icon-home icon',
+        "munu_yy_002": 'icon-procurement icon',
+        "munu_yy_003": 'icon-commodity icon',
+        "munu_yy_004": 'icon-finance icon',
+        "munu_yy_005": 'icon-other icon',
+        "munu_yy_006": 'icon-commodity icon',
+        "munu_yy_007": 'icon-commodity icon',
+        "munu_yy_008": 'icon-commodity icon',
+        "munu_yy_009": 'icon-commodity icon',
+        "munu_yy_010": 'icon-commodity icon'
+    };
+    //index
+    var indexMap = {
+        "munu_mj_001": 'homeSeller',
+        "munu_mj_002": 'webStoreOrderSalesBuy',
+        "munu_mj_003": 'salesReturn',
+        "munu_mj_004": 'stallManage',
+        "munu_mj_005": 'commodityMnagement',
+        "munu_mj_006": 'financialManagement',
+        "munu_mj_007": 'logToolsSeller',
+        "munu_mj_008": 'icon-other icon',
+        "munu_mj_009": 'icon-other icon',
+        "munu_mj_010": 'icon-other icon',
+        "munu_dk_001": 'homeStall',
+        "munu_dk_002": 'fastShipping2',
+        "munu_dk_003": 'stallProductManagement',
+        "munu_dk_004": 'stallProcurement',
+        "munu_dk_005": 'currentInventory',
+        "munu_dk_006": 'financialManagement',
+        "munu_dk_007": 'logTools',
+        "munu_dk_008": 'returnManagement2',
+        "munu_yy_001": 'userCenter',
+        "munu_yy_002": 'webStoreOrderForPlatform',
+        "munu_yy_003": 'verifyManage',
+        "munu_yy_004": 'warehouseManagement',
+        "munu_yy_005": 'messageManagement',
+        "munu_yy_006": 'menuManagement',
+        "munu_yy_007": 'icon-procurement icon',
+        "munu_yy_008": 'icon-other icon',
+        "munu_yy_009": 'icon-procurement icon',
+        "munu_yy_010": 'icon-procurement icon'
+    };
+
+    var templist;
+    var jsonArray1 = [];
+    var jsonArray2 = [];
+    var jsonArray3 = [];
+    for (var i = 0; i < resdata.length; i++) {
+        //for(var resultData in resdata){
+        var resultData = resdata[i];
+        if (resultData.type == '1' && resultData.parentAuthId == null && resultData.isShowed == "1") { //一级菜单
+            var json = new Object;
+            json.id = resultData.id;
+            json.name = resultData.name;
+            json.method = resultData.method;
+            json.level = 0;
+            var key = resultData.method;
+            json.iconClass = iconmap[key];
+            json.iconClassSelect = iconmapSelect[key];
+            json.index = indexMap[key];
+            json.type = resultData.type;
+            var serialNum = resultData.serialNum;
+            if (serialNum == '') {
+                serialNum = 0;
+            }
+            json.serialNum = serialNum;
+            //josn.parentAuthId=resultData.parentAuthId;
+            jsonArray1.push(json);
+            // console.log(jsonArray1)
+        } else if (resultData.type == '1' && resultData.parentAuthId != null && resultData.isShowed == 1) { //
+            var json2 = new Object;
+            json2.id = resultData.id;
+            json2.name = resultData.name;
+            json2.method = resultData.method;
+            json2.parentAuthId = resultData.parentAuthId;
+            json2.level = 1;
+            //var key = resultData.method;
+            //json.iconClass=iconmap[key];
+            json2.index = resultData.method;
+            json2.serialNum = resultData.serialNum;
+            json2.isShowed = resultData.isShowed;
+
+            jsonArray2.push(json2);
+        } else if (resultData.type == '2') {
+            var json3 = new Object;
+            json3.id = resultData.id;
+            json3.name = resultData.name;
+            json3.method = resultData.method;
+            json3.parentAuthId = resultData.parentAuthId;
+            json3.level = 1;
+            jsonArray3.push(json3);
+        }
+    }
+    for (var i = 0; i < jsonArray1.length; i++) {
+        var b = bhaveSub(jsonArray2, jsonArray1[i].id);
+        jsonArray1[i].bhaveSub = b;
+    }
+
+    var roleArray = [];
+    for (var i = 0; i < jsonArray1.length; i++) {
+        var result1 = jsonArray1[i];
+        var jt1 = new Object;
+        jt1.id = result1.id;
+        jt1.label = result1.name;
+        jt1.name = "" + i;
+        jt1.children = [];
+        jt1.iconClass = result1.iconClass;
+        jt1.iconClassSelect = result1.iconClassSelect;
+        jt1.bhaveSub = result1.bhaveSub;
+        jt1.parentAuthId = null;
+        jt1.type = result1.type;
+        jt1.level = result1.level;
+        jt1.index = result1.index;
+        jt1.serialNum = result1.serialNum;
+        var children1 = [];
+        for (var j = 0; j < jsonArray2.length; j++) {
+            var result2 = jsonArray2[j];
+            var children2 = [];
+            //console.log(result2);
+            for (var k = 0; k < jsonArray3.length; k++) {
+                //var sub3 = new Object;
+                var result3 = jsonArray3[k];
+                if (result3 == null) continue;
+                if (result3.parentAuthId == result2.id) {
+                    var jt3 = new Object;
+                    jt3.id = result3.id;
+                    jt3.label = result3.name;
+                    jt3.paraMethod = result2.method;
+                    children2.push(jt3);
+                }
+            }
+
+            if (result2.parentAuthId == result1.id) {
+                var jt2 = new Object;
+                jt2.id = result2.id;
+                jt2.label = result2.name;
+                jt2.index = result2.index;
+                jt2.serialNum = result2.serialNum;
+                jt2.children = [];
+                jt2.serialNum = result2.serialNum;
+                //children1.push(jt2);
+                if (children2.length > 0) {
+                    jt2.children.push(children2);
+                }
+                if (jt2.children.length < 1) {
+                    delete jt2.children;
+                }
+                jt1.children.push(jt2);
+            }
+        }
+        if (jt1.children.length < 1) {
+            delete jt1.children;
+        } else {
+            jt1.children.sort(compare("serialNum"));
+        }
+        roleArray.push(jt1);
+    }
+    roleArray.sort(compare("serialNum"));
+    //console.log(roleArray);
+    return roleArray;
+};
+
+export function getSubAuth(resdata) {
+    var templist;
+    var jsonArray1 = [];
+    var jsonArray2 = [];
+    var jsonArray3 = [];
+    for (var i = 0; i < resdata.length; i++) {
+        //for(var resultData in resdata){
+        var resultData = resdata[i];
+        if (resultData.type == '1' && resultData.parentAuthId == null) { //一级菜单
+            var json = new Object;
+            json.id = resultData.id;
+            json.name = resultData.name;
+            json.method = resultData.method;
+            //josn.parentAuthId=resultData.parentAuthId;
+            jsonArray1.push(json);
+        } else if (resultData.type == '1' && resultData.parentAuthId != null) {
+            var json2 = new Object;
+            json2.id = resultData.id;
+            json2.name = resultData.name;
+            json2.method = resultData.method;
+            json2.parentAuthId = resultData.parentAuthId;
+            jsonArray2.push(json2);
+        } else if (resultData.type == '2') {
+            var json3 = new Object;
+            json3.id = resultData.id;
+            json3.name = resultData.name;
+            json3.method = resultData.method;
+            json3.parentAuthId = resultData.parentAuthId;
+            jsonArray3.push(json3);
+        }
+    }
+
+    var roleArray = [];
+    for (var i = 0; i < jsonArray1.length; i++) {
+        var result1 = jsonArray1[i];
+        var jt1 = new Object;
+        jt1.id = result1.id;
+        jt1.label = result1.name;
+        jt1.name = "" + i;
+        jt1.children = [];
+        var children1 = [];
+        for (var j = 0; j < jsonArray2.length; j++) {
+            var result2 = jsonArray2[j];
+            var children2 = [];
+
+            for (var k = 0; k < jsonArray3.length; k++) {
+                //var sub3 = new Object;
+                var result3 = jsonArray3[k];
+                if (result3 == null) continue;
+                if (result3.parentAuthId == result2.id) {
+                    var jt3 = new Object;
+                    jt3.id = result3.id;
+                    jt3.label = result3.name;
+                    jt3.paraMethod = result2.method;
+                    children2.push(jt3);
+                }
+            }
+
+            if (result2.parentAuthId == result1.id) {
+                var jt2 = new Object;
+                jt2.id = result2.id;
+                jt2.label = result2.name;
+                jt2.children = [];
+                //children1.push(jt2);
+                if (children2.length > 0) {
+                    jt2.children.push(children2);
+                }
+                if (jt2.children.length < 1) {
+                    delete jt2.children;
+                }
+                jt1.children.push(jt2);
+            }
+        }
+        if (jt1.children.length < 1) {
+            delete jt1.children;
+        }
+        roleArray.push(jt1);
+    }
+    return roleArray;
+};

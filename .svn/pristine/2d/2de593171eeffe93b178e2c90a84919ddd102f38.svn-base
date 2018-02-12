@@ -1,0 +1,32 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li class="menuIndex2">
+                <a href="javascript:void(0)">帮助中心</a>
+            </li>
+        </ul>
+
+    </div>
+</template>
+
+<script>
+
+    export default {
+        components: {
+        },
+        data() {
+            return {
+
+            }
+        },
+        methods: {
+
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/helpCenter';
+</style>

@@ -1,0 +1,16 @@
+.helpCenter{
+    color:#333;
+    margin:0 30px;
+    background: #fff;
+    padding: 20px 30px;
+    height:100%;
+    .helpTabs{
+        margin-bottom: 20px;
+    }
+    .el-collapse{
+        border:none;
+    }
+    .Q&A{
+
+    }
+}

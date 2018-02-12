@@ -1,0 +1,103 @@
+<template>
+    <div class="fillcontain">
+        <div class="systemNotice">
+            <p>更多公告</p>
+            <div class="NoticeList">
+                <router-link :to='{path:"/systemNoticeDetails"}' v-for="list in listData" class="list">
+                    <span class="noticeTitle1">【 {{list.date}} 】</span><span class="noticeTitle">{{list.details}}</span>
+                </router-link>
+            </div>
+            <el-pagination
+                small
+                class="right"
+                style="margin-top: 20px;"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :current-page="currentPage"
+                :page-sizes="[10, 20, 30, 40]"
+                :page-size="pageSize"
+                layout="total, sizes, prev, pager, next, jumper"
+                :total="totalCount">
+            </el-pagination>
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {apiCount, userCount, orderCount, apiAllCount, getUserCount, getOrderCount, adminDayCount, adminCount,queryBulletin} from '@/api/getData'
+    import {formatDate} from '../utils/date.js'
+
+    export default {
+        data(){
+            return {
+                applicationId:'',
+                currentPage:1,
+                pageSize:10,
+                totalCount:0,
+                listData:[],
+            }
+        },
+        mounted(){
+            this.applicationId = this.$route.query.applicationId;
+            let param={
+                "applicationId":this.applicationId,
+                "pageIndex":this.currentPage,
+                "pageSize":this.pageSize
+            };
+            this.loadBulletinInfo(param);
+        },
+        methods: {
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+                this.pageSize = val;
+                let param = {
+                    "applicationId":this.applicationId,
+                    "pageIndex":this.currentPage,
+                    "pageSize":val
+                };
+
+                this.loadBulletinInfo(param);
+               // alert("pageSize----"+this.pageSize+"--currentPage--"+ this.currentPage + "---totalCount---"+this.totalCount);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+                this.currentPage = val;
+            },
+            async loadBulletinInfo(param){
+                this.listData = [];
+                const res = await queryBulletin(param);
+                if(res.isSuccess){
+                    let data = res.result.data;
+                    for(let i = 0;i<data.length;i++){
+                        let pa = {
+                            "date":this.formatDate(data[i].createTime),
+                            "details":data[i].title
+                        };
+                        this.listData.push(pa);
+                    }
+                    this.totalCount = res.result.totalCount;
+                }else{
+                    this.$message({
+                        type:'error',
+                        message:res.errorMsg
+                    });
+                }
+            },
+            //数据格式化
+            formatDate:function(val) {
+                if (val == undefined||val=='') {
+                    return "";
+                }
+                var date = new Date(val);
+                return formatDate(date,'yyyy-MM-dd hh:mm:ss');
+            },
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import "../style/common";
+    @import "../style/moreDynamic";
+</style>

@@ -1,0 +1,989 @@
+<template>
+    <div class="fillcontain" 
+    	v-loading="loading2"
+        element-loading-text="拼命加载中"
+        element-loading-spinner="el-icon-loading"
+		element-loading-background="rgba(0, 0, 0, 0.8)">
+        <ul class="menu">
+            <li  class="menuIndex2" v-if="getMenuAuthFun('stallManage')">
+                <router-link :to='{path:"/stallManage"}'>档口管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('stallSettlement')">
+                <router-link :to='{path:"/stallSettlement"}'>档口结算</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('SettlementRecords')">
+                <router-link :to='{path:"/SettlementRecords"}'>结算单</router-link>
+            </li>
+        </ul>
+        <div class="stallManage">
+           <div class="stallManageTop">
+               <el-input
+                   placeholder="公司名称搜索"
+                   icon="search"
+                   size="small"
+                   v-model="stallName"
+                   :on-icon-click="initloadFirstData">
+               </el-input>
+               <el-input
+                   placeholder="档口编码搜索"
+                   icon="search"
+                   size="small"
+                   v-model="stallCode"
+                   :on-icon-click="initloadFirstData">
+               </el-input>
+               <!--<el-input
+                   placeholder="联系人搜索"
+                   icon="search"
+                   size="small"
+                   v-model="userNameSerche"
+                   :on-icon-click="handleIconClick">
+               </el-input>-->
+               <el-input
+                   placeholder="联系电话搜索"
+                   icon="search"
+                   size="small"
+                   v-model="mobile"
+                   :on-icon-click="initloadFirstData">
+               </el-input>
+           </div>
+            <div class="stallButton">
+                <a href="javascript:void(0)" class="buttonColor3" @click="addStallClick">添加档口</a>
+                <a href="javascript:void(0)" class="buttonColor3" @click="batchDeleteStall">批量删除</a>
+                <a href="javascript:void(0)" class="buttonColor3" @click="dialogImport = true">导入档口</a>
+            </div>
+            <div class="stallManageTable">
+                <el-table
+                    :data="tableData"
+                    @selection-change="handleSelectionChange"
+                    style="width: 100%">
+                    <el-table-column
+                        type="selection"
+                        width="55">
+                    </el-table-column>
+                    <el-table-column
+                        prop="name"
+                        width="180"
+                        label="公司名称">
+                    </el-table-column>
+                    <el-table-column
+                        prop="stallCode"
+                        label="档口编码">
+                    </el-table-column>
+                    <el-table-column
+                        prop="mobile"
+                        label="联系电话">
+                    </el-table-column>
+                    <el-table-column
+                        prop="address"
+                        width="200"
+                        label="地址">
+                        <template scope="scope">
+                            <el-popover
+                                ref="popover1"
+                                placement="top"
+                                width="200"
+                                trigger="hover"
+                                :content=scope.row.address>
+                            </el-popover>
+                            <div class="overflow" v-popover:popover1>
+                                {{scope.row.address}}
+                            </div>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="status"
+                        label="状态"
+                        :formatter="formatStatus">
+                    </el-table-column>
+                    <el-table-column
+                        prop="remark"
+                        width="200"
+                        label="备注信息">
+                        <template scope="scope">
+                            <el-popover
+                                ref="popover1"
+                                placement="top"
+                                width="200"
+                                trigger="hover"
+                                :content=scope.row.remark>
+                            </el-popover>
+                            <div class="overflow" v-popover:popover1>
+                                {{scope.row.remark}}
+                            </div>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        label="操作">
+                        <template scope="scope">
+                            <div class="stallOperation">
+                                <a href="javascript:void(0)" @click="updateStall(tableData[scope.$index])">编辑</a>
+                                <a href="javascript:void(0)" @click="deleteStall(tableData[scope.$index].id)">删除</a>
+                            </div>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+            <el-pagination
+                small
+                class="right"
+                style="margin-top: 20px;"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :current-page="currentPage"
+                :page-sizes="[10, 20, 30, 40,50]"
+                :page-size="pageSize"
+                layout="total, sizes, prev, pager, next, jumper"
+                :total="totalCount">
+            </el-pagination>
+            <a href="javascript:void(0)" class="export_excle1" @click="exportTableData">导出excel</a>
+            <div style="height:160px;">
+                &nbsp;
+            </div>
+        </div>
+        <el-dialog
+            title="添加档口"
+            :visible.sync="dialogVisible"
+            size="tiny"
+            >
+            <div class="">
+                <el-form ref="addStallForm" :model="addStallForm" :rules="addStallFormRule" label-width="120px">
+                    <el-form-item label="公司名称：" prop="stallName">
+                        <!--<el-autocomplete
+                            style="width:100%;"
+                            v-model="addStallForm.stallName"
+                            :fetch-suggestions="querySearchAsync"
+                            placeholder="请输入档口公司名称"
+                            @select="handleAddSelect"
+                        ></el-autocomplete>-->
+                        <el-select
+	                        v-model="addStallForm.stallName"
+	                        filterable
+	                        remote
+	                        reserve-keyword
+	                        size="small"
+	                        style="width:100%;"
+	                        placeholder="请输入档口公司名称"
+	                        :remote-method="remoteMethod"
+	                        :loading="loading"
+	                        @change="handleAddSelect">
+	                        <el-option
+	                        	style="width:200px;"
+	                            v-for="item in optionsStalls"
+	                            :key="item.name"
+	                            :label="item.name"
+	                            :value="item.name">
+	                        </el-option>
+	                    </el-select>
+                    </el-form-item>
+                    <el-form-item label="档口编码：" prop="stallCode">
+                        <el-input v-model="addStallForm.stallCode" :disabled="stallTypeFlag" placeholder="请输入档口编码"></el-input>
+                    </el-form-item>
+                    <el-form-item label="联系电话：" prop="mobile">
+                        <el-input v-model="addStallForm.mobile"  placeholder="请输入档口电话"></el-input>
+                    </el-form-item>
+                    <el-form-item label="档口地址：" prop="address">
+                        <el-input v-model="addStallForm.address" placeholder="请输入档口地址"></el-input>
+                    </el-form-item>
+                    <el-form-item label="备注：" prop="remark">
+                        <el-input
+                            type="textarea"
+                            :rows="2"
+                            placeholder="请输入备注信息"
+                            v-model="addStallForm.remark">
+                        </el-input>
+                    </el-form-item>
+                </el-form>
+            </div>
+            <span slot="footer" class="dialog-footer flex2">
+                <a href="javascript:void(0)" @click="addStallFormSubmit('addStallForm')" class="buttonColor3">确 定</a>
+                <a href="javascript:void(0)" @click="dialogVisible = false" class="buttonColor2">取 消</a>
+              </span>
+        </el-dialog>
+        <el-dialog
+            title="编辑档口信息"
+            :visible.sync="dialogVisible2"
+            size="tiny"
+            >
+            <div class="">
+                <el-form ref="editStallForm" :model="editStallForm" :rules="editStallFormRule" label-width="120px">
+                	<el-form-item label="编号：" hidden="hidden">
+	                    <el-input v-model="editStallForm.id" auto-complete="off" class="add-dialog"></el-input>
+	                </el-form-item>
+                    <el-form-item label="公司名称：" prop="stallName">
+                        <!--<el-autocomplete
+                            style="width:100%;"
+                            v-model="editStallForm.stallName"
+                            :fetch-suggestions="querySearchAsync"
+                            placeholder="请输入档口公司名称"
+                            @select="handleSelect"
+                        ></el-autocomplete>-->
+
+                        <el-select
+	                        v-model="editStallForm.stallName"
+	                        filterable
+	                        remote
+	                        reserve-keyword
+	                        size="small"
+	                        style="width:100%;"
+	                        :disabled="true"
+	                        placeholder="请输入档口公司名称"
+	                        :remote-method="remoteMethod"
+	                        :loading="loading"
+	                        @change="handleEidtSelect">
+	                        <el-option
+	                        	style="width:200px;"
+	                            v-for="item in optionsStalls"
+	                            :key="item.name"
+	                            :label="item.name"
+	                            :value="item.name">
+	                        </el-option>
+	                    </el-select>
+                    </el-form-item>
+                    <el-form-item label="档口编码：" prop="stallCode">
+                        <el-input v-model="editStallForm.stallCode" :disabled="stallTypeFlag" placeholder="请输入档口编码"></el-input>
+                    </el-form-item>
+                    <el-form-item label="联系电话：" prop="mobile">
+                        <el-input v-model="editStallForm.mobile"  placeholder="请输入档口电话"></el-input>
+                    </el-form-item>
+                    <el-form-item label="档口地址：" prop="address">
+                        <el-input v-model="editStallForm.address" placeholder="请输入档口地址"></el-input>
+                    </el-form-item>
+                    <el-form-item label="备注：" prop="remark">
+                        <el-input
+                            type="textarea"
+                            :rows="2"
+                            placeholder="请输入备注信息"
+                            v-model="editStallForm.remark">
+                        </el-input>
+                    </el-form-item>
+                </el-form>
+            </div>
+            <span slot="footer" class="dialog-footer flex2">
+                <a href="javascript:void(0)" @click="editStallFormSubmit('editStallForm')" class="buttonColor3">确 定</a>
+                <a href="javascript:void(0)" @click="dialogVisible2 = false" class="buttonColor2">取 消</a>
+              </span>
+        </el-dialog>
+        <el-dialog
+            title="导入档口"
+            :visible.sync="dialogImport"
+            size="tiny">
+            <div class="dialogImport">
+                <div class="importFirst">
+                    <div class="flex">
+                        <p>选择文件上传：</p>
+						<p>{{uploadFileName}}</p>
+                    </div>
+                    <div class="flex3" style="align-items: flex-start">
+                        <div class="uploatName flex">
+                        </div>
+                    </div>
+                    <div class="uploatButton">
+                        <input type="file" accept=".xls" id="uploatfile" @change="uploatFile" v-if="accomplish">
+                        <div class="flex2 importUploat">
+                            <img src="../image/Download01.png" alt="">
+                            <p>上传文件</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="importTips">
+                    支持扩展名：.xlsx,.xls
+                </div>
+                <div class="importDownload">
+                    <a href="http://cws.nabei.net:8103/stock/fileTemplate/stallData.xls" class="flex2">下载模版</a>
+                </div>
+            </div>
+            <span slot="footer" class="dialog-footer flex2">
+                <a href="javascript:void(0)" class="buttonColor3" @click="importf">确 定</a>
+                <a href="javascript:void(0)" class="buttonColor2" @click="dialogImport = false">取 消</a>
+              </span>
+        </el-dialog>
+    </div>
+</template>
+<script>
+    import {createVmStall,queryVmStall,batchDeleteVmStall,updateVmStall,queryStall,batchImportVmStall,createVmCompany,checkImportVmCompany} from '@/api/getData'
+    import {setStore,getStore} from  '../config/mUtils'
+    import {userInfo} from  '../config/mUtils'
+    import {getMenuAuth,haveMenuAuth} from  '../utils/AuthMenu.js'
+    import {export_json_to_excel} from '../vendor/Export2Excel.js'
+    const _XLSX = require('xlsx')
+    const X = typeof XLSX !== 'undefined' ? XLSX : _XLSX;
+
+    export default {
+        data() {
+        	
+        	//校验手机号
+        	var validateMobile = (rule, value, cb) => {
+                var pattern0 = /^1(3|4|5|7|8)\d{9}$/;//校验手机号
+                var pattern1 = /^0\d{2}-\d{8}$/;//校验带区号带-的电话号.区号三位，号码8位
+                var pattern2 = /^0\d{3}-\d{7}$/;//校验带区号带-的电话号.区号四位，号码7位
+                var pattern3 = /^0\d{2}\d{8}$/;//校验带区号不带-的电话号.区号三位，号码8位
+                var pattern4 = /^0\d{3}\d{7}$/;//校验带区号不带-的电话号.区号四位，号码7位
+                var pattern5 = /^\d{7,8}$/;//校验7位或8位的电话号码
+                
+                if (!pattern0.test(value) && !pattern1.test(value) && !pattern2.test(value) && 
+                 !pattern3.test(value) && !pattern4.test(value) && !pattern5.test(value) ) {
+                    cb(new Error('请输入正确的手机号'))
+                }else{
+                	cb();
+                }
+            }
+
+        	var validateAddress = (rule, value, cb) => {
+        		if(value.length>15){
+        			cb(new Error('地址最多15个汉字！'))
+        		}else{
+        			cb();
+        		}
+        	}
+
+        	var validateRemark = (rule, value, cb) => {
+        		if(value.length>30){
+        			cb(new Error('备注最多30个汉字！'))
+        		}else{
+        			cb();
+        		}
+        	}
+
+        	var validateStallCode = (rule, value, cb) => {
+        		var pattern = /^[0-9a-zA-Z]+$/;
+        		/*if (!pattern.test(value)) {
+                    cb(new Error('档口编码只能输入数字和字母'))
+                }else */
+                if(value.length>10){
+                	cb(new Error('档口编码不超过10个字符！'))
+                }else{
+                	cb();
+                }
+        	}
+        	
+        	var validateStallName = (rule, value, cb) => {
+        		if(value.length>30){
+                	cb(new Error('档口名称不超过30个字符！'))
+                }else{
+                	cb();
+                }
+        	}
+
+            return {
+                dialogVisible:false,
+                dialogVisible2:false,
+                addStallForm:{
+                	stallName:'',
+                    stallCode:'',
+                    mobile:'',
+                    address:'',
+                    remark:'',
+                    stallCompanyId:'',
+                    companyId:''
+                },
+                editStallForm:{
+                	id:'',
+                	stallName:'',
+                	stallId:'',
+                    stallCode:'',
+                    mobile:'',
+                    address:'',
+                    remark:''
+                },
+                pageSize: 10,
+                //当前页码
+                currentPage: 1,
+
+                //默认数据总数
+                totalCount: 0,
+
+                stallTypeFlag:false,//false表示没有真实档口  true表示有真实档口
+
+                stallName:'',//公司名称搜索
+                mobile:'',//联系电话搜索
+                stallCode:'',//档口编码搜索
+
+                loading:false,
+
+                tableData:[],
+
+                addStallFormRule:{
+                	stallName:[
+                		{ required: true, message: '请输入档口公司名称', trigger: 'blur' },
+                		{ validator: validateStallName, trigger: 'blur' }
+                	],
+                	stallCode:[
+                		{ required: true, message: '请输入档口编码', trigger: 'blur' },
+                		{ validator: validateStallCode, trigger: 'blur' }
+                	],
+                	mobile:[
+                		{ required: true, message: '请输入手机号', trigger: 'blur' },
+                		{ validator: validateMobile, trigger: 'blur' }
+                	],
+                	address:[
+                		{validator: validateAddress, trigger: 'blur'}
+                	],
+                	remark:[
+                		{validator: validateRemark, trigger: 'blur'}
+                	]
+                },
+
+                editStallFormRule:{
+                	stallName:[
+                		{ required: true, message: '请输入档口公司名称', trigger: 'blur' },
+                		{ validator: validateStallName, trigger: 'blur' }
+                	],
+                	stallCode:[
+                		{ required: true, message: '请输入档口编码', trigger: 'blur' }
+                	],
+                	mobile:[
+                		{ required: true, message: '请输入手机号', trigger: 'blur' },
+                		{ validator: validateMobile, trigger: 'blur' }
+                	],
+                	address:[
+                		{validator: validateAddress, trigger: 'blur'}
+                	],
+                	remark:[
+                		{validator: validateRemark, trigger: 'blur'}
+                	]
+                },
+                
+                dialogImport:false,
+                
+                accomplish:true,
+                
+                importExcelData:'',
+                
+                importFaileData:[],//导入失败数据
+                
+                uploadFileName:'',//上传文件名称
+                
+                optionsStalls:[],
+                
+                jsonArray:[],
+                
+                loading2:false,
+            }
+        },
+        mounted(){
+            this.initloadFirstData();
+        },
+        methods: {
+			getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            
+            //查询第一页数据
+            initloadFirstData(){
+            	this.currentPage = 1;
+            	this.initloadData();
+            },
+
+            //从服务器获取数据
+            async initloadData() {
+            	this.tableData = [];
+            	let param ={
+            		pageIndex:this.currentPage,
+    				pageSize:this.pageSize,
+    				stallName:this.stallName,
+    				stallCode:this.stallCode,
+    				mobile:this.mobile,
+    				companyId:userInfo().companyId
+            	}
+                const res = await queryVmStall(param);
+                if (res.isSuccess == true) {
+                	this.tableData = res.result.results;
+                	this.totalCount =  res.result.totalCount;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+
+            handleAddSelect(item) {
+            	this.stallTypeFlag = false;
+            	this.optionsStalls.forEach(obj => {
+            		if(obj.name == item && obj.id){
+            			this.stallTypeFlag = true;
+            			if(obj.serialNub){
+            				this.addStallForm.stallCode = obj.serialNub;
+            			}
+            			if(obj.linkTel && obj.linkTel != null){
+            				this.addStallForm.mobile = obj.linkTel;
+            			}
+            			if(obj.companyId){
+            				this.addStallForm.stallCompanyId = obj.companyId;
+            			}
+            		}
+            	});
+            },
+            handleEidtSelect(item) {
+            	this.stallTypeFlag = false;
+            	this.optionsStalls.forEach(obj => {
+            		if(obj.name == item){
+            			this.stallTypeFlag = true;
+            			if(obj.serialNub){
+            				this.editStallForm.stallCode = obj.serialNub;
+            			}
+            			if(obj.linkTel && obj.linkTel != null){
+            				this.editStallForm.mobile = obj.linkTel;
+            			}
+            			if(obj.companyId){
+            				this.editStallForm.stallCompanyId = obj.companyId;
+            			}
+            		}
+            	});
+            },
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+                this.currentPage = 1;
+                this.pageSize = val;
+                this.initloadData();
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+                this.currentPage = val;
+                this.initloadData();
+            },
+
+            async addStallFormSubmit(formName){
+            	this.$refs[formName].validate(async (valid) => {
+				if (valid) {
+						this.addStallForm.companyId = userInfo().companyId;
+                        if(this.addStallForm.stallCompanyId){
+                        	this.addVmStall();
+                        }else{
+                        	this.addVmCompany();
+                        }
+                  } else {
+
+                      return false;
+                  }
+              });
+            },
+            
+            async addVmStall(){
+            	const res = await createVmStall(this.addStallForm);
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: res.result.msg
+                    });
+                     this.dialogVisible = false;
+                     this.initloadFirstData();
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            
+            async addVmCompany(){
+            	let vmStallName = this.addStallForm.stallName;
+            	let params = {
+            		companyName:vmStallName
+            	}
+            	const res = await createVmCompany(params);
+                    if (res.isSuccess == true) {
+                    	this.addStallForm.stallCompanyId = res.result.id;
+	                    this.addVmStall();
+                    }else{
+                        this.$message({
+                            type: 'error',
+                            message: res.errorMsg
+                        });
+                    }
+            },
+
+            async editStallFormSubmit(formName){
+            	this.$refs[formName].validate(async (valid) => {
+				if (valid) {
+                        const res = await updateVmStall(this.editStallForm);
+                        if (res.isSuccess == true) {
+                            this.$message({
+                                type: 'success',
+                                message: res.result.msg
+                            });
+                             this.dialogVisible2 = false;
+                             this.initloadData();
+                        }else{
+                            this.$message({
+                                type: 'error',
+                                message: res.errorMsg
+                            });
+                        }
+                  } else {
+
+                      return false;
+                  }
+              });
+            },
+
+            async batchDeleteVmStall(array){
+            	let param = {
+            		vmStallIds:array
+            	}
+            	const res = await batchDeleteVmStall(param);
+            	if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: res.result.msg
+                    });
+                    this.initloadFirstData();
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+
+            batchDeleteStall(){
+              if(this.multipleSelection == undefined || this.multipleSelection.length==0){
+                  this.$message({
+                        type: 'error',
+                        message: '请先勾选要删除的档口！'
+                    });
+                    return;
+              }
+                var array = [];
+                this.multipleSelection.forEach((item) => {
+                    array.push(item.id);
+                })
+                if(array.length <1){
+                  this.$message({
+                        type: 'error',
+                        message: '请先勾选要删除的档口！'
+                    });
+                    return;
+                }
+              this.$confirm('是否确认删除选中的档口?', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+              }).then(() => {
+                this.batchDeleteVmStall(array);
+              }).catch(() => {
+
+              });
+          },
+
+          deleteStall(stallId){
+              var array = [];
+              array.push(stallId);
+              this.$confirm('是否确认删除选中的档口?', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+              }).then(() => {
+                this.batchDeleteVmStall(array);
+              }).catch(() => {
+
+              });
+          },
+
+          //多选响应
+            handleSelectionChange: function(val) {
+                this.multipleSelection = val;
+            },
+
+           	updateStall(row){
+           		this.editStallForm = {
+           			id:row.id,
+           			stallId:row.stallId,
+           			stallName:row.name,
+           			stallCode:row.stallCode,
+           			mobile:row.mobile,
+           			address:row.address,
+           			remark:row.remark,
+           			stallCompanyId:row.stallCompanyId
+           		};
+           		if(row.status == 1){
+           			this.stallTypeFlag = true;
+           		}else{
+           			this.stallTypeFlag = false;
+           		}
+           		this.dialogVisible2 = true;
+           	},
+
+           	addStallClick(){
+           		this.addStallForm = {
+                	stallName:'',
+                    stallCode:'',
+                    mobile:'',
+                    address:'',
+                    remark:'',
+                    stallCompanyId:'',
+                    companyId:''
+                }
+           		this.stallTypeFlag = false;
+           		this.dialogVisible = true;
+           	},
+           	formatStatus:function(row, column){
+            	let status = row.status;
+            	if(status == 1){
+            		return "已注册";
+            	}else{
+            		return "未注册";
+            	}
+            },
+
+
+            //远程搜索模糊查询档口信息
+            async remoteMethod(query){
+                if(query!=''){
+                    this.loading = true;
+					let param = {
+	            		pageIndex:1,
+	            		pageSize:100,
+	            		stall:{
+	            			name:query
+	            		}
+	            	}
+	            	const res = await queryStall(param);
+	            	this.optionsStalls = [];
+	            	if (res.isSuccess == true) {
+	                	if(res.result.stall.results.length>=0){
+	                		this.optionsStalls = res.result.stall.results;
+	                		let flag = false;
+	                		this.optionsStalls.forEach(obj => {
+	                			if(obj.name == query){
+		                			flag = true;
+		                		}
+	                		});
+	                		if(!flag){
+	                			this.optionsStalls.push({name:query});
+	                		}
+	                	}
+	                }else{
+	                    this.$message({
+	                        type: 'error',
+	                        message: res.errorMsg
+	                    });
+	                }
+	                setTimeout(() => {
+                        this.loading = false;
+                    }, 200);  
+                } else {
+                    this.optionsStalls = [];
+                }
+            },
+            
+            async importf(){
+            	if(this.uploadFileName == ""){
+            		this.$message({
+                        type: 'error',
+                        message: "请先选择上传的文件"
+                    });
+                    return;
+            	}
+                this.dialogImport = false;
+                this.loading2 = true;
+				this.importExcelData = '';
+				this.importFaileData = [];
+				let obj = document.getElementById("uploatfile");
+				var wb;//读取完成的数据
+            	var rABS = false; //是否将文件读取为二进制字符串
+            	if(!obj.files) {
+                    return;
+                }
+                var f = obj.files[0];
+                var reader = new FileReader();
+                reader.onload =(e) =>{
+                    var data = e.target.result;
+                    if(rABS) {
+                        wb = X.read(btoa(fixdata(data)), {//手动转化
+                            type: 'base64'
+                        });
+                    } else {
+                        wb = X.read(data, {
+                            type: 'binary'
+                        });
+                    }
+
+                    //wb.SheetNames[0]是获取Sheets中第一个Sheet的名字
+                    //wb.Sheets[Sheet名]获取第一个Sheet的数据
+                    this.importExcelData = JSON.stringify( X.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]) );
+                    this.importFileData();
+                };
+                if(rABS) {
+                    reader.readAsArrayBuffer(f);
+                } else {
+                    reader.readAsBinaryString(f);
+                }
+			},
+			
+			uploatFile(){
+				let obj = document.getElementById("uploatfile").value;
+				let array = obj.split("\\");
+				if(array.length>0){
+					this.uploadFileName = array[array.length-1];
+				}else{
+					this.uploadFileName = "";
+				}
+			},
+			
+			async batchImportData(index){
+				let importDataStr = [];
+				for(var i=0;i<100 && index<this.jsonArray.length;i++){
+					importDataStr.push(this.jsonArray[index]);
+					index++;
+				}
+				let params = {
+	                	jsonStr:importDataStr,
+	                	companyId:userInfo().companyId
+	               }
+				const res = await batchImportVmStall(params);
+				if(res.isSuccess == true){
+					if(res.result.data && res.result.data.length>0){
+						res.result.data.forEach(obj => {
+							this.importFaileData.push(obj);
+						}); 
+                    }
+					if(index<this.jsonArray.length){
+                       		this.batchImportData(index);
+                       }else{
+                       		this.loading2 = false;
+                       		this.uploadFileName = "";
+                       		let obj = document.getElementById("uploatfile");
+	               			obj.value = '';
+	               			if(this.importFaileData.length>0){
+	               				this.exportFaileExcel();
+	               			}else{
+	               				this.$message({
+		                            type: 'success',
+		                            message: res.result.msg
+		                        });
+	               			}
+	               			this.initloadData();
+                       }
+				}else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                    this.loading2 = false;
+                }
+			},
+			
+			async importFileData(){
+				let param = {
+	                	jsonStr:this.importExcelData,
+	                	companyId:userInfo().companyId
+	               }
+				const res2 = await checkImportVmCompany(param);
+				if(res2.isSuccess == true){
+					this.jsonArray = res2.result;
+					this.batchImportData(0);
+					/*let params = {
+						jsonStr:res2.result,
+						companyId:userInfo().companyId
+					}
+					const res = await batchImportVmStall(params);
+	               let obj = document.getElementById("uploatfile");
+	               obj.value = '';
+	            	if (res.isSuccess == true) {
+	                    this.initloadData();
+	                    this.uploadFileName = "";
+	                    if(res.result.data && res.result.data.length>0){             
+	                       this.importFaileData = res.result.data;
+	                       this.exportFaileExcel();
+	                    }else{
+	                        this.$message({
+	                            type: 'success',
+	                            message: res.result.msg
+	                        }); 
+	                    }
+	                }else{
+	                    this.$message({
+	                        type: 'error',
+	                        message: res.errorMsg
+	                    });
+	                }*/
+				}
+               
+			},
+			
+			formatJson(filterVal, jsonData) {
+		　　　　　　return jsonData.map(v => filterVal.map(j => v[j]));
+		　　　},
+			
+			async exportFaileExcel() {		//导出excel
+            	if(this.importFaileData.length>0){
+            		const tHeader = ['公司名称', '档口编码','联系电话','地址','备注','失败原因'];
+			　　　  const filterVal = ['name', 'stallCode','mobile','address','remark','msg'];
+			　　　  const list = this.importFaileData;
+			　　　  const data = this.formatJson(filterVal, list);
+			　　　  export_json_to_excel(tHeader, data, '导入档口失败数据');
+            	}
+			},
+			
+			//导出文档
+			async exportTableData() {
+               let param ={
+            		pageIndex:1,
+    				pageSize:this.totalCount,
+    				stallName:this.stallName,
+    				stallCode:this.stallCode,
+    				mobile:this.mobile,
+    				companyId:userInfo().companyId
+            	}
+                const res = await queryVmStall(param);
+                const list = [];
+                if (res.isSuccess == true) {
+                    res.result.results.forEach(obj => {
+                    	let name= '' ;//公司名称
+                    	let stallCode = '';//档口编码
+                    	let mobile = '';//联系电话
+                    	let address = '';//地址
+                    	let status = '未注册';//状态
+                    	let remark = '';//备注信息
+                    	if(obj.name){
+                    		name = obj.name;
+                    	}
+                    	if(obj.mobile){
+                    		mobile = obj.mobile;
+                    	}
+                    	if(obj.stallCode){
+                    		stallCode = obj.stallCode;
+                    	}
+                    	if(obj.address){
+                    		address = obj.address;
+                    	}
+                    	if(obj.status && obj.status == 1){
+                    		status = '已注册';
+                    	}
+                    	if(obj.remark){
+                    		remark = obj.remark;
+                    	}
+                    	let row = {
+		            		name : name,
+							stallCode : stallCode,
+							mobile : mobile,
+							address : address,
+							status : status,
+							remark : remark
+		            	}
+		            	list.push(row);
+                    });
+
+                    const tHeader = ['公司名称', '档口编码','联系电话','地址','状态','备注信息'];
+			　　　　const filterVal = ['name', 'stallCode','mobile','address','status','remark'];
+			　　　　const data = this.formatJson(filterVal, list);
+			　　　　export_json_to_excel(tHeader, data, '档口管理列表');
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+        }
+    }
+</script>
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import "../style/stallManage";
+</style>

@@ -1,0 +1,286 @@
+.stocktaking{
+    margin:0 30px;
+    background: #fff;
+    padding: 20px 40px;
+    .stocktakingTop{
+        height: 40px;
+        .left{
+            font-size: 12px;
+        }
+        .input1{
+            width: 200px;
+        }
+        .input2{
+            div{
+                margin-left: 10px;
+            }
+        }
+        .signIn{
+            margin-top: 15px;
+        }
+    }
+    .stocktakingTop>div{
+        margin-right: 10px;
+    }
+    .address{
+        background: url("../image/address_book.png")no-repeat center;
+        background-size:100%;
+    }
+    .stocktakingButton{
+        margin-top: 10px;
+        a{
+            color:#fff;
+        }
+    }
+    .stockDetails{
+        width:100%;
+        height: 20px;
+        font-size: 12px;
+        .color2{
+
+            color:@blue2;
+            span{
+                margin-right: 5px;
+                font-size: 13px;
+            }
+        }
+    }
+    .stockDetails>div{
+        margin-bottom: 10px;
+    }
+    .diffDate{
+        margin: 30px 0;
+    }
+    .diffBumber{
+        margin: 20px 0;
+        p{
+            margin-right: 40px;
+            span{
+                font-size: 24px;
+                color: @orange;
+            }
+        }
+    }
+    .stockTabs{
+        margin: 20px 0;
+    }
+    .tabs{
+        margin-bottom: 20px;
+    }
+}
+.stocktakingTable{
+    margin-top: 15px;
+        img{
+            height: 45px;
+            width: 45px;
+        }
+    .sumTotal{
+        font-size: 14px;
+        width:100%;
+        height: 42px;
+        box-sizing: border-box;
+        border:1px solid rgb(223, 230, 236);
+        span{
+            color:@orange;
+        }
+    }
+    .sumTotal2{
+        height: 50px;
+        p{
+            margin: 0 20px;
+            color:#333;
+            font-size: 13px;
+        }
+    }
+    .tableTop{
+        padding: 0 20px;
+        font-size: 12px;
+        height: 40px;
+        line-height: 40px;
+        border: 1px solid #d4d4d4;
+        div{
+            margin-right: 20px;
+        }
+    }
+}
+.ViewButton{
+    a{
+        color:@blue;
+    }
+}
+.shipmentLeft{
+    padding: 10px 0 0 30px;
+    font-size: 12px;
+    .radio1{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        img{
+            width: 180px;
+        }
+        p{
+            height: 25px;
+            line-height: 25px;
+        }
+    }
+}
+.shipmentRight{
+    margin-top: 20px;
+}
+.shipmentRight>div{
+    height: 60px;
+    display: flex;
+    align-items: center;
+    .textRight{
+        text-align: right;
+        padding-right: 10px;
+    }
+}
+.dialog-footer{
+    padding-top: 20px;
+    button{
+        margin: 0 40px;
+    }
+}
+//详情
+.fastShippingDetails{
+    margin:0 30px;
+    background: #fff;
+    padding: 20px 40px;
+    height:100%;
+    .detailsTop{
+        font-size: 13px;
+        color:#333;
+    }
+    .detailsTop>div{
+        margin-bottom: 5px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        height: 30px
+    }
+    .back{
+        color:@blue;
+        border-bottom: 1px solid @blue;
+        font-size: 12px;
+    }
+    .detailsTop2{
+        margin: 10px 0 30px;
+        padding: 0 0 10px;
+        font-size: 12px;
+        .flex2{
+            input{
+                width: 300px;
+            }
+        }
+    }
+}
+//弹窗
+.countingTop{
+    padding: 0 10px;
+    p{
+        width: 120px;
+    }
+}
+.countingContent{
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    justify-content: center;
+    img{
+        width: 150px;
+        height: 150px;
+    }
+    .content2{
+        width:100%;
+        .flex{
+            margin: 15px 0;
+        }
+        .flex>p{
+            width: 120px;
+            text-align: right;
+            margin-right: 10px;
+        }
+        .flex>div{
+            width: 220px;
+        }
+    }
+    .spxq{
+        margin:10px;
+        p{
+            margin-bottom: 10px;
+        }
+    }
+}
+
+.color1{
+    color:@blue;
+}
+.color2{
+    color:#fff;
+}
+.color3{
+    color:@red;
+}
+.callout{
+    p{
+        display:block;
+        white-space:nowrap;
+        overflow:hidden;
+        text-overflow:ellipsis;
+    }
+}
+.ReceivingPosition{
+    input{
+        width: 220px;
+    }
+    a{
+        width: 80px;
+        color:@blue;
+    }
+}
+.stockChangeNum{
+    font-size: 18px;
+    height: 80px;
+    p{
+        margin: 0 20px;
+        display: flex;
+        align-items: center;
+        span{
+            color:@orange;
+            font-size: 26px;
+            margin-left: 5px;
+            span{
+                color:#333;
+                font-size: 26px;
+            }
+        }
+
+    }
+}
+.InInventory{
+    flex-direction: column;
+    margin: 30px 0;
+    span{
+        color:@red;
+        font-weight: 600;
+        font-size: 20px;
+    }
+    p{
+        margin-top: 30px;
+    }
+}
+.Continue{
+    margin: 20px 0;
+    padding-bottom: 20px;
+}
+.detailTable{
+    .el-table .cell{
+        padding: 0;
+    }
+    img{
+        width: 40px;
+        height: 40px;
+    }
+}

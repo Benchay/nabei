@@ -1,0 +1,335 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('bindWebstoreForPlatform')">
+                <router-link :to='{path:"/bindWebstoreForPlatform"}'>绑定店铺管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('webStoreOrderForPlatform')">
+                <router-link :to='{path:"/webStoreOrderForPlatform"}'>网店订单</router-link>
+            </li>
+            <li class="menuIndex3" v-if="getMenuAuthFun('orderForPlatform')">
+                <router-link :to='{path:"/orderForPlatform"}'>采购订单</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('productManagement')">
+                <router-link :to='{path:"/productManagement"}'>商品管理</router-link>
+            </li>
+        </ul>
+        <div class="orderMenu">
+        	<div class="block left">
+                <el-date-picker
+                    size="small"
+                    v-model="searchOrderStartDate"
+                    type="date"
+                    placeholder="选择下单开始日期"
+                    @change="initloadData">
+                </el-date-picker>
+            </div>
+            <div class="block left" style="padding-top: 5px;">
+            	&nbsp;-&nbsp;
+            </div>
+            <div class="block left">
+            	<el-date-picker
+                    size="small"
+                    v-model="searchOrderEndDate"
+                    type="date"
+                    placeholder="选择下单结束日期"
+                    @change="initloadData">
+                </el-date-picker>
+                <el-input
+                    size="small"
+                    class="topInput dropdown-menu"
+                    placeholder="订单编号"
+                    icon="search"
+                    v-model="searchOrderId"
+                    :on-icon-click="initloadData">
+                </el-input>
+                <el-input
+                    size="small"
+                    class="topInput dropdown-menu"
+                    placeholder="档口名称"
+                    icon="search"
+                    v-model="searchStallName"
+                    :on-icon-click="initloadData">
+                </el-input>
+                <!--<el-input
+                    class="topInput dropdown-menu"
+                    placeholder="电商卖家名称"
+                    icon="search"
+                    v-model="searchCompanyName"
+                    :on-icon-click="initloadData">
+                </el-input>-->
+                <el-select v-model="searchOrderStatus" @change="initloadData" placeholder="选择订单状态" class="dropdown-menu" size="small">
+                    <el-option label="全部" value="null"></el-option>
+                    <el-option label="待配货" value="1"></el-option>
+                    <el-option label="待拿货" value="2"></el-option>
+                    <el-option label="已完成" value="4"></el-option>
+                </el-select>
+            </div>
+        </div>
+        <div class="orderForPlatform">
+            <div class="shopList" style="padding-bottom: 80px;">
+                <el-table
+                    ref="multipleTable"
+                    :data="tableData3"
+                    tooltip-effect="dark"
+                    @selection-change="handleSelectionChange"
+                    style="width: 100%">
+                    <el-table-column
+                        prop="orderCode"
+                        label="订单编号"
+                        width="250">
+                    </el-table-column>
+                    <el-table-column
+                        prop="statusShow"
+                        label="订单状态"
+                        width="100"
+                        >
+                    </el-table-column>
+                    <el-table-column
+                        prop="companyName"
+                        label="电商卖家名称"
+                        width="220"
+                        >
+                    </el-table-column>
+                    <el-table-column
+                        prop="stallName"
+                        label="档口名称"
+                        width="150">
+                    </el-table-column>
+                    <el-table-column
+                        prop="totalNum"
+                        label="采购数量"
+                        width="100">
+                    </el-table-column>
+                    <el-table-column
+                        prop="totalFee"
+                        label="采购金额"
+                        width="100">
+                    </el-table-column>
+                    <el-table-column
+                        prop="orderTime"
+                        label="下单时间"
+                        width="200"
+                        :formatter="mydateFormat">
+                    </el-table-column>
+                    <el-table-column
+                        prop="money"
+                        label="操作"
+                        show-overflow-tooltip>
+                        <template scope="scope">
+                        	<router-link :to='{path:"/orderDetailForPlatform", query:{orderId:scope.row.id,orderCode:scope.row.orderCode,companyName:scope.row.companyId,stallName:scope.row.stallName,totalNum:scope.row.totalNum,totalFee:scope.row.totalFee}}'>详情</router-link>｜
+                        	<router-link :to='{path:"/dynamicsOrderForPlatform", query:{orderId:scope.row.id,orderCode:scope.row.orderCode,companyName:scope.row.companyId,stallName:scope.row.stallName,status:scope.row.status}}'>动态</router-link>
+                        </template>
+                    </el-table-column>
+                </el-table>
+                <el-pagination
+                    small
+                    class="right"
+                    style="margin-top: 20px;"
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :current-page="currentPage"
+                    :page-sizes="[10, 20, 30, 40]"
+                    :page-size="pagesize"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    :total="totalCount">
+                </el-pagination>
+
+
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {queryOrder,findCompanysByName,queryPurchaserInfo,queryOrderManage} from '@/api/getData'
+    import {userInfo} from  '../config/mUtils'
+    import {mydateFormat} from '../utils/dataFormater.js'
+    import {getMenuAuth,haveMenuAuth} from  '../utils/AuthMenu.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        computed: {
+            classObject: function () {
+                return {
+                    active: this.isActive && !this.error,
+                    'text-danger': this.error && this.error.type === 'fatal',
+                }
+            }
+        },
+        data() {
+            return {
+                rotate:false,
+                bindWebStoreUrl:'www.bai',
+                tableData3: [{companyName:''}],
+                //默认每页数据量
+                pagesize: 8,
+
+                //默认高亮行数据id
+                highlightId: -1,
+
+                //当前页码
+                currentPage: 1,
+
+                //查询的页码
+                start: 1,
+
+                //默认数据总数
+                totalCount: 0,
+
+                searchOrderStartDate:'',
+                searchOrderEndDate:'',
+                searchCompanyName:'',
+                searchOrderId:'',
+				searchStallName:'',
+				searchOrderStatus:'',
+            }
+        },
+         mounted(){
+            this.initloadData();
+        },
+
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+            },
+            async initloadData() {
+            	let status = '';
+            	if(this.searchOrderStatus != '' && this.searchOrderStatus != 'null'){
+            		status = this.searchOrderStatus;
+            	}
+            	let param ={
+            		pageIndex:1,
+            		pageSize:this.pagesize,
+            		orderCode:this.searchOrderId,
+            		stallName:this.searchStallName,
+            		orderStartTime:this.searchOrderStartDate,
+            		orderEndTime:this.searchOrderEndDate,
+            		status:status,
+            		orderTypeIn:[1]
+            	}
+            	this.tableData3 = [];
+                const res = await queryOrderManage(param);
+                if (res.isSuccess == true) {
+                    this.tableData3 = res.result.results;
+                    this.totalCount = res.result.totalCount;
+                    this.tableData3.forEach((obj) => {
+                    	if(obj.status){
+                    		obj.statusShow = this.formatOrderStatus(obj.status);
+                    	}
+                    });
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+            async initloadData2() {
+            	let param ={
+            		pageIndex:this.currentPage,
+            		pageSize:this.pagesize,
+            		orderCode:this.searchOrderId,
+            		stallName:this.searchStallName,
+            		orderStartTime:this.searchOrderStartDate,
+            		orderEndTime:this.searchOrderEndDate,
+            		status:status,
+            		orderTypeIn:[1]
+            	}
+                this.tableData3 = [];
+                const res = await queryOrderManage(param);
+                if (res.isSuccess == true) {
+                    this.tableData3 = res.result.results;
+                    this.tableData3.forEach((obj) => {
+                    	if(obj.status){
+                    		obj.statusShow = this.formatOrderStatus(obj.status);
+                    	}
+                    });
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+           async checkCompany(){
+           		let companyIds = [];
+                for(let i=0;i<this.tableData3.length;i++){
+                	if(this.tableData3[i].companyId){
+                		companyIds.push(this.tableData3[i].companyId);
+                	}
+                }
+                let params = {
+            		compIds : companyIds
+            	}
+                alert(companyIds.length);
+                const res = await queryPurchaserInfo(params);
+                alert(res.isSuccess == true);
+            	if (res.isSuccess == true) {
+            		this.companyData = res.result.result;
+            		for(let i=0;i<this.tableData3.length;i++){
+	        			for(let j=0;j<this.companyData.length;j++){
+	        				let data2 = this.companyData[j];
+	        				if(data2.id == this.tableData3[i].companyId){
+	        					this.tableData3[i].companyId = data2.name;
+	        				}
+	        			}
+	                }
+            	}else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+            gotobindwebstore(){
+            	window.open(this.bindWebStoreUrl);
+            },
+            //多选响应
+            handleSelectionChange: function(val) {
+                this.multipleSelection = val;
+            },
+
+            handleCurrentChange:function(val) {
+                this.currentPage = val;
+                this.initParamsData2();
+            },
+            mydateFormat,
+            formatOrderStatus:function(status){
+            	if(status == 0){
+            		return "";
+            	}else if(status == 1){
+            		return "待配货";
+            	}else if(status == 2){
+            		return "待拿货";
+            	}else if(status == 3){
+            		return "";
+            	}else if(status == 4){
+            		return "已完成";
+            	}else{
+            		return "";
+            	}
+            },
+            mydateFormat,
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/orderForPlatform';
+</style>

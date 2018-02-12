@@ -1,0 +1,433 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('fastShipping2')">
+                <router-link :to='{path:"/fastShipping2"}'>快速出货</router-link>
+            </li>
+            <li class="menuIndex" v-if="getMenuAuthFun('indentManagement')">
+                <router-link :to='{path:"/indentManagement"}'>订单管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('takeGoods')">
+                <router-link :to='{path:"/takeGoods"}'>取货码</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('sellerSettlement')">
+                <router-link :to='{path:"/sellerSettlement"}'>客户结算</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('SettlementRecordsStall')">
+                <router-link :to='{path:"/SettlementRecordsStall"}'>结算单</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('customerManagement')">
+                <router-link :to='{path:"/customerManagement"}'>客户管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('statisticalStatement')">
+                <router-link :to='{path:"/statisticalStatement"}'>销售统计</router-link>
+            </li>
+        </ul>
+        <div class="indentManagement">
+            <div style="height: 45px;">
+                <div class="flex2 left" style="margin-right: 20px">
+                    <el-date-picker
+                        size="small"
+                        v-model="filters.date.startDate"
+                        :formatter="formatDate"
+                        type="datetime"
+                        placeholder="选择开始日期"
+                        :picker-options="startDateBefore"
+                        @change="handleIconClick"
+                    >
+                    </el-date-picker>
+                    -
+                    <el-date-picker
+                        size="small"
+                        v-model="filters.date.endDate"
+                        :formatter="formatDate"
+                        type="datetime"
+                        placeholder="选择截止日期"
+                        :picker-options="startDateAfter"
+                        @change="handleIconClick"
+                    >
+                    </el-date-picker>
+                </div>
+                <div class="left flex2">
+                    <el-input v-model="input1" size="small" placeholder="订单编号搜索" style="margin-right: 10px" icon="search" :on-icon-click="handleIconClick"></el-input>
+                    <el-select
+                        size="small"
+                        v-model="otherSideCompanyName"
+                        filterable
+                        remote
+                        reserve-keyword
+                        style="width:260px"
+                        placeholder="请输入电商名称"
+                        :remote-method="remoteMethod"
+                        :loading="loading"
+                        @change="handleIconClick">
+                        <el-option
+                            v-for="item in options4"
+                            :key="item.sellId"
+                            :label="item.sellName"
+                            :value="item.sellId">
+                        </el-option>
+                    </el-select>
+                </div>
+               <el-col :span="24" class="indentList radioGreen">
+                   <el-radio-group v-model="radio" size="small" @change="handleIconClick">
+                       <el-radio-button label="0">全部</el-radio-button>
+                       <el-radio-button label="-1">待处理</el-radio-button>
+                       <el-radio-button label="99">已完成</el-radio-button>
+                   </el-radio-group>
+               </el-col>
+            </div>
+            <el-table
+                :data="tableData"
+                style="width: 100%">
+                <el-table-column
+                    prop="orderCode"
+                    width="220"
+                    label="订单编号">
+                </el-table-column>
+                <el-table-column
+                    width="200"
+                    label="电商卖家">
+                    <template scope="scope">{{scope.row.customerName!=undefined&&scope.row.customerName!=''?scope.row.customerName:scope.row.busiName!=undefined&&scope.row.busiName!=''?scope.row.busiName:'匿名卖家'}}</template>
+                </el-table-column>
+                <el-table-column
+                    prop="totalNum"
+                    label="订单数量">
+                </el-table-column>
+                <el-table-column
+                    prop="totalFee"
+                    label="订单金额">
+                </el-table-column>
+                <el-table-column
+                    prop="orderTime"
+                    width="180"
+                    label="下单时间"
+                    :formatter="formatDate">
+                </el-table-column>
+                <el-table-column
+                    prop="payType"
+                    label="结算方式"
+                    :formatter="checkPayType">
+                </el-table-column>
+                <el-table-column
+                    label="订单状态">
+                    <template scope="scope">
+                        <p  v-bind:class="[scope.row.status>6?'color2':scope.row.status<7?'color3':'']">{{scope.row.status==2?'已配货':scope.row.status==5?'待配货':scope.row.status==6?'部分配货':scope.row.status==50?'已取消':scope.row.status==99?'已完成':''}}</p>
+                    </template>
+                </el-table-column>
+                <el-table-column
+                    prop="closeStutas"
+                    label="结算状态">
+                    <template scope="scope">{{scope.row.closeStutas==0?'未结算':scope.row.closeStutas==1?'已结算':scope.row.closeStutas==2?'部分结算':''}}</template>
+                </el-table-column>
+                <el-table-column
+                    label="操作">
+                    <template scope="scope">
+                        <a href="javascript:void(0);" class="color4" @click="Stateialog(scope.row.status,scope.row.id,scope.row.orderCode,scope.row.orderType,scope.row.otherSideCompId,scope.row.busiName,scope.row.orderTime,scope.row.totalNum,scope.row.totalFee)">
+                            {{scope.row.status==2||scope.row.status==99||scope.row.status==50?'查看':scope.row.status==5?'立即配货':scope.row.status==6?'继续配货':''}}
+                        </a>
+                    </template>
+                </el-table-column>
+            </el-table>
+            <el-pagination
+                small
+                class="right"
+                style="margin-top: 20px;"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :current-page="currentPage"
+                :page-sizes="[10, 20, 30, 40,50]"
+                :page-size="pageSize"
+                layout="total, sizes, prev, pager, next, jumper"
+                :total="totalCount">
+            </el-pagination>
+            <a href="javascript:void(0)" class="export_excle" @click="exportTableData">导出excel</a>
+            <div style="height:160px;">
+                &nbsp;
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {formatDate} from '../utils/date.js'
+    import {export_json_to_excel} from '../vendor/Export2Excel.js'
+    import {queryOrder,queryStallCustomer} from '@/api/getData'
+    import {getStore,userInfo} from  '../config/mUtils'
+    import {getMenuAuth,haveMenuAuth} from  '../utils/AuthMenu.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+
+        data() {
+            return {
+                filters:{
+                    date:{
+                        startDate:'',
+                        endDate:''
+                    }
+                },
+                startDateBefore:{
+                    disabledDate: (time) => {
+                        let beginDateVal = this.filters.date.endDate;
+                        if (beginDateVal) {
+                            return time.getTime() > beginDateVal;
+                        }
+                    }
+                },
+                startDateAfter:{
+                    disabledDate: (time) => {
+                        let beginDateVal = this.filters.date.startDate;
+                        if (beginDateVal) {
+                            return time.getTime() < beginDateVal;
+                        }
+                    }
+                },
+                roleForm:{
+                    roleId:'',
+                    userId:'',
+                    compId:''
+                },
+                otherSideCompanyName:'',
+                dialog:false,
+                radio:-1,
+                selects:false,
+                value6:'',
+                input:'',
+                input1: '',
+                input2: '',
+                input3: '',
+                tableData:[],
+
+                pageSize:10,
+                totalCount:0,
+                currentPage:1,
+                options4:[],
+                loading: false,
+                str:'',
+            }
+        },
+        watch:{
+            '$route': function (route) {
+                this.roleForm.compId = userInfo().companyId;
+
+                let param ={
+                    "orderCode":this.input1,
+                    "busiCompId":this.otherSideCompanyName,
+                    "pageIndex":this.currentPage,
+                    "pageSize":this.pageSize,
+                    "status":this.radio,
+                    "orderType":2,
+                    "companyId":this.roleForm.compId
+                };
+                this.initloadData(param);//加载数据
+            }
+        },
+        mounted() {
+
+            this.roleForm.compId = userInfo().companyId;
+            let param ={
+                "orderCode":this.input1,
+                "busiCompId":this.otherSideCompanyName,
+                "pageIndex":this.currentPage,
+                "pageSize":this.pageSize,
+                "status":this.radio,
+                "orderType":2,
+                "companyId":this.roleForm.compId
+            };
+            this.initloadData(param);//加载数据
+
+            const s = document.createElement('script');
+			s.type = 'text/javascript';
+			s.src = 'http://oss.sheetjs.com/js-xlsx/xlsx.full.min.js';
+			document.body.appendChild(s);
+        },
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            //获取订单信息
+            async initloadData(param) {
+                this.tableData = [];
+                const res = await queryOrder(param);
+                if (res.isSuccess == true) {
+                    this.tableData = res.result.results;
+                    this.totalCount = res.result.totalCount;
+                }else{
+                    this.$message({
+                        duration:this.GLOBAL.MESSAGE_DISSMISS_TIME_MID,
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+            checkNull(val){
+        	    if(val!=undefined&&val!=''){
+        	        return true;
+                }
+                return false;
+            },
+
+            //组合查询
+            handleIconClick(){
+                this.str = '';
+                var list = [];
+                if(this.checkNull(this.filters.date.startDate)){
+                     var startVal = formatDate(this.filters.date.startDate,'yyyy-MM-dd hh:mm');
+                     var start = {name:"startDate",value:startVal};
+                     list.push(start);
+                }
+                if(this.checkNull(this.filters.date.endDate)){
+                    var endVal = formatDate(this.filters.date.endDate,'yyyy-MM-dd hh:mm');
+                    var end = {name:"endDate",value:endVal};
+                    list.push(end);
+                }
+                if(this.checkNull(this.radio)){
+                    var state = {name:"status",value:this.radio};
+                    list.push(state);
+                }
+                if(this.checkNull(this.input1)){
+                    var orderCode = {name:"orderCode",value:this.input1};
+                    list.push(orderCode);
+                }
+                if(this.checkNull(this.otherSideCompanyName)){
+                    var otherCompId = {name:"busiCompId",value:this.otherSideCompanyName};
+                    list.push(otherCompId);
+                }
+
+                this.str = '{';
+                list.forEach((obj)=>{
+                    this.str = this.str + '"' + obj.name + '":"' + obj.value + '",'
+                });
+                this.str = this.str + '"pageIndex":"' + this.currentPage + '",' + '"pageSize":"' + this.pageSize + '",' + '"orderType":"' + 2 + '",' +  '"companyId":"' + this.roleForm.compId + '"}';
+                var param = JSON.parse(this.str);
+                this.initloadData(param);
+            },
+
+            //远程搜索模糊查询电商卖家名称
+            async remoteMethod(query){
+                if(query!=''){
+                    this.loading = true;
+                    let param = {
+                        "companyId":userInfo().companyId,
+                        "sellName":query,
+                        "pageIndex":1,
+                        "pageSize":100
+                    };
+                    const res = await queryStallCustomer(param);
+                    setTimeout(() => {
+                        this.loading = false;
+                        this.options4 =  res.result.results;
+                        }, 200);
+                } else {
+                    this.options4 = [];
+                }
+
+            },
+
+            handleSizeChange(val) {
+                this.pageSize = val;
+                let param ={
+                    "startDate":this.filters.date.startDate,
+                    "endDate":this.filters.date.endDate,
+                    "orderCode":this.input1,
+                    "busiCompId":this.otherSideCompanyName,
+                    "pageIndex":this.currentPage,
+                    "pageSize":this.pageSize,
+                    "status":this.radio,
+                    "orderType":2,
+                    "companyId":this.roleForm.compId
+                };
+                this.initloadData(param);
+            },
+            handleCurrentChange(val) {
+                this.currentPage = val;
+                let param ={
+                    "startDate":this.filters.date.startDate,
+                    "endDate":this.filters.date.endDate,
+                    "orderCode":this.input1,
+                    "busiCompId":this.otherSideCompanyName,
+                    "pageIndex":this.currentPage,
+                    "pageSize":this.pageSize,
+                    "status":this.radio,
+                    "orderType":2,
+                    "companyId":this.roleForm.compId
+                };
+                this.initloadData(param);
+            },
+            //格式化日期
+            formatDate:function(row,column){
+                var time = row[column.property];
+                if(time==undefined||time==''){
+                    return '';
+                }
+                return formatDate(time,"yyyy-MM-dd hh:mm");
+            },
+            Stateialog(state,id,orderCode,orderType,otherSideCompId,busiName,orderTime,totalNum,totalFee){
+                if(state == 5){
+                    this.$router.push({path:'/indentManagementReturnDetails2',query:{orderId:id,orderCode:orderCode,busiCompId:otherSideCompId,status:state,orderType:orderType,busiName:busiName,orderTime:orderTime,totalNum:totalNum,totalFee:totalFee}});
+                }else if(state == 6 || state == 2 || state == 99 || state == 50){
+                    this.$router.push({path:'/indentManagementPortionPicking',query:{orderId:id}});
+                }
+            },
+            async exportTableData() {
+                var table = [];
+                    for(let i=0;i<this.tableData.length;i++){
+                        let data1 = this.tableData[i];
+                        if(data1.status && data1.status == 2){
+                            data1.status = '已配货';
+                        }else if(data1.status && data1.status == 5){
+                            data1.status = '待配货';
+                        }else if(data1.status && data1.status == 6){
+                            data1.status = '部分配货';
+                        }else if(data1.status && data1.status == 50){
+                            data1.status = '已取消';
+                        }else if(data1.status && data1.status == 99){
+                            data1.status = '已完成';
+                        }
+                        if(data1.payType==0){
+                            data1.payType = '现结';
+                        }else if(data1.payType==1){
+                            data1.payType = '周结';
+                        }else if(data1.payType==2){
+                            data1.payType = '月结';
+                        }
+
+                        if(data1.orderTime!=undefined&&data1.orderTime!=''){
+                            data1.orderTime = formatDate(data1.orderTime,'yyyy-MM-dd hh:mm:ss');
+                        }
+                        table.push(data1);
+                    }
+                const list = table;
+                const tHeader = ['订单编号', '电商卖家','订单数量','订单金额','下单时间','结算方式','状态'];
+                const filterVal = ['orderCode', 'busiName','totalNum','totalFee','orderTime','payType','status'];
+			　　　			　　　const data = this.formatJson(filterVal, list);
+			　　　export_json_to_excel(tHeader, data, '订单管理表');
+            },
+            formatJson(filterVal, jsonData) {
+		　　　　　　return jsonData.map(v => filterVal.map(j => v[j]))
+		　　　　},
+            checkPayType:function(row,column){
+                let data = row[column.property];
+                if(data==0){
+                    return '现结';
+                }else if(data==1){
+                    return '周结';
+                }else if(data==2){
+                    return '月结';
+                }
+            },
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/indentManagement';
+</style>

@@ -1,0 +1,1029 @@
+<template>
+    <div class="fillcontain">
+        <ul :class="[identity ==1 ?'stallShareMenu':identity ==2 ?'sellerShareMenu':'']">
+            <li>
+                <router-link :to='{path:"/manageRole"}'>角色管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/manageStaff"}'>员工管理</router-link>
+            </li>
+            <li class="ListMenu">
+                <router-link :to='{path:"/basicInformation"}'>基本资料</router-link>
+            </li>
+        </ul>
+        <div class="basic">
+            <div style="overflow: hidden;width:100%;">
+                <el-col :span="24" class="basicBorder">
+<!--                    <el-col :span="3">
+                        <el-upload
+                            class="avatar-uploader"
+                            action=""
+                            :show-file-list="false"
+                            :on-success="handleAvatarSuccess">
+                            <img v-if="imageUrl" :src="imageUrl" class="avatar" @click="upload">
+                            <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+                        </el-upload>
+                        <p class="changeImg">修改头像</p>
+                    </el-col> -->
+				    <form id="upload" enctype="multipart/form-data" method="post">
+				    	<el-col :span="3">
+				      <el-upload class="avatar-uploader"
+				        ref="upload"
+				        action="baseUrl + '/api/upload'"
+				        :on-change="handleChange"
+				        :before-upload="beforeAvatarUpload">
+				        <img v-if="imageUrl" :src="imageUrl" class="avatar" name="uploadFile">
+				        <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+				      </el-upload>
+				       <p class="changeImg">修改头像</p>
+				       </el-col>
+				    </form>
+                    <el-col :span="18" class="basicInfo">
+                        <el-col :span="24"><span class="title">用户名：</span><span>{{this.roleForm.nickName}}</span></el-col>
+                        <el-col :span="8"><span class="title">手机号码：</span><span>{{this.roleForm.userName}}</span></el-col>
+                        <el-col :span="16"><router-link :to='{path:"/changePassword"}' class="changepwd">修改密码</router-link></el-col>
+                        <!--<el-col :span="24"><span class="title">帐号ID：</span><span>{{this.roleForm.userId}}</span></el-col>-->
+                        <el-col :span="24"><span
+                            class="title">注册时间：</span><span>{{this.roleForm.registerTime | formatRegisterDate}}</span>
+                        </el-col>
+                    </el-col>
+                </el-col>
+            </div>
+            <div class="flex creationInfo">
+                <p>所在公司</p>
+                <div>
+                    <el-button type="info" size="small" @click="dialogFormVisible = true">+创建公司</el-button>
+                    <el-button size="small" @click="dialogSearchVisible = true,searchBlock = false">加入公司</el-button>
+                </div>
+            </div>
+            <div class="basicTable">
+                <el-table
+                    :data="tableData">
+                    <el-table-column
+                        prop="name"
+                        label="公司名称"
+                        width="200">
+                    </el-table-column>
+                    <el-table-column
+                        prop="compCode"
+                        label="公司代码">
+                    </el-table-column>
+                    <el-table-column
+                        label="公司LOGO">
+                        <template scope="scope">
+                            <img src="../image/shops@3x.png" alt="">
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="userName"
+                        label="管理员">
+                    </el-table-column>
+                    <el-table-column
+                        prop="compScale"
+                        label="公司规模"
+                        :formatter="formatScale">
+                    </el-table-column>
+                    <el-table-column label="操作" width="400" prop="power">
+                        <template scope="scope">
+                            <div v-show=!tableData[scope.$index].adminFlag>
+                                <!--
+                                <el-button
+                                    size="small"
+                                >查看</el-button>-->
+                                <el-button
+                                    size="small"
+                                    type="danger"
+                                    @click="exitCompany(tableData[scope.$index])"
+                                >退出该公司
+                                </el-button>
+                            </div>
+                            <div v-show=tableData[scope.$index].adminFlag>
+                                <el-button
+                                    size="small"
+                                    @click="showEditCompany(tableData[scope.$index])"
+                                >编辑
+                                </el-button>
+                                <el-button
+                                    size="small"
+                                    type="danger"
+                                    @click.native.prevent="deleteRow(scope.$index, tableData)">删除
+                                </el-button>
+                                <!--<el-button-->
+                                    <!--size="small"-->
+                                    <!--type="info">-->
+                                    <!--<router-link :to='{path:"/messageManagement"}' style="color:#fff;">消息管理-->
+                                    <!--</router-link>-->
+                                <!--</el-button>-->
+                                <el-button
+                                    size="small"
+                                    type="warning"
+                                    @click="showCompanyCovert(tableData[scope.$index])">管理转让
+                                </el-button>
+                            </div>
+                        </template>
+                    </el-table-column>
+                </el-table>
+
+                <el-pagination
+                    small
+                    class="right"
+                    style="margin-top: 20px;"
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :current-page="currentPage"
+                    :page-sizes="[100, 200, 300, 400]"
+                    :page-size="pagesize"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    :total="totalCount">
+                </el-pagination>
+            </div>
+        </div>
+        <el-dialog title="创建公司" s-on-blur :visible.sync="dialogFormVisible" class="creationGS"
+                   :before-close="handleCreateCompanyClose">
+            <el-form :model="form" :rules="createCompanyRule" ref="refCreateForm">
+                <div class="form">
+                    <el-form-item prop="name" label="公司名称：" :label-width="formLabelWidth" style="width: 400px;" >
+                        <el-input v-model="form.name" auto-complete="off"></el-input>
+                    </el-form-item>
+                    <el-form-item prop="serialNub" label="档口编码：" :label-width="formLabelWidth" style="width: 400px;" v-if="form.companyBindingId== GLOBAL.COMPANY_TYPE_STALL">
+                        <el-input v-model="form.serialNub" auto-complete="off"></el-input>
+                    </el-form-item>
+                    <!--<el-form-item prop="compCode" label="公司代码：" :label-width="formLabelWidth">
+                        <el-input v-model="form.compCode" auto-complete="off"></el-input>
+                    </el-form-item>-->
+                    <!--
+                    <el-form-item prop="companyBindingId" label=" 公司类型：" :label-width="formLabelWidth" >
+                        <el-select v-model="form.companyBindingId" placeholder="请选择公司类型" @change="myCompanyBindingIdBlur">
+                            <el-option label="档口" value="1"></el-option>
+                            <el-option label="卖家" value="2"></el-option>
+                        </el-select>
+                    </el-form-item>-->
+                    <el-form-item label="公司LOGO：" :label-width="formLabelWidth">
+                        <el-upload
+                            class="upload-demo"
+                            action="https://jsonplaceholder.typicode.com/posts/"
+                            :on-preview="handlePreview"
+                            :on-remove="handleRemove"
+                            :file-list="fileList">
+                            <el-button size="small" type="primary">上传LOGO</el-button>
+                        </el-upload>
+                    </el-form-item>
+                    <el-form-item label="公司位置：" :label-width="formLabelWidth" style="width: 400px;" >
+                        <el-input v-model="form.location" auto-complete="off"></el-input>
+                    </el-form-item>
+                </div>
+                <el-form-item prop="compScale" label="公司规模：" :label-width="formLabelWidth">
+                    <el-select v-model="form.compScale" placeholder="请选择公司规模"  @change="myCompScaleBlur">
+                        <el-option label="20人以下" value="1"></el-option>
+                        <el-option label="20-50人" value="2"></el-option>
+                        <el-option label="50-200人" value="3"></el-option>
+                        <el-option label="200-500人" value="4"></el-option>
+                        <el-option label="500-100人" value="5"></el-option>
+                        <el-option label="1000人以上" value="6"></el-option>
+                    </el-select>
+                </el-form-item>
+
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="cancelCreateCompany">取 消</el-button>
+                <el-button type="primary" @click="createCompany('refCreateForm')">确 定</el-button>
+            </div>
+        </el-dialog>
+
+        <el-dialog title="管理转让" :visible.sync="dialogFormMember" class="Transferdialog" size="tiny">
+            <el-form :model="form">
+                <div class="form">
+                    <el-form-item label="公司名称：" :label-width="formLabelWidth">
+                        <p>{{manageForm.companyName}}</p>
+                    </el-form-item>
+                    <el-form-item label="当前管理员：" :label-width="formLabelWidth">
+                        <p>{{manageForm.userName}}</p>
+                    </el-form-item>
+                    <el-form-item label="转让管理员：" :label-width="formLabelWidth">
+                        <el-autocomplete
+                            style="width: 250px;"
+                            placeholder="请选择..."
+                            :fetch-suggestions="querySearchAsync"
+                            @select="handleSelect"
+                            v-model="input2">
+                            <template slot="append"><img src="../image/address_book.png" alt=""
+                                                         @click="queryComanyUserInfo"></template>
+                        </el-autocomplete>
+                    </el-form-item>
+                    <div class="explain">说明：公司转让成功后，只有新的管理员能管理公司</div>
+                </div>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="cancelConvertCompanyAuth">取 消</el-button>
+                <el-button type="primary" @click="convertCompanyAuth">确 定</el-button>
+            </div>
+        </el-dialog>
+        <el-dialog title="搜索公司" :visible.sync="dialogSearchVisible" class="dialogSearch"
+                   :before-close="handleSearchCompanyClose">
+            <div class="search">
+                <el-input placeholder="请输入要查找的公司名称" v-model="searchCompany">
+                    <el-button slot="append" icon="search" @click="search">搜索</el-button>
+                </el-input>
+            </div>
+            <div v-show="searchBlock">
+                <div class="searchNumber">共搜索到 <span> {{this.selectCompanyCount}} </span>条数据</div>
+                <div class="searchTable">
+                    <el-table
+                        ref="searchCompTable"
+                        :data="searchTableData"
+                        @row-click="selectedCompanyItem"
+                        :row-class-name="tableRowClassName"
+                    >
+                        <el-table-column
+                            prop="name"
+                            label="公司名称"
+                            width="200">
+                        </el-table-column>
+                        <el-table-column
+                            prop="compCode"
+                            label="公司代码">
+                        </el-table-column>
+                        <el-table-column
+                            label="公司LOGO">
+                            <template scope="scope">
+                                <img src="../image/shops@3x.png" alt="">
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            prop="compScale"
+                            label="公司规模"
+                            :formatter="formatScale">
+                        </el-table-column>
+                        <el-table-column label="" width="200" prop="power">
+                            <template scope="scope">
+                                <el-button
+                                    size="small"
+                                    @click="joinCompany(searchTableData[scope.$index])"
+                                >+加入公司
+                                </el-button>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </div>
+            </div>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="closeSearchDialog">取 消</el-button>
+                <el-button type="primary" @click="closeSearchDialog">确 定</el-button>
+            </div>
+        </el-dialog>
+
+        <el-dialog title="加入公司" :visible.sync="dialogJoinCompany" size="tiny" class="JoinCompany"
+                   :before-close="handleJoinCompanyClose">
+            <div class="company">
+                <div class="flex"><img src="../image/shops@3x.png" alt="">{{joinSearchForm.name}}</div>
+                <div class="companyInfo">
+                    <p>公司规模： <span>{{joinSearchForm.compScale | formatScaleValue }}</span></p>
+                    <!--<p>管理员：<span>李四</span></p>-->
+                </div>
+            </div>
+            <div class="joinVerify flex">
+                <span class="tit">验证信息：</span>
+                <el-input v-model="joinSearchForm.input" placeholder="请输入验证信息"></el-input>
+            </div>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="cancelJoinCompanyFun">取 消</el-button>
+                <el-button type="primary" @click="joinCompanyFun">确 定</el-button>
+            </div>
+        </el-dialog>
+
+        <el-dialog title="编辑公司" :visible.sync="dialogRedact" class="Redactdialog" size="tiny">
+            <el-form :model="editForm" ref="refeditForm" :rules="createCompanyRule">
+                <div class="form">
+                    <el-form-item prop="name" label="公司名称：" :label-width="formLabelWidth">
+                        <el-input v-model="editForm.name" auto-complete="off" placeholder="请输入公司名称"></el-input>
+                    </el-form-item>
+                    <!--
+                    <el-form-item label="公司代码：" :label-width="formLabelWidth">
+                        <el-input v-model="editForm.compCode" auto-complete="off" placeholder="请输入公司代码"></el-input>
+                    </el-form-item>-->
+                    <el-form-item label="公司位置：" :label-width="formLabelWidth">
+                        <el-input v-model="editForm.location" auto-complete="off" placeholder="请输入公司位置"></el-input>
+                    </el-form-item>
+                    <el-form-item label="公司规模：" :label-width="formLabelWidth" class="redactSelect">
+                        <el-select v-model="editForm.compScale" placeholder="请选择公司规模">
+                            <el-option label="20人以下" value="1"></el-option>
+                            <el-option label="20-50人" value="2"></el-option>
+                            <el-option label="50-200人" value="3"></el-option>
+                            <el-option label="200-500人" value="4"></el-option>
+                            <el-option label="500-1000人" value="5"></el-option>
+                            <el-option label="1000人以上" value="6"></el-option>
+                        </el-select>
+                    </el-form-item>
+                    <el-form-item label="公司LOGO：" :label-width="formLabelWidth">
+                        <el-upload
+                            class="upload-demo"
+                            action="baseUrl + '/admin/update/avatar/"
+                            :on-preview="handlePreview"
+                            :on-remove="handleRemove"
+                            :file-list="fileList">
+                            <el-button size="small" type="primary">上传LOGO</el-button>
+                        </el-upload>
+                    </el-form-item>
+                </div>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="dialogRedact = false">取 消</el-button>
+                <el-button type="primary" @click="saveEditCompany('refeditForm')">确 定</el-button>
+            </div>
+        </el-dialog>
+    </div>
+</template>
+
+<style>
+    .el-table .info-row {
+        background: #5CB85C;
+    }
+
+    .el-table .positive-row {
+        background: #e2f0e4;
+    }
+</style>
+
+
+<script>
+    import headTop from '../components/headTop'
+    import {setStore, getStore,userInfo} from  '../config/mUtils'
+    import {isJson} from  '../utils/common'
+    import {saveUser} from '@/api/getData'
+    import {
+        createCompanyFun,
+        getAdminInfo,
+        queryCompany,
+        requestUserCompany,
+        saveCompany,
+        getUserCompanys,
+        exitCompany,
+        deleteCompany,
+        queryUser,
+        changeCompanyAuth,
+        initDefaultWareHouse,
+        initStall
+    } from '@/api/getData'
+    import {formatDate} from '../utils/date.js'
+    import {mydateFormat} from '../utils/dataFormater.js'
+
+
+    export default {
+        components: {
+            headTop,
+        },
+        filters: {
+            formatRegisterDate(time) {
+                var date = new Date(time);
+                return formatDate(date, 'yyyy-MM-dd hh:mm');
+            },
+            formatScaleValue: function (value) {
+                return value;
+                var scale = value;
+                console.log("log-?--" + value)
+                if (scale == '1') {
+                    return "20人以下";
+                } else if (scale == '2') {
+                    return "20-50人";
+                } else if (scale == '3') {
+                    return "50-200人";
+                } else if (scale == '4') {
+                    return "200-500人";
+                } else if (scale == '5') {
+                    return "500-1000人";
+                } else if (scale == '6') {
+                    return "1000人以上";
+                }
+            },
+        },
+        data() {
+            var validateCompName = (rule, value, cb) => {
+                console.log(value)
+                var pattern = /^\S{1,50}$/
+                if (value === '') {
+                    cb(new Error('公司名称不能为空'))
+                } else if (!pattern.test(value)) {
+                    cb(new Error('公司名称不能超过50个字符'))
+                } else {
+                    cb()
+                }
+            }
+
+            var validateCompCode = (rule, value, cb) => {
+                var pattern = /^[A-Za-z0-9]{3,20}/;
+                if (value === '') {
+                    cb(new Error('公司代码不能为空'))
+                } else if (!pattern.test(value)) {
+                    cb(new Error('3到20位数据或者字母'))
+                } else {
+                    cb()
+                }
+            }
+            var validateCompCode = (rule, value, cb) => {
+                var pattern = /^[A-Za-z0-9]{3,20}/;
+                if (value === '') {
+                    cb(new Error('公司代码不能为空'))
+                } else if (!pattern.test(value)) {
+                    cb(new Error('3到20位数据或者字母'))
+                } else {
+                    cb()
+                }
+            }
+            var validateCompScale = (rule, value, cb) => {
+                if (value === '') {
+                    cb(new Error('请选择公司规模'))
+                } else {
+                    cb()
+                }
+            }
+            /*
+            var validateCompanyBindingId = (rule, value, cb) => {
+
+                if (value == '') {
+                    cb(new Error('请选择公司类型'))
+                } else {
+                   cb()
+                }
+            }*/
+            return {
+                //1为档口、2为卖家身份
+                identity:1,
+                userInfo:userInfo(),
+                restaurants: [],
+                selectAuthUserId: '',
+                timeout: null,
+                input2: '',
+                roleForm: {
+                    loginname: '',
+                    userId: '',
+                    roleId: '',
+                    compId: '',
+                    userName: '',
+                    registerTime: '',
+                    nickName: '',
+                    currentComUid:'',
+                },
+                pagesize: 6,
+                //默认高亮行数据id
+                highlightId: -1,
+                //当前页码
+                currentPage: 1,
+                //查询的页码
+                start: 1,
+                //默认数据总数
+                totalCount: 0,
+
+                dynamicTags: ['技术总监', 'ui设计师', 'java工程师'],
+                fileList: [],
+                dialogFormVisible: false,
+                dialogFormMember: false,
+                manageForm: {
+                    companyName: '',
+                    ownerName: '',
+                    userName:''
+                },
+                dialogSearchVisible: false,
+                dialogJoinCompany: false,
+                dialogFormRole: false,
+                dialogRedact: false,
+                imageUrl: '',
+                searchCompany: '',
+                input: '',
+                searchBlock: false,
+                addTime: '',
+                defaultProps: {
+                    children: 'children',
+                    label: 'label'
+                },
+                tableData: [],
+                searchTableData: [],
+                selectActiveCompanyId: '',
+                selectCompanyCount: 0,
+                form: {
+                    name: '',
+                    region: '',
+                    location: '',
+                    compCode: '',
+                    compScale: '',
+                    delivery: false,
+                    logoUrl: '',
+                    companyBindingId:''
+                },
+                editForm: {
+                    name: '',
+                    compCode: '',
+                    compScale: '',
+                    ownerId: '',
+                    companyBindingId:'',
+                    location:'',
+                    serialNub:''
+                },
+                formLabelWidth: '120px',
+                joinSearchForm: {
+                    compId: '',
+                    name: '',
+                    nickName: '',
+                    compScale: ''
+                },
+
+                createCompanyRule: {
+                    name: [
+                        {validator: validateCompName, trigger: 'blur'}
+                    ],
+                    compCode: [
+                        {validator: validateCompCode, trigger: 'blur'}
+                    ],
+
+                    compScale: [
+                        {validator: validateCompScale, trigger: 'blur'}
+                    ],
+                    /*
+                    companyBindingId:[
+                        {validator:validateCompanyBindingId,trigger: 'blur'}
+                        ],*/
+                },
+
+            }
+        },
+        mounted(){
+            var userInfo = getStore("user_info_user");
+            var vjson = JSON.parse(userInfo);
+            //console.log(vjson)
+            this.roleForm.userId = vjson.id;
+            this.roleForm.userName = vjson.userName;
+            this.form.companyBindingId=vjson.type;
+            var currentComp = getStore("curCompany");
+            if (isJson(currentComp)) {
+                var vcom = JSON.parse(currentComp);
+                this.roleForm.compId = vcom.id;
+            }
+            //this.roleForm.compId=vjson.curCompany.id;
+            //this.changepwdForm.userName=this.roleForm.userName;
+            this.roleForm.registerTime = vjson.createTime;
+            console.log("info---" + this.roleForm.registerTime);
+            //测试代码
+            //this.roleForm.compId='2';
+            this.loadInit();
+            //this.restaurants = this.loadAll();
+        },
+        methods: {
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+            },
+            myCompanyBindingIdBlur(){
+                this.$refs.refCreateForm.validateField('companyBindingId');
+            },
+            myCompScaleBlur(){
+                console.log("================================");
+                this.$refs.refCreateForm.validateField('compScale');
+            },
+
+            formatScale: function (row, column) {
+                var scale = row.compScale;
+                if (scale == '1') {
+                    return "20人以下";
+                } else if (scale == '2') {
+                    return "20-50人";
+                } else if (scale == '3') {
+                    return "50-200人";
+                } else if (scale == '4') {
+                    return "200-500人";
+                } else if (scale == '5') {
+                    return "500-1000人";
+                } else if (scale == '6') {
+                    return "1000人以上";
+                }
+            },
+
+            mydateFormat,
+            formatRegisterDate(time) {
+                var date = new Date(time);
+                return formatDate(date, 'yyyy-MM-dd hh:mm');
+            },
+            loadInit(){
+                this.currentPage = 1;
+                let param = {
+                    "userId": this.roleForm.userId,
+                    "pageSize": this.pagesize,
+                    "pageIndex": this.currentPage
+                };
+                this.initFormValue();
+                this.loadDataWithCondition(param);
+            },
+            initFormValue(){
+                this.form.name = '';
+                this.form.location = '';
+                this.form.compCode = '';
+                this.form.compScale = '';
+            },
+            //页码变更
+            handleCurrentChange: function (val) {
+                this.currentPage = val;
+                let param = {
+                    "userId": this.roleForm.userId,
+                    "pageSize": this.pagesize,
+                    "pageIndex": this.currentPage
+                };
+                this.loadDataWithCondition(param);
+            },
+            async loadDataWithCondition(param) {
+                const res = await getUserCompanys(param);
+                console.log(res);
+                if (res.isSuccess == true) {
+                    this.tableData = res.result.data;
+                    this.totalCount = res.result.totalCount;
+                } else {
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            handleClick() {
+                console.log(1);
+            },
+            selectedCompanyItem(row){
+                console.log(row);
+                this.selectActiveCompanyId = row.id;
+
+            },
+            async exitCompany(data){
+                const res = await exitCompany({"companyId": data.id, "userId": this.roleForm.userId});
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: '退出成功'
+                    });
+                    this.loadInit();
+                } else {
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            showEditCompany(data){
+                this.dialogRedact = true;
+                this.editForm.name = data.name;
+                this.selectActiveCompanyId = data.id;
+                this.editForm.compCode = data.compCode;
+                this.editForm.compScale = data.compScale;
+                this.editForm.location=data.location;
+            },
+            showCompanyCovert(data){
+                this.dialogFormMember = true;
+                this.selectActiveCompanyId = data.id;
+                this.manageForm.companyName = data.name;
+                this.manageForm.ownerName = data.userName;
+
+            },
+            async saveEditCompany(formName){
+                this.$refs[formName].validate(async (valid) => {
+                    if (valid) {
+                        let dataCompany = {
+                            'id': this.selectActiveCompanyId,
+                            'createUserId': this.roleForm.userId,
+                            'name': this.editForm.name,
+                            'ownerId': this.roleForm.userId,
+                            'compScale': this.editForm.compScale,
+                            'compCode': this.editForm.compCode
+                        }
+                        const res = await saveCompany(dataCompany);
+                        if (res.isSuccess == true) {
+                            this.$message({
+                                type: 'success',
+                                message: '修改成功'
+                            });
+                            this.dialogRedact = false;
+                            this.loadInit();
+                        } else {
+                            this.$message({
+                                type: 'error',
+                                message: res.errorMsg
+                            });
+                        }
+                    }
+                });
+
+            },
+            tableRowClassName(row, index) {
+                /*
+                 if (index === 1) {
+                 return 'info-row';
+                 } else if (index === 3) {
+                 return 'positive-row';
+                 }
+                 return '';*/
+                if (row.operation) {
+                    return 'info-row'
+                } else {
+                    return ''
+                }
+            },
+            //删除角色信息
+            async deleteRow(index, rows) {
+                //rows.splice(index, 1);
+                var compid = rows[index].id;
+                const res = await deleteCompany({"companyId": compid, "userId": this.roleForm.userId});
+                console.log(res);
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: '删除成功'
+                    });
+                    //this.loadInit();
+                    location.reload();
+                } else {
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            toggleSelection(rows) {
+                if (rows) {
+                    rows.forEach(row => {
+                        this.$refs.multipleTable.toggleRowSelection(row);
+                    });
+                } else {
+                    this.$refs.multipleTable.clearSelection();
+                }
+            },
+            handleSelectionChange(val) {
+                this.multipleSelection = val;
+            },
+            handleClose(tag) {
+                this.dynamicTags.splice(this.dynamicTags.indexOf(tag), 1);
+            },
+            handleAvatarSuccess(res, file) {
+                this.imageUrl = URL.createObjectURL(file.raw);
+            },
+            beforeAvatarUpload(file) {
+                const isJPG = file.type === 'image/jpeg';
+                const isLt2M = file.size / 1024 / 1024 < 2;
+
+                if (!isJPG) {
+                    this.$message.error('上传头像图片只能是 JPG 格式!');
+                }
+                if (!isLt2M) {
+                    this.$message.error('上传头像图片大小不能超过 2MB!');
+                }
+                return isJPG && isLt2M;
+            },
+            async handleChange(file){
+                this.userInfo.picPath = file.name;
+                const res = await saveUser(this.userInfo);
+				if (res.isSuccess == true) {
+				    this.$message({
+				        type: 'success',
+				        message: res.result.msg
+				    });
+				}else{
+				    this.$message({
+				        type: 'error',
+				        message: res.errorMsg
+				    });
+				}
+
+            },
+            handleRemove(file, fileList) {
+                console.log(file, fileList);
+            },
+            handlePreview(file) {
+                console.log(file);
+            },
+            handleClose(tag) {
+                this.dynamicTags.splice(this.dynamicTags.indexOf(tag), 1);
+            },
+            handleSearchCompanyClose(){
+                this.searchCompany = '';
+                this.dialogSearchVisible = false;
+            },
+            closeSearchDialog(){
+                this.searchCompany = '';
+                this.dialogSearchVisible = false;
+            },
+            async search(){
+                if (this.searchCompany == '') {
+                    this.$message({
+                        type: 'error',
+                        message: '请输入公司名称'
+                    });
+                    return false;
+                }
+                let dataCompany = {
+                    'company': {"name": this.searchCompany},
+                    'pageSize': 1000,
+                    'pageIndex': 1,
+                }
+
+                const res = await queryCompany(dataCompany);
+                console.log(res);
+                if (res.isSuccess == true) {
+                    this.searchBlock = true;
+                    this.searchTableData = res.result.data;
+                    this.selectCompanyCount = res.result.data.length;
+                } else {
+                    this.searchBlock = false;
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            joinCompany(data){
+                if (data.id == '') {
+                    this.$message({
+                        type: 'error',
+                        message: '请选择要加入的公司'
+                    });
+                    return false;
+                }
+                this.joinSearchForm.compId = data.id;
+                this.joinSearchForm.name = data.name;
+                this.joinSearchForm.compScale = data.compScale;
+                this.dialogJoinCompany = true;
+                //this.joinSearchForm.name
+
+            },
+            handleJoinCompanyClose(){
+                this.cancelJoinCompanyFun();
+            },
+            cancelJoinCompanyFun(){
+                this.joinSearchForm.input = '';
+                this.dialogJoinCompany = false;
+            },
+            async joinCompanyFun(){
+                var compId = this.joinSearchForm.compId;
+                const res = await requestUserCompany({"userId": this.roleForm.userId, "companyId": compId});
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: '加入成功'
+                    });
+                    //this.loadInit();
+                    this.joinSearchForm.input = '';
+                    this.dialogJoinCompany = false;
+                    location.reload();
+                } else {
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            handleCreateCompanyClose(){
+                this.dialogFormVisible = false;
+                this.initFormValue();
+            },
+            cancelCreateCompany(){
+                this.dialogFormVisible = false;
+                this.initFormValue();
+            },
+            //
+            async createCompany(formName) {
+                console.log("error=====1")
+                this.$refs[formName].validate(async (valid) => {
+                    if (valid) {
+                        this.userId = this.roleForm.userId;
+                        let dataCompany = {
+                            'name': this.form.name,
+                            'ownerId': this.userId,
+                            'createUserId': this.userId,
+                            'location': this.form.location,
+                            'compCode': this.form.compCode,
+                            'compScale': this.form.compScale,
+                            'type':this.form.companyBindingId
+                        }
+                        if(this.form.companyBindingId== this.GLOBAL.COMPANY_TYPE_STALL ){
+                            if(this.form.serialNub==''){
+                                this.$message({
+                                    type: 'error',
+                                    message: '请输入档口编码'
+                                });
+                                return;
+                            }
+                        }
+                        const res = await createCompanyFun(dataCompany);
+                        if (res.isSuccess == true) {
+                        	//初始化仓库
+                        	var msgtitle='创建成功';
+                        	if(this.form.companyBindingId== this.GLOBAL.COMPANY_TYPE_STALL ){
+                        		const res2= await initDefaultWareHouse({"companyId":res.result.id,"name":"默认仓库","memo":"默认仓库"});
+                        		if(res2.isSuccess == true){
+                        			msgtitle='创建成功';
+                        		}
+                                let stallpara = {
+                                    "companyId":res.result.id,
+                                    'name': this.form.name,
+                                    'serialNub': this.form.serialNub,
+                                    'createUserId': this.userId,
+                                }
+                                const res3=await initStall(stallpara);
+                                if(res3.isSuccess == true){
+                                    msgtitle='创建成功';
+                                }
+                        	}else{
+                        		msgtitle='创建成功(未初化仓库)';
+                        	}
+
+                        	this.$message({
+                        			duration:this.GLOBAL.MESSAGE_DISSMISS_TIME_MID,
+                                	type: 'success',
+                                	message: msgtitle,
+                                	showClose:true
+                            });
+                            this.dialogFormVisible = false;
+                            this.loadInit();
+                            //this.$router.push({path: '/manage',query:{userId:res.result.userId}})
+                        } else {
+                            this.$message({
+                                type: 'error',
+                                message: res.errorMsg
+                            });
+                        }
+                    } else {
+                        console.log("error=====")
+                    }
+                });
+            },
+            converUserFun(resdata){
+                var jsonArray = [];
+                for (var i = 0; i < resdata.length; i++) {
+                    var resultData = resdata[i];
+                    var json = new Object;
+                    json.value = resultData.userName; //显示
+                    json.id = resultData.id;
+                    jsonArray.push(json);
+                }
+                return jsonArray;
+
+            },
+            async queryComanyUserInfo(){
+                const res = await queryUser({"compId": this.selectActiveCompanyId, "page": 1, "pageSize": 2000});
+                if (res.isSuccess == true) {
+                    this.restaurants = this.converUserFun(res.result.data);
+                    //console.log( this.restaurants );
+                }
+            },
+            querySearchAsync(queryString, cb) {
+                var restaurants = this.restaurants;
+                var results = queryString ? restaurants.filter(this.createStateFilter(queryString)) : restaurants;
+
+                clearTimeout(this.timeout);
+                this.timeout = setTimeout(() => {
+                    cb(results);
+                }, 2000 * Math.random());
+            },
+            createStateFilter(queryString) {
+                return (state) => {
+                    return (state.value.indexOf(queryString.toLowerCase()) === 0);
+                };
+            },
+            handleSelect(item) {
+                console.log(item);
+                this.selectAuthUserId = item.id;
+            },
+            cancelConvertCompanyAuth(){
+                this.dialogFormMember = false;
+                this.selectAuthUserId = '';
+            },
+            async convertCompanyAuth(){
+                if (this.selectAuthUserId === '') {
+                    this.$message({
+                        type: 'error',
+                        message: '请选择要转让的用户'
+                    });
+                }
+                const res = await changeCompanyAuth({
+                    "ownerId": this.selectAuthUserId,
+                    "operaUserId": this.roleForm.userId,
+                    "companyId": this.selectActiveCompanyId
+                });
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: '转让成功'
+                    });
+                    this.dialogFormMember = false;
+                    this.loadInit();
+                } else {
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+        },
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin.less';
+    @import "../style/common";
+    @import '../style/basicInformation';
+
+</style>

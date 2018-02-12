@@ -1,0 +1,627 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('stallProcurement')">
+                <router-link :to='{path:"/stallProcurement"}'>采购入库</router-link>
+            </li>
+            <li class="menuIndex" v-if="getMenuAuthFun('stallPurchase')">
+                <router-link :to='{path:"/stallPurchase"}'>采购退货</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('supplierManagement')">
+                <router-link :to='{path:"/supplierManagement"}'>供应商管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('purchaseStatistics')">
+                <router-link :to='{path:"/purchaseStatistics"}'>采购统计</router-link>
+            </li>
+        </ul>
+        <div class="promptlyReturns radioGreen">
+            <el-col :span="10" class="isLeft">
+            	<el-col :span="24" class="flex leftList">
+                    <div class="fastTop flex2">
+		                <div class="title">供应商：</div>
+		                <div class="content">
+		                    <span> {{supplierName}}</span>
+		                    <a href="javascript:void(0)" class="comeBack" @click="handleSelectSupplier">选择</a>
+		                </div>
+		            </div>
+                </el-col>
+                <!--<el-col :span="24" class="flex leftList">
+                    <el-col :span="4" class="title">仓库：</el-col>
+                    <el-col :span="18" class="content" v-show="colors.length > 0">
+                        <el-select v-model="warehouseId" placeholder="选择仓库" class="dropdown-menu" size="small" >
+		                    <el-option v-for="item in warehouse" :label="item.warehouseName" :value="item.warehouseId"></el-option>
+		                </el-select>
+                    </el-col>
+                </el-col>-->
+                <el-col :span="24" class="leftList leftList2">
+                    <div class="flex">
+                        <el-col :span="4" class="title">货号：</el-col>
+                        <el-col :span="19" class="content" style="width:300px">
+                        	<el-select
+                                v-model="productCode"
+                                filterable
+                                remote
+                                reserve-keyword
+                                placeholder="请输入货号..."
+                                :remote-method="remoteMethod"
+                                :loading="loading"
+                                @change="searchPurchaseProduct">
+                                <el-option
+                                    v-for="item in productData"
+                                    :key="item.productCode"
+                                    :label="item.productCode"
+                                    :value="item.productCode">
+                                </el-option>
+                            </el-select>
+                            <!--<el-input icon="search" v-model="productCode" placeholder="请输入货号..." :on-icon-click="searchPurchaseProduct"></el-input>-->
+                        </el-col>
+                    </div>
+                    <el-col :span="4" v-if="stallStart == true">&nbsp;</el-col>
+                    <el-col :span="19" v-if="stallStart == true" class="content">
+                        <div class="contentInfo flex">
+                            <img v-if="imgUrl_main != ''" style="width: 160px; height: 160px;" :src="imgUrl_main" alt="">
+                            <img v-else style="width: 160px; height: 160px;" src="../image/product_default.png" alt="">
+                        </div>
+                    </el-col>
+                </el-col>
+                <div   v-if="stallStart == true">
+                    <el-col :span="24" class="flex leftList">
+                        <el-col :span="4" class="title">颜色：</el-col>
+                        <el-col :span="18" class="content" v-show="colorsData.length > 0">
+                            <el-radio-group v-model="colorRadio" @change="selectColor" class="radioGreen">
+                                <el-radio-button :label="item" v-for="item in colorsData" >{{item}}</el-radio-button>
+                            </el-radio-group>
+                        </el-col>
+                    </el-col>
+                    <el-col :span="24" class="flex leftList">
+                        <el-col :span="4" class="title">尺码：</el-col>
+                        <el-col :span="18" class="content" v-show="sizesData.length > 0">
+                            <el-radio-group v-model="sizeRadio" class="radioGreen">
+                                <el-radio-button :label="item" v-for="item in sizesData" >{{item}}</el-radio-button>
+                            </el-radio-group>
+                        </el-col>
+                    </el-col>
+                    <el-col :span="24" class="flex leftList">
+                        <el-col :span="4" class="title">数量：</el-col>
+                        <el-col :span="18" class="content">
+                            <el-input-number v-model="stockNum" :min="1" :max="maxStockNum"></el-input-number>
+                        </el-col>
+                    </el-col>
+                    <el-col :span="24" class="flex leftList">
+                        <el-col :span="4" class="title">退货价格：</el-col>
+                        <el-col :span="18" class="content">
+                            <div style="width: 180px;">
+                                <el-input placeholder="" v-model="purchasePrice">
+                                    <template slot="prepend">￥</template>
+                                </el-input>
+                            </div>
+                        </el-col>
+                    </el-col>
+                    <el-col :span="24" class="flex2 leftButton">
+                        <a href="javascript:void(0)" class="buttonColor" @click="addPurchaseList">加入退货清单</a>
+                    </el-col>
+                </div>
+            </el-col>
+            <el-col :span="14" class="isRight">
+                <div>退货清单</div>
+                <div class="rightDelete right"><a href="javascript:void(0)"  class="buttonColor" @click="batchDeleteConfig">删除</a></div>
+                <el-table
+                    :data="purchaseDataList"
+                    class="rightTable"
+                    show-summary
+                    @selection-change="handleSelectionChange"
+                    height="480"
+                    style="width: 100%">
+                    <el-table-column
+                        type="selection"
+                        width="55"
+                    >
+                    </el-table-column>
+                    <el-table-column
+                        label="主图/货号">
+                        <template scope="scope">
+                            <div class="flex4 tableFirst">
+                                <img v-if="scope.row.imgUrl_main != ''" :src="scope.row.imgUrl_main" style="width: 40px; height: 40px;" alt=""  class="tableImg">
+                                <img v-else src="../image/product_default.png" style="width: 40px; height: 40px;" alt=""  class="tableImg">
+                                <p>{{scope.row.productCode}}</p>
+                            </div>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="colour"
+                        v-model="colour"
+                        label="颜色">
+                    </el-table-column>
+                    <el-table-column
+                        prop="size"
+                        v-model="size"
+                        label="尺码">
+                    </el-table-column>
+                    <el-table-column
+                    	prop="orderNum"
+                        v-model="orderNum"
+                        label="数量">
+                    </el-table-column>
+                    <el-table-column
+                    	prop="totalPrice"
+                        v-model="totalPrice"
+                        label="金额">
+                    </el-table-column>
+                </el-table>
+                <!--<div class="tips">-->
+                    <!--<p>*提示：</p>-->
+                    <!--<p>1.商品默认显示档口当前在售价，价格有变动可自行协商档口，手动调整！<br/>-->
+                        <!--2.点击开始匹配后，系统会自动匹配档口</p>-->
+                <!--</div>-->
+                <el-col :span="24" class="flex2 payButton">
+
+                    <a href="javascript:void(0)" class="buttonColor" @click="confirmSalesReturn">保存</a>
+
+                </el-col>
+            </el-col>
+        </div>
+        <el-dialog
+            title="所有供应商"
+            :visible.sync="dialogSupplierVisible"
+            size="tiny">
+            <div>
+                <el-input
+                    class="startInput"
+                    placeholder="供应商名称"
+                    icon="search"
+                    v-model="supplierName" @change="findSupplierList">
+                </el-input>
+               <div class="startRadio">
+                   <el-radio class="radio" :ref='list.id' v-model="supplierRadio" :label="list.id" v-for="list in supplierList">{{list.name}}</el-radio>
+               </div>
+            </div>
+            <span slot="footer" class="dialog-footer flex2">
+                <a href="javascript:void(0)" class="buttonColor" @click="handleSelectedSupplier">确 定</a>
+            </span>
+        </el-dialog>
+    </div>
+</template>
+<script>
+    import {headTop} from '../components/headTop'
+    import {findSupplierList,loadProductInfo,createStockOrder,queryProduct} from '@/api/getData'
+    import {userInfo,getStore,setStore} from  '../config/mUtils'
+    import {getMenuAuth,haveMenuAuth} from  '../utils/AuthMenu.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                stallStart:false,
+            	imgUrl_main:'',
+            	purchaseId:1,
+            	supplier:{},//供应商
+            	warehouse:{},//仓库
+            	warehouseId:'',//选择的仓库id
+            	productCode:'',//货号
+            	productId:'',//商品id
+            	productVariantId:'',//商品变体id
+            	productPrice:'',//商品价格
+            	productVariantData:[],//商品变体集合
+
+            	product:{},//采购商品
+
+            	purchaseData:[],//退货清单数据
+
+            	productData:[],
+            	loading:false,
+
+            	productVariant:[],
+                productInfoData:[],
+                colorsData:[],
+                sizesData:[],
+
+            	colors:[],//颜色集
+
+            	sizes:[],//尺码集
+
+            	colorRadio:'',//选择颜色
+
+            	sizeRadio:'',//选择尺码
+
+            	stockNum:1,//退货数量
+
+            	purchasePrice:'',//退货价格
+
+            	purchaseDataList:[],//退货清单数据
+
+            	dialogSupplierVisible:false,//供应商弹窗
+
+            	supplierList:[],//供应商列表
+
+            	supplierName:'',//供应商名称
+
+            	supplierId:'',//供应商id
+
+            	supplierRadio:'',//选择的供应商
+
+            	maxStockNum:100,
+
+            	productInfo:'',
+                productConfigs:{
+                    productInfo:{name:'',stockNum:''},
+                    sizeSet:['L','XL'],
+                    colourSet:['aa','bb']
+                },
+
+                productVariant:[],
+                totalPrice:'',
+                size:'',
+                orderNum:'',
+                colour:''
+            }
+        },
+        mounted(){
+        	this.initData();
+        },
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            handleSelectSupplier(){
+                this.dialogVisible = true;
+            },
+            isShow(){
+                this.queryProductInfo();
+            },
+            async initData(){
+
+            },
+
+            initloadData(){
+
+            },
+
+            searchPurchaseProduct(){
+            	this.productInfoData = [];
+             	this.colorsData = [];
+             	this.sizesData = [];
+             	this.colorRadio = '';
+             	this.sizeRadio = '';
+             	this.stockNum = '1';
+             	this.purchasePrice = '';
+            	this.loadProductInfo();
+            },
+
+            async loadProductInfo(){
+            	if(this.productCode==''){
+                    return
+                }
+            	this.imgUrl_main = '';
+            	let param = {
+        			productCode:this.productCode,
+        			companyId:userInfo().companyId
+        		}
+            	const res = await loadProductInfo(param);
+            	if (res.isSuccess == true) {
+                    this.stallStart = true;
+                    if(res.result.productVariant.length>0){
+                        this.$message({
+                            type: 'success',
+                            message: '加载数据成功'
+                        });
+                        this.productId = res.result.id;
+                        this.purchasePrice = res.result.purchasePrice;
+                        this.imgUrl_main = res.result.imgUrl_main;
+                        if(res.result.location){
+                        	this.warehouse = res.result.location;
+                        	this.warehouseId = res.result.location[0].warehouseId;
+                        }
+                        this.productVariant = [];
+                        if(res.result.productVariant){
+	                    	this.productVariant = res.result.productVariant;
+	                    }
+	                    if(this.productVariant.length>0 && res.result.colours){
+	                    	res.result.colours.split("_").forEach(obj => {
+	                    		let sizes = [];
+	                    		this.colorsData.push(obj);
+	                    		this.productVariant.forEach(obj1 => {
+	                    			if(obj == obj1.colour){
+	                    				sizes.push(obj1.size);
+	                    			}
+	                    		})
+	                    		let row = {
+	                    			colour:obj,
+	                    			sizes:sizes
+	                    		}
+	                    		this.productInfoData.push(row);
+	                    	});
+	                    	res.result.sizes.split("_").forEach(obj => {
+	                    		this.sizesData.push(obj);
+	                    	})
+	                    }
+                    }else{
+                        this.$message({
+                            type: 'error',
+                            message: '没有查询到数据！'
+                        });
+                        return
+                    }
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+            filterProductConfigs(productInfo){
+                if(productInfo.length>0){
+                    this.productConfigs.productInfo.name =productInfo[0].title;
+                    let productNum  =0;
+                    productInfo.forEach((obj) => productNum+=obj.stockNum);
+                    this.productConfigs.productInfo.stockNum =productNum;
+                    let sizeSet = new Set();
+                    productInfo.forEach((obj) => sizeSet.add(obj.size));
+                    this.productConfigs.sizeSet = [...sizeSet];
+                    let colourSet = new Set();
+                    productInfo.forEach((obj) => colourSet.add(obj.colour));
+                    this.productConfigs.colourSet = [...colourSet];
+                }
+
+            },
+
+            selectColor(){
+            	this.sizesData = [];
+            	this.productInfoData.forEach(obj => {
+            		if(obj.colour == this.colorRadio){
+            			this.sizesData = obj.sizes;
+            		}
+            	})
+            },
+
+            addPurchaseList(){
+            	if(this.productCode == ''){
+            		this.$message({
+                        type: 'error',
+                        message: '请输入货号！'
+                    });
+                    return;
+            	}
+            	if(this.colorRadio == '' || this.sizeRadio == ''){
+            		this.$message({
+                        type: 'error',
+                        message: '请选择规格信息！'
+                    });
+                    return;
+            	}
+            	if(this.stockNum == ''){
+            		this.$message({
+                        type: 'error',
+                        message: '请输入退货数量！'
+                    });
+                    return;
+            	}
+            	if(this.purchasePrice == ''){
+            		this.$message({
+                        type: 'error',
+                        message: '请输入退货价格！'
+                    });
+                    return;
+            	}
+            	this.productVariant.forEach((obj) => {
+            		if(obj.colour == this.colorRadio && obj.size == this.sizeRadio){
+            			this.productVariantId = obj.id;
+            		}
+            	});
+            	let flag = false;
+            	this.purchaseDataList.forEach(obj => {
+            		if(obj.productVariantId == this.productVariantId){
+            			obj.price = this.purchasePrice;
+            			obj.orderNum = this.stockNum;
+            			let totalPrice = obj.price*obj.orderNum;
+            			obj.totalPrice = totalPrice.toFixed(2);
+            			flag = true;
+            		}
+            	});
+            	if(!flag){
+            		let totalPrice = this.purchasePrice*this.stockNum;
+            		let row = {
+	            		purchaseId:this.purchaseId,
+	            		productId:this.productId,
+	            		productVariantId:this.productVariantId,
+	            		orderNum:this.stockNum,
+	            		companyId:userInfo().companyId,
+	            		productCode:this.productCode,
+	            		colour:this.colorRadio,
+	            		size:this.sizeRadio,
+	            		imgUrl_main:this.imgUrl_main,
+	            		price:this.purchasePrice,
+	            		totalPrice : totalPrice.toFixed(2)
+	            	}
+	            	this.purchaseId = this.purchaseId+1;
+	            	this.purchaseDataList.push(row);
+            	}
+            },
+
+            async confirmSalesReturn(){
+                if(this.supplierName==''){
+                    this.$message({
+                        type: 'error',
+                        message: '请先添加供应商信息!'
+                    });
+                    return
+                }
+                let  param = {
+                    "type":'7',
+                    "companyId":userInfo().companyId,
+                    "warehouseId":this.warehouseId,
+                    "details": this.purchaseDataList,
+                    "otherSideCompanyId":this.supplierId,
+                    "autoAudit":true
+                };
+                let totalStockFee = 0;
+                this.purchaseDataList.forEach(({unitPrice})=>totalStockFee+=unitPrice)
+                param.totalStockFee = totalStockFee;
+                const res = await createStockOrder(param);
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: '保存采购退货单成功！3S后跳转到列表...'
+                    });
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+                this.dialogVisible = false;
+                setTimeout(() => {
+                	//保存成功后，清除原数据
+                    this.supplierName = '';
+                    this.productCode = '';
+                    this.purchasePrice = '';
+                    this.purchaseDataList = [];
+                    this.imgUrl_main = '';
+                    this.stallStart = false;
+                    this.$router.push('/stallPurchase')
+                }, 5000);
+            },
+
+            batchDeleteConfig(){
+            	if(this.multipleSelection == undefined || this.multipleSelection.length==0){
+                  this.$message({
+                        type: 'error',
+                        message: '请先勾选要删除的数据！'
+                    });
+                    return;
+              }
+                let tempData = [];
+                this.multipleSelection.forEach((item,index) => {
+                	this.purchaseDataList.forEach((obj) => {
+                		if(obj.purchaseId != item.purchaseId){
+                			tempData.push(obj);
+                		}
+                	})
+                })
+                this.purchaseDataList = tempData;
+            },
+
+            //多选响应
+            handleSelectionChange: function(val) {
+                this.multipleSelection = val;
+            },
+
+            handleSelectSupplier(){
+                  this.dialogSupplierVisible = true
+            },
+
+            async findSupplierList(){
+            	if(this.supplierName==''){
+                    return
+                }
+
+                let  param = {
+                    "companyId": userInfo().companyId,
+                    "type":2,
+                    "name":this.supplierName
+                }
+
+                const res = await findSupplierList(param);
+                this.supplierList = res.result;
+            },
+
+            handleSelectedSupplier(){
+                if(this.supplierRadio==''){
+                    this.$message({
+                        type: 'error',
+                        message: '未选择数据！'
+                    });
+                    return
+                }
+				if(this.supplierId != this.supplierRadio){
+					if(this.supplierId != '' && this.purchaseDataList.length>0){
+						this.$confirm('确认更换后，将删除退货清单的已有数据?', '提示', {
+			                confirmButtonText: '确定',
+			                cancelButtonText: '取消',
+			                type: 'warning'
+			              }).then(() => {
+			                this.supplierId = this.supplierRadio;
+			            	this.supplierName =  this.$refs[this.supplierRadio][0].$el.innerText;
+			                this.productCode = '';
+			                this.imgUrl_main = '';
+			                this.colorsData = [];
+			                this.sizesData = [];
+			                this.stockNum = '1';
+			                this.purchasePrice = '';
+			                this.purchaseDataList = [];
+			              }).catch(() => {
+								this.supplierRadio = this.supplierId;
+			              });
+					}else{
+						this.supplierId = this.supplierRadio;
+		                this.supplierName =  this.$refs[this.supplierRadio][0].$el.innerText;
+		                this.productCode = '';
+		                this.imgUrl_main = '';
+		                this.colorsData = [];
+		                this.sizesData = [];
+		                this.stockNum = '1';
+		                this.purchasePrice = '';
+		                this.purchaseDataList = [];
+					}
+				}
+                this.dialogSupplierVisible = false;
+            },
+
+            async remoteMethod(query){
+                if(query!=''){
+                	if(this.supplierName == ''){
+                		this.$message({
+	                        type: 'error',
+	                        message: '请先选择供应商！'
+	                    });
+                		return;
+                	}
+                    this.loading = true;
+                    let param = {
+                        "productCode":query,
+                        "companyId":userInfo().companyId,
+                        "supplierName":this.supplierName,
+                        "pageIndex":1,
+                        "pageSize":1000
+                    };
+                    const res = await queryProduct(param);
+                    setTimeout(() => {
+                        this.loading = false;
+                        this.productData = res.result.results;
+                    }, 200);
+                } else {
+                    this.productData = [];
+                }
+            },
+
+            priceFormat:function(row, column) {
+			    let price = row.price;
+			    let orderNum = row.orderNum;
+			    if(price && orderNum){
+			    	let totalPrice = price*orderNum;
+			    	return totalPrice.toFixed(2);
+			    }
+			    return 0;
+			},
+        }
+    }
+</script>
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/stallPurchaseReturn';
+
+    .startRadio{
+        margin-top: 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        label{
+            height: 40px;
+            padding-left: 50px;
+        }
+    }
+</style>

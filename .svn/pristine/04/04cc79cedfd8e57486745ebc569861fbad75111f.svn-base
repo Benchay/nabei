@@ -1,0 +1,167 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/stallManage"}'>档口管理</router-link>
+            </li>
+            <li class="menuIndex2">
+                <router-link :to='{path:"/stallSettlement"}'>档口结算</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/SettlementRecords"}'>结算单</router-link>
+            </li>
+        </ul>
+        <div class="sellerSettlement">
+            <router-link :to='{path:"/stallSettlement"}' class="comeBack2 right">返回</router-link>
+            <div class="details" v-for="list in info">
+                <el-col :span="24">
+                    <el-col :span="24">档口名称：{{otherSideCompanyName}}</el-col>
+                    <el-col :span="6">当前总欠款：{{unClosedFee}}</el-col>
+                    <el-col :span="18">
+                        <div  class="flex">
+                            <p v-bind:class="[list.state ==0?'style1':list.state ==1?'style1':list.state ==2?'style2':'']">{{list.state == 0?'现结':list.state == 1?'周结':list.state == 2?'月结':''}}</p>
+                            <p>{{list.date}}</p>
+                        </div>
+                    </el-col>
+                    <el-col :span="6">已到期：{{toReviceFee}}</el-col>
+                    <el-col :span="18">未到期：{{this.setUndueFee}}</el-col>
+                </el-col>
+            </div>
+            <div class="detailsTable">
+                <p class="tableTop">结算记录：</p>
+                <el-table
+                    :data="tableData6"
+                    style="width: 100%">
+                    <el-table-column
+                        prop="reciveAcountType"
+                        label="支付类型">
+                    </el-table-column>
+                    <el-table-column
+                        prop="payAcount"
+                        label="支付账户">
+                    </el-table-column>
+                    <el-table-column
+                        prop="actualPayFee"
+                        label="结算金额">
+                    </el-table-column>
+                    <el-table-column
+                        prop="createTime"
+                        label="结算时间"
+                        :formatter="formatDateInfo">
+                    </el-table-column>
+                    <el-table-column
+                        prop="status"
+                        label="结算状态">
+                        <template scope="scope">
+                            <p>{{scope.row.status ==1?'付款成功':scope.row.status ==2?'等待付款':scope.row.status ==3?'付款失败':scope.row.status==2?'付款中':''}}</p>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {formatDate} from '../utils/date.js'
+    import {userInfo} from '../config/mUtils.js'
+    import {querySettlementOrder} from '@/api/getData'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                checked:false,
+                info:[],
+                tableData6:[{
+                    payType:'支付宝',
+                    account:13479896431,
+                    sum:555,
+                    status:1,
+                    date:'2017-02-11'
+                },{
+                    payType:'微信',
+                    account:'163123@163.com',
+                    sum:555,
+                    status:2,
+                    date:'2017-02-11'
+                },{
+                    payType:'网银',
+                    account:6222021302315405,
+                    sum:555,
+                    status:3,
+                    date:'2017-02-11'
+                }],
+                unClosedFee:0,
+                toReviceFee:0,
+                otherSideCompanyId:'',
+                otherSideCompanyName:'',
+
+
+            }
+        },
+        watch:{
+            'route':function (route) {
+                this.$route.go(0);
+            }
+        },
+        mounted(){
+            this.otherSideCompanyId = this.$route.query.otherSideCompanyId;
+            this.otherSideCompanyName = this.$route.query.otherSideCompanyName;
+            this.unClosedFee = this.$route.query.unClosedFee;
+            this.toReviceFee = this.$route.query.toReviceFee;
+            let param = {
+                state:this.$route.query.settlementType,
+                date:this.$route.query.settlementDay
+            };
+            this.info.push(param);
+            this.querySettlementOrderInfo();
+        },
+        methods: {
+            //获取未结算金额
+            setUndueFee(){
+                if(this.unclosedFee==undefined||this.unClosedFee==''){
+                    this.unClosedFee = 0;
+                }
+                if(this.toReviceFee==undefined||this.toReviceFee==''){
+                    this.toReviceFee = 0;
+                }
+                return this.unClosedFee - this.toReviceFee;
+            },
+            //加载结算单记录
+            async querySettlementOrderInfo(){
+                this.tableData6 = [];
+                let param = {
+                    "companyId":userInfo().companyId,
+                    "otherSideCompanyId":this.saleCompanyId,
+                    "pageIndex":1,
+                    "pageSize":9999
+                };
+                const res = await querySettlementOrder(param);
+                if(res.isSuccess){
+                    let table = res.result.results;
+                    table.forEach((obj)=>{
+                        this.tableData6.push(obj);
+                    });
+                }
+            },
+            //格式化时间
+            formatDateInfo:function(row,column){
+                let data = row[column.property];
+                if(data==undefined||data==''){
+                    return '';
+                }
+                return formatDate(data*1,'yyyy-MM-dd hh:mm:ss');
+            },
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/sellerSettlement';
+</style>

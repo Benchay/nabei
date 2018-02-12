@@ -1,0 +1,54 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li class="menuIndex">
+                <a href="javascript:void(0)">帮助中心</a>
+            </li>
+        </ul>
+
+    </div>
+</template>
+
+<script>
+
+    export default {
+        components: {
+        },
+        data() {
+            return {
+                saleState:0,
+                items:[
+                    {
+                        title:'商品销售趋势',
+                        Checked:1,
+                    },{
+                        title:'单品销售分析',
+                        Checked:0,
+                    },{
+                        title:'畅销商品分析',
+                        Checked:0,
+                    },{
+                        title:'滞销商品分析',
+                        Checked:0,
+                    },]
+            }
+        },
+        methods: {
+            tabs(obj){
+                for(let i =0;i<this.items.length;i++){
+                    let obj1 = this.items[i];
+                    if(obj1!=obj){
+                        obj1.Checked = false;
+                    }
+                }
+                this.items[obj].Checked = true;
+            },
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/commodityStatistics';
+</style>

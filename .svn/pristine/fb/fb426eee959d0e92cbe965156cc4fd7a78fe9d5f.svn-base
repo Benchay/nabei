@@ -1,0 +1,133 @@
+.currentInventory{
+    margin:0 30px;
+    background: #fff;
+    padding: 20px 40px;
+    .inventoryTop{
+        height: 35px;
+    }
+    .inventoryTop>.left>div{
+        margin-right: 10px;
+        width:200px;
+    }
+    .address{
+        background: url("../image/address_book.png")no-repeat center;
+        background-size:100%;
+    }
+    .locationImg{
+        width: 18px;
+        height: 18px;
+        margin-left: 5px;
+        background: url("../image/rcompile01.png")no-repeat center;
+        background-size: 100%;
+    }
+    .locationImg:hover{
+        background: url("../image/rcompile.png")no-repeat center;
+
+    }
+}
+.fastTable{
+    margin-top: 15px;
+    .CommodityFigure{
+        img{
+            height: 45px;
+            width: 45px;
+        }
+    }
+    .chooseDepot{
+        margin-left: 10px;
+    }
+}
+.ViewButton{
+    a{
+        color:@blue;
+    }
+}
+.shipmentLeft{
+    padding: 10px 0 0 30px;
+    font-size: 12px;
+    .radio1{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        img{
+            width: 180px;
+        }
+        p{
+            height: 25px;
+            line-height: 25px;
+        }
+    }
+}
+.shipmentRight{
+    margin-top: 20px;
+}
+.shipmentRight>div{
+    height: 60px;
+    display: flex;
+    align-items: center;
+    .textRight{
+        text-align: right;
+        padding-right: 10px;
+    }
+}
+
+//详情
+.fastShippingDetails{
+    margin:0 30px;
+    background: #fff;
+    padding: 20px 40px;
+    .detailsTop{
+        font-size: 13px;
+        color:#333;
+    }
+    .detailsTop>div{
+        margin-bottom: 5px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        height: 30px;
+    }
+    .back{
+        color:@blue;
+        border-bottom: 1px solid @blue;
+        font-size: 12px;
+    }
+}
+//弹窗
+.LocationContent{
+    margin-top: 20px;
+    padding: 30px 30px 10px ;
+    p{
+        margin-bottom: 20px;
+    }
+}
+.detailsContent{
+    color:#767676;
+    padding: 10px 30px;
+    img{
+        width: 125px;
+        height: 125px;
+    }
+    .detailsContent-1{
+        margin-left:20px;
+        p{
+            height: 40px;
+            line-height: 40px;
+        }
+    }
+}
+.chooseRadio{
+    margin-top: 20px;
+    max-height: 210px;
+    overflow: scroll;
+    display: flex;
+    flex-direction: column;
+    margin-left: 70px;
+    label{
+        line-height: 30px;
+    }
+}
+.dialog-footer{
+    border-top: 1px solid #f4f4f4;
+    padding-top: 15px;
+}

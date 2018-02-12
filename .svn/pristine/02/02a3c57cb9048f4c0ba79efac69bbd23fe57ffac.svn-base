@@ -1,0 +1,186 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/webStoreOrderSalesBuy"}'>网店订单</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/purchaseRequireBuy"}'>采购需求</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/orderPurchaseBuy"}'>采购订单</router-link>
+            </li>
+            <li class="menuIndex2">
+                <router-link :to='{path:"/addShop"}'>绑定店铺</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/packageDetails"}'>包裹管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/salesForecast"}'>采购统计</router-link>
+            </li>
+        </ul>
+        <div v-show="tableData3.length==0"  class="addShop">
+            <div class="binding flex3">
+                <img src="../image/shops@3x.png" alt="">
+                <p>您当前无绑定店铺</p>
+                <p><a href="javascript:void(0);" @click="gotobindwebstore" class="buttonColor3">立即绑定店铺</a></p>
+            </div>
+        </div>
+        <div class="addShop">
+            <div class="store" v-show="tableData3.length>0">
+                <el-col :span="6" class="storeList" v-for="list in storeList" :class="[list.state == 1?'storeList1':'storeList']">
+                    <div class="list2">
+                        <div>
+                            <img v-if="list.state == 1" class="leftImg" src="../image/taobao-02.png" alt="">
+                            <img v-if="list.state == 0" class="leftImg" src="../image/taobao-01.png" alt="">
+                        </div>
+                        <div class="list3">
+                            <a href="javascript:void(0);" @click="handleEdit(list)">{{list.name}}</a>
+                            <a href="javascript:void(0);" @click="handleDel(list.id)">授权时间：{{list.validtime}}</a>
+                            <p v-if="list.state == 1">最后同步日期：{{list.lastSynchTime}}</p>
+                            <p v-if="list.state == 0">最后同步日期：{{list.lastSynchTime}}</p>
+                        </div>
+                        <img  class="delete" @click="deleteRow(list.id)" src="../image/rdelete03.png" alt="">
+                    </div>
+                    <div v-if="list.state == 1" class="lose_efficacy">
+                        <img src="../image/lose_efficacy.png" alt="">
+                    </div>
+                </el-col>
+                <el-col :span="5" class="storeList listLast">
+                    <div @click="gotobindwebstore">+绑定店铺</div>
+                </el-col>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {getBindWebStoreUrl,findWebStoreRecord,deleteWebStoreRecord,batchDeleteWebStoreRecord} from '@/api/getData'
+	import {formatDate} from '../utils/date.js'
+	import {userInfo} from  '../config/mUtils'
+
+    export default {
+        components: {
+            headTop,
+        },
+        computed: {
+
+        },
+        data() {
+            return {
+            	//默认每页数据量
+                pagesize: 5,
+                //当前页码
+                currentPage: 1,
+                totalCount:'',
+            	bindWebStoreUrl:'',
+                rotate:false,
+                tableData3:[{state:1}],
+                storeList:[{name:'我是店铺1',state:1},{name:'我是店铺2',state:0},{name:'我是店铺3',state:0},],
+            }
+        },
+        async mounted(){
+            this.initloadUrl();
+
+            this.initloadData();
+        },
+        methods:{
+			//从服务器获取数据
+            async initloadUrl() {
+            	let param ={
+            		companyId:userInfo().companyId,
+            		view:'web'
+            	}
+                const res = await getBindWebStoreUrl(param);
+                if (res.isSuccess == true) {
+                    this.bindWebStoreUrl = res.result.url;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.isSuccess
+                    });
+                }
+            },
+            //从服务器获取数据
+            async initloadData() {
+            	this.storeList = [];
+            	let param ={
+            		pageIndex:1,
+            		pageSize:this.pagesize,
+            		searchCompanyIds:[userInfo().companyId]
+            	}
+                const res = await findWebStoreRecord(param);
+                if (res.isSuccess == true) {
+                	res.result.data.results.forEach((obj) => {
+                		let state = 1;
+                		let timestr = '';
+                		let lastSynchTime = '';
+                		if(obj.validEndTime>new Date().valueOf()){
+                			state = 0;
+                		}
+                		if(obj.validEndTime){
+                			var date2 = new Date(obj.validStartTime);
+		                	timestr = formatDate(date2,'yyyy-MM-dd hh:mm');
+                		}
+                		if(obj.lastSyncOrderTime){
+                			lastSynchTime = formatDate(obj.lastSyncOrderTime,'yyyy-MM-dd hh:mm');
+                		}
+                		let webstore = {name:obj.name,state:state,validtime:timestr,id:obj.id,lastSynchTime:lastSynchTime};
+                		this.storeList.push(webstore);
+                	});
+                    this.tableData3 = res.result.data.results;
+                    this.totalCount = res.result.data.totalCount;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.isSuccess
+                    });
+                }
+            },
+            async initloadData2() {
+            	let param ={
+            		pageIndex:this.currentPage,
+            		pageSize:this.pagesize,
+            		companyId:userInfo().companyId
+            	}
+                const res = await findWebStoreRecord(param);
+                if (res.isSuccess == true) {
+                    this.tableData3 = res.result.data.results;
+                    this.totalCount = res.result.data.totalCount;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.isSuccess
+                    });
+                }
+            },
+            async deleteRow(id) {
+            	let ids = [];
+            	ids.push(id);
+            	let param ={
+            		ids:ids
+            	}
+            	const res = await batchDeleteWebStoreRecord(param);
+            	if (res.isSuccess == true) {
+                    this.initloadData();
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.isSuccess
+                    });
+                }
+            },
+            gotobindwebstore(){
+            	window.open(this.bindWebStoreUrl);
+            },
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/addShop';
+</style>

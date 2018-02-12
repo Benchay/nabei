@@ -1,0 +1,196 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li class="menuIndex">
+                <router-link :to='{path:"/sellReturn"}'>销售退货</router-link>
+            </li>
+        </ul>
+        <div class="indentManagement">
+            <div style="height: 45px;">
+                <div class="flex2 left" style="margin-right: 10px">
+                    <el-date-picker
+                        size="small"
+                        v-model="value6"
+                        type="daterange"
+                        placeholder="选择日期范围">
+                    </el-date-picker>
+                </div>
+                <div class="left flex2">
+                    <el-input v-model="input1" size="small" placeholder="订单号搜索" style="margin-right: 10px" ></el-input>
+                    <el-input v-model="input3" size="small" placeholder="电商卖家搜索"></el-input>
+                </div>
+                <el-col :span="24" class="indentList radioGreen">
+                    <el-radio-group v-model="radio" size="small">
+                        <el-radio-button label="1">全部</el-radio-button>
+                        <el-radio-button label="2">待处理</el-radio-button>
+                        <el-radio-button label="3">已完成</el-radio-button>
+                    </el-radio-group>
+                </el-col>
+            </div>
+            <el-table
+                :data="tableData"
+                style="width: 100%">
+                <el-table-column
+                    prop="number"
+                    label="序号">
+                </el-table-column>
+                <el-table-column
+                    prop="orderCode"
+                    label="订单编号">
+                </el-table-column>
+                <el-table-column
+                    prop="busiName"
+                    label="电商卖家">
+                </el-table-column>
+                <el-table-column
+                    prop="totalNum"
+                    label="订单数量">
+                </el-table-column>
+                <el-table-column
+                    prop="totalFee"
+                    label="订单金额">
+                </el-table-column>
+                <el-table-column
+                    width="180"
+                    label="下单时间">
+                    <template scope="scope">{{scope.row.createTime}}</template>
+                </el-table-column>
+                <el-table-column
+                    prop="payType"
+                    label="结算方式">
+                </el-table-column>
+                <el-table-column
+                    label="状态">
+                    <template scope="scope">
+                        <p>{{scope.row.status==1?'退货待签收':scope.row.status==2?'退货待确认':scope.row.status==3?'退货待入库':scope.row.status==4?'已完成':''}}</p>
+                    </template>
+                </el-table-column>
+                <el-table-column
+                    label="操作">
+                    <template scope="scope">
+                        <a href="javascript:void(0);" class="color4" @click="Stateialog(scope.row.status)">
+                            {{scope.row.status==1?'立即签收':scope.row.status==2?'立即确认':scope.row.status==3?'立即入库':scope.row.status==4?'查看':''}}
+                        </a>
+                    </template>
+                </el-table-column>
+            </el-table>
+            <el-pagination
+                small
+                class="right"
+                style="margin-top: 20px;"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :current-page="currentPage"
+                :page-sizes="[10, 20, 30, 40]"
+                :page-size="pageSize"
+                layout="total, sizes, prev, pager, next, jumper"
+                :total="totalCount">
+
+            </el-pagination>
+            <a href="javascript:void(0)" class="export_excle" @click="exportTableData">导出excel</a>
+        </div>
+    </div>
+</template>
+
+<script>
+    import {formatDate} from '../utils/date.js'
+    import {export_json_to_excel} from '../vendor/Export2Excel.js'
+    import {queryStallOrder} from '@/api/getData'
+    import {getStore} from  '../config/mUtils'
+
+    export default {
+        components: {
+
+        },
+        filters:{
+            formatDate(time){
+                return formatDate(time,"yyyy-MM-dd hh:mm:ss");
+            }
+        },
+        data() {
+            return {
+                radio:1,
+                value6:'',
+                input1: '',
+                input3: '',
+                tableData:[
+                    {
+                        number:1,
+                        orderCode:12345641321231,
+                        busiName:'我是名称',
+                        totalNum:123,
+                        totalFee:1234,
+                        createTime:'2017-12-29',
+                        payType:'周结',
+                        status:1,
+                    },
+                    {
+                        number:2,
+                        orderCode:12345641321231,
+                        busiName:'我是名称',
+                        totalNum:123,
+                        totalFee:1234,
+                        createTime:'2017-12-29',
+                        payType:'周结',
+                        status:2,
+                    },
+                    {
+                        number:3,
+                        orderCode:12345641321231,
+                        busiName:'我是名称',
+                        totalNum:123,
+                        totalFee:1234,
+                        createTime:'2017-12-29',
+                        payType:'月结',
+                        status:3,
+                    },
+                    {
+                        number:4,
+                        orderCode:12345641321231,
+                        busiName:'我是名称',
+                        totalNum:123,
+                        totalFee:1234,
+                        createTime:'2017-12-29',
+                        payType:'周结',
+                        status:4,
+                    },
+                ]
+
+            }
+        },
+        mounted() {
+
+        },
+        methods: {
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+                this.pageSize = val;
+                this.initloadData();
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+                this.currentPage = val;
+                this.initloadData();
+            },
+            handleIconClick(ev) {
+                console.log(ev);
+            },
+            Stateialog(status){
+                if(status == 1){
+                    this.$router.push('/sellReturnSignIn');
+                }else if(status == 2){
+                    this.$router.push('/sellReturnAffirm');
+                }else if(status == 3 || status == 4){
+                    this.$router.push('/sellReturnStorage');
+                }
+            }
+
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/indentManagement';
+</style>

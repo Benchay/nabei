@@ -1,0 +1,115 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <a href="javascript:void(0);">邀请好友</a>
+            </li>
+        </ul>
+        <div class="inviteContent">
+            <el-input
+                placeholder="用户搜索"
+                icon="search"
+                v-model="input2"
+                :on-icon-click="handleIconClick"
+                style="width:200px;margin: 10px;">
+            </el-input>
+            <el-col :span="24" style="text-align: center;display: block;margin:10px 20%;">
+                <el-col :span="12" style="background: #eee;text-align: center;">
+                    <span>邀请链接:</span>
+                    <el-input
+                        value="http://task.antclick.com:9034/default/login!Login.do"
+                        :closable="true"
+                        :on-icon-click="handleIconClick"
+                        style="width:400px;margin: 10px;">
+                        <i class="el-icon-circle-close"></i>
+                    </el-input>
+                    <span>复制</span>
+                </el-col>
+            </el-col>
+            <div style="padding: 0 10px;">
+                <el-table
+                    :data="tableData"
+                    style="width: 100%">
+                    <el-table-column
+                        prop="number"
+                        label="编号"
+                        width="180">
+                    </el-table-column>
+                    <el-table-column
+                        prop="friendsName"
+                        label="被邀请人"
+                        width="180">
+                    </el-table-column>
+                    <el-table-column
+                        prop="loginTime"
+                        label="注册时间">
+                    </el-table-column>
+                </el-table>
+                <el-pagination
+                    small
+                    class="right"
+                    style="margin-top: 20px;"
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :current-page="currentPage"
+                    :page-sizes="[10, 20, 30, 40]"
+                    :page-size="pagesize"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    :total="20">
+                </el-pagination>
+                <a href="javascript:void(0)" class="export_excle">导出excel</a>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                currentPage:4,
+                pagesize:4,
+                input2: '',
+                tableData: [{
+                    number: '20164544222',
+                    friendsName: '王小虎',
+                    loginTime: '上海市普陀区金沙江路 1518 弄'
+                }, {
+                    number: '201609181011',
+                    friendsName: '王小虎',
+                    loginTime: '上海市普陀区金沙江路 1518 弄'
+                },{
+                    number: '201623223222',
+                    friendsName: '王小虎',
+                    loginTime: '上海市普陀区金沙江路 1518 弄'
+                },{
+                    number: '201623232',
+                    friendsName: '王小虎',
+                    loginTime: '上海市普陀区金沙江路 1518 弄'
+                }]
+            }
+        },
+        methods: {
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+            },
+            handleIconClick(ev) {
+                console.log(ev);
+            }
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin.less';
+    @import '../style/common.less';
+    @import '../style/inviteFriends';
+</style>

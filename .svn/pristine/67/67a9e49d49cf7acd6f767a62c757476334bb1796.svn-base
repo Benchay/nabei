@@ -1,0 +1,43 @@
+.msgSendInterfaceConfig{
+    margin:0 30px;
+    background: #fff;
+    padding: 20px 40px;
+    height:100%;
+    .shopList{
+        margin-top: 20px;
+        img{
+            width: 40px;
+            height: 40px;
+        }
+        .trefresh>img {
+            width: 25px;
+            height: 25px;
+        }
+        .delete{
+            margin-top: 20px;
+            font-size: 12px;
+        }
+    }
+}
+.verify-menu-search{
+    margin:0 30px;
+    background: #fff;
+    background-color: gold;
+    background: #fff;
+    height: 40px;
+    padding: 20px;
+    padding-left: 40px;
+    padding-bottom: 0px;
+}
+
+.dropdown-menu{
+    width: 150px;
+}
+
+.menu-list{
+    background: #fff;
+    padding: 20px;
+    margin:0 30px;
+    padding-left: 40px;
+    padding-bottom: 0px;
+}

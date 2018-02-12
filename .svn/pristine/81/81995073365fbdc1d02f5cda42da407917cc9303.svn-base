@@ -1,0 +1,478 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/stallProcurement"}'>采购入库</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/stallPurchase"}'>采购退货</router-link>
+            </li>
+            <li class="menuIndex">
+                <router-link :to='{path:"/supplierManagement"}'>供应商管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/purchaseStatistics"}'>采购统计</router-link>
+            </li>
+        </ul>
+        <div class="supplier">
+            <div class="flex supplierTop">
+                <el-input
+                    size="small"
+                    placeholder="供应商搜索"
+                    icon="search"
+                    v-model="q_supplierName"
+                    :on-icon-click="loadData">
+                </el-input>
+                <el-input
+                    size="small"
+                    placeholder="联系电话搜索"
+                    icon="search"
+                    v-model="q_supplierTel"
+                    :on-icon-click="loadData">
+                </el-input>
+            </div>
+            <div class="supplierButton">
+                <a href="javascript:void(0)" class="buttonColor" @click="handleAdd">添加供应商</a>
+                <a href="javascript:void(0)" class="buttonColor" @click="handleBatchDel">批量删除</a>
+                <a href="javascript:void(0)" class="buttonColor">批量导入</a>
+            </div>
+            <div class="supplierTable">
+                <el-table
+                    :data="tableData"
+                    @selection-change="handleSelectionChange"
+                    style="width: 100%">
+                    <el-table-column
+                        type="selection"
+                        width="55">
+                    </el-table-column>
+                    <el-table-column
+                        prop="name"
+                        label="供应商">
+                    </el-table-column>
+                    <el-table-column
+                        prop="linkMan"
+                        label="联系人">
+                    </el-table-column>
+                    <el-table-column
+                        prop="linkTel"
+                        label="联系电话">
+                    </el-table-column>
+                    <el-table-column
+                        prop="address"
+                        width="220"
+                        label="地址">
+                        <template scope="scope">
+                            <el-popover
+                                ref="popover1"
+                                placement="top"
+                                width="200"
+                                trigger="hover"
+                                :content=scope.row.address>
+                            </el-popover>
+                            <div class="overflow" v-popover:popover1>
+                                {{scope.row.address}}
+                            </div>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="reciveFeeType"
+                        label="收款方式"
+                        :formatter="accountFormat">
+                    </el-table-column>
+                    <el-table-column
+                        prop="reciveAccountNum"
+                        label="收款帐号">
+                    </el-table-column>
+                    <el-table-column
+                        label="操作">
+                        <template scope="scope">
+                            <div class="tableFoot">
+                                <a href="javascript:void(0)" class="blue2" @click="handleEdit(scope.row)">修改</a>
+                                <a href="javascript:void(0)" class="blue2" @click="handleOneDel(scope.row.id)">删除</a>
+                            </div>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+            <el-pagination
+                small
+                class="right"
+                style="margin-top: 20px;"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :current-page="currentPage"
+                :page-sizes="[10, 20, 30, 40]"
+                :page-size="pageSize"
+                layout="total, sizes, prev, pager, next, jumper"
+                :total="totalCount">
+            </el-pagination>
+            <a href="javascript:void(0)" class="export_excle">导出excel</a>
+        </div>
+        <el-dialog
+            title="添加供应商"
+            :visible.sync="dialogVisible"
+            size="tiny">
+           <div class="dialogForm">
+               <el-form label="right" label-width="110px" :model="addSupplierForm" ref="addSupplierForm" :rules="addSupplierFormRule">
+                   <el-form-item label="供应商名称：" prop="name">
+                       <el-input v-model="addSupplierForm.name" placeholder="请输入供应商名称..."></el-input>
+                   </el-form-item>
+                   <el-form-item label="联系人：" prop="linkMan">
+                       <el-input v-model="addSupplierForm.linkMan" placeholder="请输入联系人姓名..."></el-input>
+                   </el-form-item>
+                   <el-form-item label="联系电话：" prop="linkTel">
+                       <el-input v-model="addSupplierForm.linkTel" placeholder="请输入联系电话..."></el-input>
+                   </el-form-item>
+                   <el-form-item label="地址：" prop="address">
+                       <el-input type="textarea" v-model="addSupplierForm.address" placeholder="请输入地址详情..."></el-input>
+                   </el-form-item>
+                   <el-form-item label="收款方式：">
+                       <el-select v-model="addSupplierForm.reciveFeeType" placeholder="请选择收款方式...">
+                           <el-option label="支付宝" value="3"></el-option>
+                           <el-option label="微信" value="4"></el-option>
+                           <el-option label="银行卡" value="5"></el-option>
+                       </el-select>
+                   </el-form-item>
+                   <el-form-item label="收款账号：">
+                       <el-input v-model="addSupplierForm.reciveAccountNum" placeholder="请输入收款账号..."></el-input>
+                   </el-form-item>
+               </el-form>
+           </div>
+            <span slot="footer" class="dialog-footer flex2">
+                <a href="javascript:void(0)" class="buttonColor" @click="createSupplier('addSupplierForm')">确 定</a>
+                <a href="javascript:void(0)" class="buttonColor2" @click="dialogVisible = false">取 消</a>
+              </span>
+        </el-dialog>
+        <el-dialog
+            title="修改供应商"
+            :visible.sync="dialogAmend"
+            size="tiny">
+            <div class="dialogForm">
+                <el-form label="right" label-width="110px" :model="editSupplierForm" ref="editSupplierForm" :rules="editSupplierFormRule">
+                    <el-form-item label="供应商名称：" prop="name">
+                        <el-input v-model="editSupplierForm.name"  placeholder="请输入供应商名称..."></el-input>
+                    </el-form-item>
+                    <el-form-item label="联系人：" prop="linkMan">
+                        <el-input v-model="editSupplierForm.linkMan" placeholder="请输入联系人姓名..."></el-input>
+                    </el-form-item>
+                    <el-form-item label="联系电话：" prop="linkTel">
+                        <el-input v-model="editSupplierForm.linkTel" placeholder="请输入联系电话..."></el-input>
+                    </el-form-item>
+                    <el-form-item label="地址：" prop="address">
+                        <el-input type="textarea"  v-model="editSupplierForm.address" placeholder="请输入地址详情..."></el-input>
+                    </el-form-item>
+                    <el-form-item label="收款方式：">
+                        <el-select v-model="editSupplierForm.reciveFeeType" placeholder="请选择收款方式...">
+                            <el-option label="支付宝" value="3"></el-option>
+                            <el-option label="微信" value="4"></el-option>
+                            <el-option label="银行卡" value="5"></el-option>
+                        </el-select>
+                    </el-form-item>
+                    <el-form-item label="收款账号：">
+                        <el-input v-model="editSupplierForm.reciveAccountNum" placeholder="请输入收款账号..."></el-input>
+                    </el-form-item>
+                </el-form>
+            </div>
+            <span slot="footer" class="dialog-footer flex2">
+                <el-button type="primary" @click="updateSupplier('editSupplierForm')">确 定</el-button>
+                <el-button @click="dialogAmend = false">取 消</el-button>
+              </span>
+        </el-dialog>
+        <el-dialog
+            title="删除"
+            :visible.sync="dialogDelete"
+            size="tiny">
+            <span>确定删除此供应商信息？</span>
+            <span slot="footer" class="dialog-footer flex2">
+                <el-button type="primary" @click="deleteSupplier">确 定</el-button>
+                <el-button @click="dialogDelete = false">取 消</el-button>
+              </span>
+        </el-dialog>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {querySupplier,saveSupplier,deleteSupplier,createSupplier} from '@/api/getData'
+    import {userInfo,getStore,setStore} from  '../config/mUtils'
+    import {accountFormat} from '../utils/dataFormater.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+        	//校验手机号
+        	var validateMobile = (rule, value, cb) => {
+			if(undefined==value){
+				cb(new Error('请输入正确的手机号'))
+				return ;
+			}
+                var pattern = /^1[34578]\d{9}$/;
+                if(value.length==0){
+                	cb();
+                }else if(value.length>11){
+                	cb(new Error('请输入正确的手机号'))
+                }else if (!pattern.test(value)) {
+                    cb(new Error('请输入正确的手机号'))
+                }else{
+                	cb();
+                }
+            }
+
+        	var validateAddress = (rule, value, cb) => {
+        		if(value&&value.length>50){
+        			cb(new Error('地址最多50个汉字！'))
+        		}else{
+        			cb();
+        		}
+        	}
+
+        	var validateName = (rule, value, cb) => {
+        		if(value&&value.length>20){
+        			cb(new Error('供应商名称最多20个汉字！'))
+        		}else{
+        			cb();
+        		}
+        	}
+
+        	var validateLinkMan = (rule, value, cb) => {
+        		if(value&&value.length>16){
+        			cb(new Error('联系人最多16个汉字！'))
+        		}else{
+        			cb();
+        		}
+        	}
+            return {
+                multipleSelection:[],
+                input2:'',
+                dialogVisible:false,
+                dialogAmend:false,
+                dialogDelete:false,
+                tableData: [],
+                addSupplierForm:{
+                    linkMan:'',
+                    linkTel:'',
+                    name:'',
+                    stallId:'',
+                    type:'',
+                    address:'',
+                    reciveFeeType:''
+                },
+                editSupplierForm:{
+                    linkMan:'',
+                    linkTel:'',
+                    name:'',
+                    stallId:'',
+                    type:'',
+                    address:'',
+                    reciveFeeType:''
+                },
+                pageSize: 10,
+                highlightId: -1,
+                currentPage: 1,
+                start: 1,
+                totalCount: 0,
+                q_supplierName:'',
+                q_supplierTel:'',
+                to_delIds:[],
+                to_delOneId:'',
+                addSupplierFormRule:{
+                	name:[
+                		{ required: true, message: '供应商名称不能为空', trigger: 'blur' },
+                		{ validator: validateName, trigger: 'blur' }
+                	],
+                	linkTel:[
+                		{ validator: validateMobile, trigger: 'blur' }
+                	],
+                	address:[
+                		{ validator: validateAddress, trigger: 'blur' }
+                	],
+                	linkMan:[
+                		{ validator: validateLinkMan, trigger: 'blur' }
+                	]
+                },
+                editSupplierFormRule:{
+                	name:[
+                		{ required: true, message: '供应商名称不能为空', trigger: 'blur' },
+                		{ validator: validateName, trigger: 'blur' }
+                	],
+                	linkTel:[
+                		{ validator: validateMobile, trigger: 'blur' }
+                	],
+                	address:[
+                		{ validator: validateAddress, trigger: 'blur' }
+                	],
+                	linkMan:[
+                		{ validator: validateLinkMan, trigger: 'blur' }
+                	]
+                }
+            }
+        },
+        mounted(){
+           this.loadData();
+        },
+        methods: {
+            handleSizeChange(val) {
+               this.pageSize = val;
+            },
+            handleCurrentChange(val) {
+                this.currentPage= val;
+            },
+            handleEdit(row){
+                this.editSupplierForm = row;
+                this.dialogAmend = true
+            },
+            handleAdd(){
+                this.supplier={};
+                this.dialogVisible = true
+            },
+            handleOneDel(id){
+                this.to_delOneId = id;
+                this.dialogDelete = true
+            },
+            handleBatchDel(){
+                if(this.multipleSelection.length==0){
+                    this.$message({
+                        type: 'error',
+                        message: '未选择数据不能进行批量删除！'
+                    });
+                    return;
+                }
+                this.$confirm('确认删除所选择的'+this.multipleSelection.length+'条数据？')
+                    .then(_ => {
+                        var count=0;
+                        this.multipleSelection.forEach((item) => {
+                            this.to_delOneId = item.id
+                            this.deleteSupplier()
+                            count++
+                        })
+                        this.loadData();
+                    })
+
+
+            },
+            async loadData(){
+            	let params = {
+            		param:{
+                        companyId:userInfo().companyId
+                    },
+                    pageIndex:this.currentPage,
+                    pageSize:this.pageSize
+            	}
+            	if(this.q_supplierName!=''){
+                    params.param.name = this.q_supplierName
+                }
+                if(this.q_supplierTel!=''){
+                    params.param.linkTel = this.q_supplierTel
+                }
+                const res = await querySupplier(params);
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: '数据加载成功！'
+                    });
+                    this.tableData = res.result.results;
+                    this.totalCount = res.result.totalCount;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            async createSupplier(formName){
+            	this.$refs[formName].validate(async (valid) => {
+            		if (valid) {
+            			this.addSupplierForm.companyId = userInfo().companyId;
+            			this.addSupplierForm.type = 2;
+            			const res = await createSupplier(this.addSupplierForm);
+            			if (res.isSuccess == true) {
+		                    this.$message({
+		                        type: 'success',
+		                        message: '保存成功！'
+		                    });
+		                    this.dialogVisible = false
+		                    this.loadData();
+		                }else{
+		                    this.$message({
+		                        type: 'error',
+		                        message: res.errorMsg
+		                    });
+		                }
+            		}
+            	})
+            },
+            async updateSupplier(formName){
+                this.$refs[formName].validate(async (valid) => {
+                	if (valid) {
+                		const res = await saveSupplier(this.editSupplierForm);
+                		if (res.isSuccess == true) {
+		                    this.$message({
+		                        type: 'success',
+		                        message: '保存成功！'
+		                    });
+		                    this.loadData();
+		                }else{
+		                    this.$message({
+		                        type: 'error',
+		                        message: res.errorMsg
+		                    });
+		                }
+		                this.dialogAmend = false
+                	}
+                })
+            },
+            async deleteSupplier(){
+                let param = {
+                    supplierId:this.to_delOneId
+                }
+                const res = await deleteSupplier(param);
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: '删除成功！'
+                    });
+                    //  this.tableData = res.result.results;;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+                this.dialogDelete = false
+                this.loadData();
+            },
+            //页码变更
+            handleCurrentChange: function(val) {
+                this.currentPage = val;
+                let params ={
+                    param:{
+                        stallId:userInfo().companyId,
+                    },
+                    pageIndex:this.currentPage,
+                    pageSize:this.pagesize
+                }
+                if(this.q_supplierName!=''){
+                    params.param.name = this.q_supplierName
+                }
+                if(this.q_supplierTel!=''){
+                    params.param.linkTel = this.q_supplierTel
+                }
+                this.loadData(params);
+            },
+
+            //多选响应
+            handleSelectionChange: function(val) {
+                this.multipleSelection = val;
+            },
+            accountFormat,
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/supplierManagement';
+</style>

@@ -1,0 +1,463 @@
+.startProcurement{
+    min-height: 100%;
+    margin:1px 30px;
+    background: #fff;
+    padding: 20px 40px;
+    color:#333;
+    .salesButton>button{
+        width:88px;
+        margin-bottom: 20px;
+    }
+    .salesDemandTop{
+        margin-bottom: 20px;
+    }
+    .markOrder{
+        color:@blue;
+        font-size: 12px;
+        line-height: 36px;
+    }
+    /*网店订单*/
+    .salesOrderTable{
+        padding-top: 40px;
+        color:#333;
+        .headImg{
+            width:40px;
+            height:40px;
+        }
+        .tableFirst{
+            height: 40px;
+            line-height: 40px;
+            font-size: 14px;
+            text-align: center;
+            border:1px solid #d4d4d4;
+            td{
+                width:17%;
+            }
+            .firstLi{
+                text-align: left;
+                padding-left: 18px;
+            }
+            .salesCheckbox{
+                width:20px;
+                padding-left: 17px;
+            }
+        }
+        .buyTable,.buyTable1,.buyTable2{
+            border:1px solid #d4d4d4;
+            border-bottom: none;
+            font-size: 12px;
+            .buyImg1{
+                height: 40px;
+                margin: 0 30px 0 10px;
+            }
+            th,td{
+                height: 30px;
+                line-height: 30px;
+            }
+            td{
+                border-top: 1px solid #d4d4d4;
+                height: 50px;
+                line-height: 50px;
+                text-align: center;
+            }
+            th{
+                width:17%;
+                font-weight: 100;
+                background: #f4f4f4;
+            }
+            td{
+                width:17%;
+            }
+            td:first-child{
+                width:34%;
+            }
+            th:first-child{
+                text-align: left;
+                padding-left: 18px;
+            }
+            .tdFirst{
+                display: flex;
+                align-items: center;
+                justify-content: flex-start;
+                text-align: left;
+                padding-right: 20px;
+                p{
+                    height: 30px;
+                    line-height: 30px;
+                }
+            }
+            .tdLast{
+                p{
+                    height: 20px;
+                    line-height: 20px;
+                    margin: 5px 0;
+                }
+                a{
+                    margin: 0 5px;
+                }
+            }
+            .checkbox{
+                margin-left: 5px;
+            }
+            .unfinisdhedFirst{
+                width:100%;
+            }
+        }
+        .buyTable2{
+            border-top: none;
+            td:first-child{
+                text-align: left;
+                padding-left: 18px;
+                width:17%;
+            }
+            td{
+                height: 30px;
+                line-height: 30px;
+            }
+        }
+        .tableContent{
+            border-bottom:1px solid #d4d4d4;
+            // overflow: scroll;
+            overflow-x: hidden;
+        }
+        .tableContent2{
+            border-bottom:1px solid #d4d4d4;
+            // overflow: scroll;
+            overflow-x: hidden;
+            // max-height: 165px;
+            margin-bottom: 5px;
+        }
+        .nth-2{
+            text-align: left;
+        }
+        .scrollTable{
+            overflow: scroll;
+            max-height: 410px;
+        }
+        .tableHead{
+            margin-top: 5px;
+        }
+    }
+    .salesDemandTable{
+        .headImg{
+            width:40px;
+            height:40px;
+        }
+    }
+    .export_excle{
+        margin: 10px 0;
+        margin-left: 10px;
+    }
+    .tendencyImg{
+        width:20px;
+        height:20px;
+    }
+    .purchaseList{
+        li{
+            float: left;
+            font-size: 12px;
+            margin-right: 10px;
+            padding: 3px 8px;
+            color:#333;
+        }
+        .tabss>button{
+            background:@blue;
+            color:#fff;
+        }
+    }
+    .purchaseTable{
+        padding-top: 40px;
+        .purTable{
+            width:100%;
+            background: #f4f4f4;
+            border:1px solid #d7d7d7;
+            margin-bottom: 15px;
+            .purTableTit{
+                display:flex;
+                justify-content: space-between;
+                padding:0 30px;
+                border-bottom:1px solid #d7d7d7;
+                li{
+                    display: flex;
+                    align-items: center;
+                    font-size: 14px;
+                    height:36px;
+                    line-height: 36px;
+                    img{
+                        margin-right: 5px;
+                    }
+                }
+            }
+            .purTableContent{
+                background: #fff;
+                font-size:14px;
+                img{
+                    width:66px;
+                    height:66px;
+                    border-radius: 50%;
+                    float: left;
+                    margin: 0 60px 0 40px;
+
+                }
+                li{
+                    width:28%;
+                    height:80px;
+                    display: flex;
+                    align-items: center;
+                    border-left: 1px solid #d7d7d7;
+                    text-align: center;
+                    justify-content:center;
+                }
+                li:first-child{
+                    width:44%;
+                    border:none;
+                    justify-content: flex-start;
+                    .salesLists{
+                        margin-right: 126px;
+                        color:#333;
+                    }
+                    .salesLists:hover{
+                        color:@red;
+                    }
+                }
+                li:nth-child(2){
+                    border:none;
+                }
+                li:last-child{
+                    flex-direction: column;
+                }
+                .salesView{
+                    color:@blue;
+                }
+                .salesMoney{
+                    color:@orange;
+                }
+            }
+        }
+        .color1{
+            color:@red;
+        }
+        .color2{
+            color:#333;
+        }
+         }
+    .oneKey{
+        margin-left: 20px;
+    }
+    .salesOrderTop{
+        height: 45px;
+        .topSearch>div {
+            width: 200px;
+            margin-right: 10px;
+        }
+    }
+    .orderTop{
+        width:100%;
+        p{
+            font-size: 12px;
+        }
+        .uploatfile{
+            position: relative;
+            .buttonColor3{
+
+            }
+            #uploatfile{
+                position: absolute;
+                top:0;
+                width:93px;
+                height: 30px;
+                opacity: 0;
+            }
+        }
+        .buttonColor3:hover{
+            color:rgb(209, 219, 229);
+        }
+    }
+    .productTabs{
+        margin-top: 20px;
+    }
+}
+.purchasingAll{
+    .purTable1{
+        width:100%;
+        background: #f4f4f4;
+        border:1px solid #d7d7d7;
+        margin-bottom: 5px;
+        .purTableTit{
+            display:flex;
+            justify-content:flex-start;
+            border-bottom:1px solid #d7d7d7;
+            li{
+                display: flex;
+                align-items: center;
+                font-size: 14px;
+                height:36px;
+                line-height: 36px;
+                padding: 0 40px;
+                img{
+                    margin-right: 5px;
+                }
+            }
+        }
+        .purTableTit2{
+            display: flex;
+            justify-content: flex-start;
+        }
+        .purcolor1{
+            color:@orange;
+        }
+    }
+    .pm21Top{
+        height: 50px;
+        a{
+            color:@blue;
+            border-bottom:1px solid @blue;
+            font-size: 12px;
+        }
+    }
+    .purTableUl1{
+        border-bottom:1px solid #d7d7d7;
+        font-weight: 600;
+        font-size: 15px;
+    }
+    .purTableUl2{
+        background: #fff;
+        border-top: 1px solid #d7d7d7;
+        font-size:14px;
+        li{
+            height:50px;
+        }
+        img{
+            width:40px;
+            height:40px;
+        }
+    }
+    .purTableContent2{
+        background: #fff;
+        font-size:14px;
+        img{
+            width:66px;
+            height:66px;
+            border-radius: 50%;
+        }
+        li{
+            width:28%;
+            height:100px;
+            display: flex;
+            align-items: center;
+            justify-content:center;
+        }
+        li:first-child{
+            width:15%;
+        }
+    }
+    .purTable2{
+        ul{
+            li{
+                display: flex;
+                align-items: center;
+                justify-content:center;
+                width:14.2%;
+                height:46px;
+                color:#333;
+            }
+        }
+    }
+    .table33{
+        img{
+            height: 40px;
+            width: 40px;
+        }
+    }
+}
+.dialogCD{
+    height: 120px;
+    p{
+        font-size: 22px;
+        margin-left: 20px;
+    }
+}
+.yjcgFoot{
+    margin-top: 20px;
+    font-size: 12px;
+    color:#333;
+    p{
+        margin-right: 40px;
+    }
+}
+.yjcgDialog{
+    flex-direction: column;
+    p{
+        height: 40px;
+        line-height: 40px;
+    }
+}
+.orderTable{
+    padding-top: 40px;
+}
+
+//包裹动态
+.dynamic>div{
+    margin: 0 0 10px;
+}
+.dynamicList{
+    min-height: 320px;
+    margin-top: 30px;
+    .track-rcol{width: 100%; border: 1px solid #eee;padding-bottom: 20px;}
+    .track-list{margin: 20px; padding-left: 5px; position: relative;}
+    .track-list li{
+        position: relative; padding: 9px 0 0 25px; line-height: 18px; border-left: 1px solid #d9d9d9; color: #999;
+        .node-icon{position: absolute; left: -6px; top: 50%; width: 11px; height: 11px;
+            background: url(../image/yuan.png) no-repeat;background-size:100%; }
+        .time{margin-right: 20px; position: relative; top: 4px; display: inline-block; vertical-align: middle;}
+        .txt{max-width: 500px;margin-left: 80px;position: relative; top: 20px; display: inline-block; vertical-align: middle;font-size: 12px}
+    }
+    .track-list li:first-child{
+        color: red; padding-top: 0; border-left-color: #fff;
+        .time{margin-right: 20px; }
+        .txt{max-width: 500px; }
+        .node-icon{position: absolute; left: -6px; top: 50%; width: 11px; height: 11px;
+            background: url(../image/yuan2.png) no-repeat;background-size:100%;}
+    }
+}
+//新需求弹窗
+.newRequirement{
+    padding-right: 30px;
+    .newList{
+        margin-bottom: 20px;
+        .title {
+            text-align: right;
+            color: #333;
+        }
+        .content {
+            margin-left: 10px;
+        }
+        .newRequirementImg{
+            width: 125px;
+            height:125px;
+            border:1px solid #d4d6d5;
+        }
+    }
+}
+//更换档口弹窗
+.changeStall{
+    .changeStallRadio{
+        border-top: 1px solid #d4d6d5;
+        border-bottom: 1px solid #d4d6d5;
+        max-height: 400px;
+        overflow: scroll;
+        display: flex;
+        flex-direction: column;
+        padding: 15px 0 15px 30%;
+        .el-radio__input.is-checked .el-radio__inner {
+            border-color:@red;
+            background:@red;
+        }
+        .el-radio__inner:hover {
+            border-color: @red;
+        }
+    }
+    .changeStallRadio>label{
+        margin-bottom: 10px;
+    }
+}

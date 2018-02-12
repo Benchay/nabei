@@ -1,0 +1,212 @@
+<template>
+    <div class="fillcontain">
+        <div class="homeStall">
+            <el-col :span="15" class="isLeft">
+                <div class="neweller">当前卖家：匿名卖家</div>
+                <div class="shortcut">
+                    <ul class="flex">
+                        <li class="flex2">
+                            <router-link :to='{path:"/fastShipping2"}'  class="flex2 ">
+                                <img src="../image/shipping01.png" alt="">
+                                <span>快速出货</span>
+                            </router-link>
+                        </li>
+                        <li class="flex2">
+                            <router-link :to='{path:"/returnManagement2"}' class="flex2">
+                                <img src="../image/salesreturn.png" alt="">
+                                <span>快速退货</span>
+                            </router-link>
+
+                        </li>
+                    </ul>
+                </div>
+                <div class="deliveryRecord flex">
+                    <div class="flex">
+                        <img src="../image/sshipping.png" alt="">
+                        <p class="title">出货记录</p>
+                    </div>
+                    <ul class="flex isHover">
+                        <li><router-link :to='{path:"/statisticalStatement"}'>退货记录</router-link></li>
+                        <li><router-link :to='{path:"/statisticalStatement"}'>销售日报</router-link></li>
+                        <li><router-link :to='{path:"/statisticalStatement"}'>数据统计</router-link></li>
+                    </ul>
+                </div>
+                <div class="RecordTable">
+                   <div class="tableInfo flex">
+                        <div class="flex">卖家名称：<span>散客卖家</span></div>
+                       <div class="flex"><img src="../image/sicon06.png" alt=""><span class="color1">已付款</span></div>
+                   </div>
+                    <table border="0" cellpadding="0" cellspacing="0">
+                        <tr>
+                            <th>订单号</th>
+                            <th>货号</th>
+                            <th>颜色</th>
+                            <th>尺码</th>
+                            <th>单价</th>
+                            <th>数量</th>
+                        </tr>
+                        <tr>
+                            <td>2017</td>
+                            <td>JG110</td>
+                            <td>粉色</td>
+                            <td>L</td>
+                            <td>145.00</td>
+                            <td>20</td>
+                        </tr>
+                    </table>
+                    <div class="tableFoot">
+                        <div class="left">出货时间：2017-06-14 11：43</div>
+                        <div class="right flex2">
+                            <p>商品小计：2</p>
+                            <p>实付金额（元）：40</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="RecordTable">
+                    <div class="tableInfo flex">
+                        <div class="flex">卖家名称：<span>散客卖家</span></div>
+                        <div class="flex"><img src="../image/sicon06.png" alt=""><span class="color1">已付款</span></div>
+                    </div>
+                    <table border="0" cellpadding="0" cellspacing="0">
+                        <tr>
+                            <th>订单号</th>
+                            <th>货号</th>
+                            <th>颜色</th>
+                            <th>尺码</th>
+                            <th>单价</th>
+                            <th>数量</th>
+                        </tr>
+                        <tr>
+                            <td>2017</td>
+                            <td>JG110</td>
+                            <td>粉色</td>
+                            <td>L</td>
+                            <td>145.00</td>
+                            <td>20</td>
+                        </tr>
+                    </table>
+                    <div class="tableFoot">
+                        <div class="left">出货时间：2017-06-14 11：43</div>
+                        <div class="right flex2">
+                            <p>商品小计：2</p>
+                            <p>实付金额（元）：40</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="RecordTable">
+                    <div class="tableInfo flex">
+                        <div class="flex">卖家名称：<span>散客卖家</span></div>
+                        <div class="flex"><img src="../image/sicon06.png" alt=""><span class="color1">已付款</span></div>
+                    </div>
+                    <table border="0" cellpadding="0" cellspacing="0">
+                        <tr>
+                            <th>订单号</th>
+                            <th>货号</th>
+                            <th>颜色</th>
+                            <th>尺码</th>
+                            <th>单价</th>
+                            <th>数量</th>
+                        </tr>
+                        <tr>
+                            <td>2017</td>
+                            <td>JG110</td>
+                            <td>粉色</td>
+                            <td>L</td>
+                            <td>145.00</td>
+                            <td>20</td>
+                        </tr>
+                    </table>
+                    <div class="tableFoot">
+                        <div class="left">出货时间：2017-06-14 11：43</div>
+                        <div class="right flex2">
+                            <p>商品小计：2</p>
+                            <p>实付金额（元）：40</p>
+                        </div>
+                    </div>
+                </div>
+            </el-col>
+            <el-col :span="9" class="isRight">
+                <div class="newNotice">
+                    <div class="flex">
+                        <img src="../image/tmessage03.png" alt="">
+                        <p class="title">最新公告</p>
+                    </div>
+                    <ul class="noticeList">
+                        <li>【2017-08-17】公告标题：嘻嘻哈哈不经夸嘻嘻哈哈不经夸嘻嘻哈哈不经夸嘻嘻哈哈不经夸嘻嘻哈哈不经夸嘻嘻哈哈不经夸</li>
+                        <li>【2017-08-17】公告标题：嘻嘻哈哈不经夸嘻嘻哈哈不经夸嘻嘻哈哈不经夸</li>
+                        <li>【2017-08-17】公告标题：嘻嘻哈哈不经夸嘻嘻哈哈不经夸嘻嘻哈哈不经夸</li>
+                    </ul>
+                    <div class="right noticeButton"><router-link :to='{path:"/systemNotice"}'>查看更多 》</router-link></div>
+                </div>
+                <div class="newNotice newNotice2">
+                    <div class="flex">
+                        <img src="../image/tmessage03.png" alt="">
+                        <p class="title">近期动态</p>
+                    </div>
+                    <ul class="DynamicList">
+                        <li class="flex">
+                            <div class="listHead">
+                                <img src="../image/sprite02.png" alt="">
+                            </div>
+                            <div class="state">
+                                <p class="flex"><span class="listState">已签收</span><span class="listNum">电商卖家名称</span></p>
+                                <p class="flex"><span class="listState">2017-12-29</span><span class="listNum">订单编号：1231564564513333333333333331111111116</span></p>
+                            </div>
+                        </li>
+                        <li class="flex">
+                            <div class="listHead">
+                                <img src="../image/sprite02.png" alt="">
+                            </div>
+                            <div class="state">
+                                <p class="flex"><span class="listState">已签收</span><span class="listNum">电商卖家名称</span></p>
+                                <p class="flex"><span class="listState">2017-12-29</span><span class="listNum">订单编号：1231564564513333333333333331111111116</span></p>
+                            </div>
+                        </li>
+                        <li class="flex">
+                            <div class="listHead">
+                                <img src="../image/sprite02.png" alt="">
+                            </div>
+                            <div class="state">
+                                <p class="flex"><span class="listState">已签收</span><span class="listNum">电商卖家名称</span></p>
+                                <p class="flex"><span class="listState">2017-12-29</span><span class="listNum">订单编号：1231564564513333333333333331111111116</span></p>
+                            </div>
+                        </li>
+                    </ul>
+                    <div class="right noticeButton"><router-link :to='{path:"/moreDynamic"}'>查看更多 》</router-link></div>
+                </div>
+                <div class="greenHand">
+                    <p class="title">新手入门</p>
+                    <div class="greenHandImg">
+                        <img src="../image/timg2.png" alt="">
+                    </div>
+                </div>
+            </el-col>
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {apiCount, userCount, orderCount, apiAllCount, getUserCount, getOrderCount, adminDayCount, adminCount} from '@/api/getData'
+    export default {
+        data(){
+            return {
+
+            }
+        },
+        components: {
+
+        },
+        computed: {
+
+        },
+        methods: {
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import "../style/common";
+    @import "../style/homeStall";
+</style>

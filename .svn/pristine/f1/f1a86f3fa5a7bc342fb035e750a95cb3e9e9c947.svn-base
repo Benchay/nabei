@@ -1,0 +1,331 @@
+<template>
+    <div class="fillcontain">
+        <ul :class="[identity ==1 ?'stallShareMenu':identity ==2 ?'sellerShareMenu':'']">
+            <li class="ListMenu">
+                <router-link :to='{path:"/messageCenter"}'>消息中心</router-link>
+            </li>
+        </ul>
+        <div class="messageCenter">
+            <div :class="[identity ==1 ?'stallShareMenu':identity ==2 ?'sellerShareMenu':'']">
+                <div>
+                    <a href="javascript:void(0)" class="buttonColor11" @click="clickDelWorkMessage">删除</a>
+                    <a href="javascript:void(0)" class="buttonColor11" @click="clickReadWorkMessage">标记已读</a>
+                </div>
+                <el-col :span="24" class="radioColor messageRadio">
+                    <el-radio-group v-model="readFlag" size="small" @change="changeReadFlag(readFlag)">
+                        <el-radio-button label="0">全部</el-radio-button>
+                        <el-radio-button label="1">未读{{unreadCount==undefined||unreadCount==''?'':"(" + unreadCount + ")"}}</el-radio-button>
+                        <el-radio-button label="2">已读{{readCount==undefined||readCount==0?'':"(" + readCount + ")"}}</el-radio-button>
+                    </el-radio-group>
+                </el-col>
+                <div class="messageTable">
+                    <el-table
+                        ref="multipleTable"
+                        @selection-change="handleSelectionChange"
+                        :data="tableData"
+                        style="width: 100%">
+                        <el-table-column
+                            type="selection"
+                            width="40">
+                        </el-table-column>
+                        <el-table-column
+                            label=""
+                            width="20">
+                            <template scope="scope">
+                                <div class="flex2">
+                                    <img v-if="scope.row.bread == true" src="../image/read.png" alt="">
+                                    <img v-if="scope.row.bread == false" src="../image/unread.png" alt="">
+                                </div>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            label="标题"
+                            width="200">
+                            <template scope="scope">
+                                <p>【{{scope.row.operateValue}}】</p>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            label="状态" width="100">
+                            <template scope="scope">
+                            {{scope.row.readFlag==0 ? '未读' : '已读'}}
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            prop="title"
+                            label="内容">
+                            <template scope="scope">
+                                <div @click="loadDetail(scope.row)">
+                                <el-popover
+                                    ref="popover1"
+                                    placement="top"
+                                    width="200"
+                                    trigger="hover"
+                                    :content=scope.row.title>
+                                </el-popover>
+                                <div class="overflow" v-popover:popover1>
+                                    {{scope.row.title}}
+                                </div>
+                                </div>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            prop="sendTime"
+                            label="时间 "
+                            :formatter="mydateFormat"
+                            width="200">
+                        </el-table-column>
+                    </el-table>
+                    <el-pagination
+                        small
+                        class="right"
+                        style="margin-top: 20px;"
+                        @size-change="handleSizeChange"
+                        @current-change="handleCurrentChange"
+                        :current-page="currentPage"
+                        :page-sizes="[10, 20, 30, 40]"
+                        :page-size="pageSize"
+                        layout="total, sizes, prev, pager, next, jumper"
+                        :total="totalCount">
+                    </el-pagination>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {userInfo,setStore,getStore} from  '../config/mUtils'
+    import {formatDate} from '../utils/date.js'
+    import {getCompanyType} from  '../utils/common'
+    import {queryWorkMessage,readWorkMessage,delWorkMessage} from '@/api/getData'
+
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                 roleForm: {
+                    userId: '',
+                    roleId: '',
+                    compId:''
+                },
+                //1为档口、2为卖家身份
+                identity:'',
+                //是否已读
+                readFlag:"0",
+                tableData: [],
+                 //默认每页数据量
+                pageSize: 10,
+                //默认高亮行数据id
+                highlightId: -1,
+                //当前页码
+                currentPage: 1,
+                //查询的页码
+                start: 1,
+                //默认数据总数
+                totalCount: 0,
+                multipleSelection:[],
+                unreadCount:'',
+                readCount:''
+
+            }
+        },
+        filters:{
+        },
+        watch:{
+            '$route':function (route) {
+                this.identity =getCompanyType(getStore("curCompany"));
+            }
+        },
+        mounted () {
+        	this.identity =getCompanyType(getStore("curCompany"));
+         	var userInfo=getStore("userInfo");
+            var vjson = JSON.parse(userInfo);
+            this.roleForm.userId=vjson.id;
+            var currentComp=getStore("curCompany");
+            var vcom = JSON.parse(currentComp);
+            this.roleForm.compId=vcom.id;
+            this.readFlag = 1;
+            this.queryWorkMessage(this.readFlag);
+        },
+        methods: {
+            mydateFormat:function(row, column) {
+                var time = row[column.property];
+                if (time == undefined||time=='') {
+                    return "";
+                }
+                let date = new Date(time);
+                return formatDate(date,'yyyy-MM-dd hh:mm');
+            },
+            handleSizeChange(val) {
+                this.pageSize = val;
+                this.queryWorkMessage(this.readFlag);
+            },
+            handleCurrentChange(val) {
+                this.currentPage = val;
+                this.queryWorkMessage(this.readFlag);
+            },
+            handleSelectionChange: function(val) {
+                this.multipleSelection = val;
+            },
+
+
+            loadDetail(row){
+              var orderStatus = row.operate;
+              var content = JSON.parse(row.content);
+
+              if(orderStatus && (orderStatus == 'STALL_CREATE_PACKAGE'||orderStatus == 'SELLER_TAKE_PACKAGE'||orderStatus == 'SELLER_LOAD_PACKAGE'|| orderStatus == 'SELLER_UNLOAD_PACKAGE')){
+                  this.$router.push({path:'/packageStatus',query:{packId:content.packageId}});
+              }else if(orderStatus && (orderStatus == 'STALL_CREATE_OUTSETTLEMENTORDER_APPLY'|| orderStatus == 'STALL_CREATE_INSETTLEMENTORDER_APPLY')){
+                  this.$router.push({path:'/SettlementRecordsdetail',query:{otherSideCompanyId:content.ownerCompanyId,settlementOrderId:content.settlementOrderId}});
+              }
+            },
+
+            changeReadFlag(ha){
+                this.queryWorkMessage(ha);
+            },
+            async queryWorkMessage(ha){
+                if(ha == 0){
+                    ha = '';
+                }else if(ha == 1){
+                    ha = "0";
+                }else if(ha == 2){
+                    ha = "1";
+                }
+                let param = {
+                    "type":"MASTER_NEWS",
+                    "toUserId":this.roleForm.userId,
+                    "delFlag":0,
+                    "readFlag": ha,
+                    "pageIndex": this.currentPage,
+                    "pageSize":this.pageSize
+                }
+                const res = await queryWorkMessage(param);
+                if(res.isSuccess){
+                    this.tableData = res.result.results;
+                    this.totalCount = res.result.totalCount
+                    if(ha == ''){
+                    }else if(ha == 0){
+                        this.unreadCount = res.result.totalCount;
+                    }else if(ha == 1){
+                        this.readCount = res.result.totalCount;
+                    }
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            async subReadWorkMessage(ids){
+                let idIn = ids.toString();
+                let param = {
+                    idIn:idIn
+                }
+                const res = await readWorkMessage(param);
+                if(res.isSuccess){
+                    this.tableData = res.result.results;
+                    this.totalCount = res.result.totalCount;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+                this.queryWorkMessage(this.readFlag);
+            },
+            async clickReadWorkMessage(){
+                if(this.multipleSelection.length==0){
+                    this.$message({
+                        type: 'error',
+                        message: '请先勾选要标记的消息！'
+                    });
+                    return;
+                }
+                var ids = [];
+                this.multipleSelection.forEach((item) => {
+                    ids.push(item.id);
+                })
+                if(ids.length <1){
+                    this.$message({
+                        type: 'error',
+                        message: '请先勾选要标记的消息！'
+                    });
+                    return;
+                }
+                this.$confirm('是否确认标记选中的消息?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    this.subReadWorkMessage(ids);
+                }).catch(() => {
+
+                });
+            },
+            async clickDelWorkMessage(){
+            if(this.multipleSelection == undefined || this.multipleSelection.length==0){
+                    this.$message({
+                        type: 'error',
+                        message: '请先勾选要删除的消息！'
+                    });
+                    return;
+                }
+                var ids = [];
+                this.multipleSelection.forEach((item) => {
+                    ids.push(item.id);
+                })
+                if(ids.length <1){
+                    this.$message({
+                        type: 'error',
+                        message: '请先勾选要删除的消息！'
+                    });
+                    return;
+                }
+                this.$confirm('是否确认删除选中的消息?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    this.subDelWorkMessage(ids);
+                }).catch(() => {
+
+                });
+            },
+            async subDelWorkMessage(ids){
+                let idIn = ids.toString();
+                let param = {
+                    idIn:idIn
+                }
+                const res = await delWorkMessage(param);
+                if(res.isSuccess){
+                    this.$message({
+                        type: 'success',
+                        message: res.result.msg
+                    });
+                   this.queryWorkMessage(this.readFlag)
+                 }else{
+                      this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                 }
+            },
+
+        },
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin.less';
+    @import "../style/common";
+    @import '../style/messageCenter';
+    .messageContent{
+        cursor: pointer;
+    }
+</style>

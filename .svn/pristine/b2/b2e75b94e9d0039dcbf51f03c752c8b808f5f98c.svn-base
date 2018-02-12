@@ -1,0 +1,487 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li class="menuIndex2">
+                <router-link :to='{path:"/salesReturn"}'>退货管理</router-link>
+            </li>
+        </ul>
+        <div class="returns-content">
+            <div class="returnsAll">
+                <!--<div class="returnsTop">
+                    <div class="left returnsItems">
+                        <b>退货单 -</b>{{orderCode}}
+                    </div>
+                    <div class="right">
+                        <el-button class="buttonColor3">打印设置</el-button>
+                        <el-button class="buttonColor3"  @click="dialog2 = true" v-if="status == 7">取消退货</el-button>
+                        <el-button class="buttonColor3" v-if="status >= 9" :disabled="this.closingFee>0" @click="quickRecivePay">立即收款</el-button>
+                        <el-button class="buttonColor3" @click="chakan" v-if="status >= 9 && this.closeStutas != 0">查看结算</el-button>
+                        <router-link :to='{path:"/salesReturn"}'><el-button class="buttonColor3">返回</el-button></router-link>
+                    </div>
+                </div>
+                <div>
+                    <div class="returnsList">
+                        <el-col :span="5">档口名称：{{busiName}}</el-col>
+                        <el-col :span="5">总退货数量：{{totalNum}}</el-col>
+                        <el-col :span="5">退货总金额：<span class="title">￥{{totalFee}}</span></el-col>
+
+                    </div>
+                    <div class="returnsList">
+                        <el-col :span="5">结算状态：（{{closeStutas == 0?'未结算':closeStutas == 1?'已结算':closeStutas == 2?'部分结算':''}}）</el-col>
+                        <el-col :span="5">未结算金额：<span class="title">￥{{closeFee}}</span></el-col>
+                    </div>
+                    <div class="flex detailsRight right">
+                        <a href="javascript:void(0)" @click="salesDialog">
+                            <div>
+                                <p class="red">订单动态</p>
+                                <p>{{status == 7?'待签收':status == 8?'已签收':status == 9?'退货成功':status == 10?'退货失败':status == 50?'已取消':status == 99?'已完成':''}}</p>
+
+                            </div>
+                        </a>
+                    </div>
+                </div>-->
+                <div class="right">
+                    <router-link :to='{path:"/salesReturn"}' class="comeBack2">返回</router-link>
+                </div>
+                <div class="orderDetails">
+                    <div class="flex detailsLeft">
+                        <img style="width: 80px; height: 80px;" :src="orderImgUrl_main" alt="">
+                        <div>
+                            <p>订单编号：{{orderCode}}</p>
+                            <p>档口名称：{{busiName}}</p>
+                            <p>总退货数量：{{totalNum}}</p>
+                        </div>
+                    </div>
+                    <div  class="detailsCenter">
+                        <p>结算状态：（{{closeStutas == 0?'未结算':closeStutas == 1?'已结算':closeStutas == 2?'部分结算':''}}）<el-button class="observe1" size="mini" round @click="chakan" v-if="status >= 9 && this.closeStutas != 0">查看记录</el-button></p>
+                        <p>退货总金额：<span class="title">￥{{totalFee}}</span>
+                            <el-button class="buttonColor3 jiesuan" v-if="closeStutas == 0 && (status == 99|| status == 9) " :disabled="this.closingFee>0" @click="quickRecivePay">立即收款</el-button>
+                        </p>
+                        <p>未结算金额：<span class="title">￥{{ closeFee==undefined ? totalFee : totalFee - closeFee  }}</span></p>
+                    </div>
+                    <div class="flex detailsRight">
+                        <a href="javascript:void(0)" @click="salesDialog">
+                            <div>
+                                <p class="red">订单动态</p>
+                                <p>{{status == 7?'待签收':status == 8?'已签收':status == 9?'退货成功':status == 10?'退货失败':status == 50?'已取消':status == 99?'已完成':''}}</p>
+
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                <div class="returnsRemark">
+                    备注：{{memo}}
+                </div>
+                <div class="returnsTable">
+                    <el-table
+                        :data="tableData"
+                        style="width: 100%">
+                        <el-table-column
+                            label="主图/货号">
+                            <template scope="scope">
+                                <div class="flex">
+                                    <img :src="scope.row.imgUrl_main" alt=""  class="tableImg">
+                                    <p>{{scope.row.productCode}}</p>
+                                </div>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            prop="productName"
+                            width="180"
+                            label="商品名称">
+                        </el-table-column>
+                        <el-table-column
+                            prop="color"
+                            label="颜色">
+                        </el-table-column>
+                        <el-table-column
+                            prop="size"
+                            label="尺码">
+                        </el-table-column>
+                        <el-table-column
+                            prop="orderNum"
+                            label="退货数量">
+                        </el-table-column>
+                        <el-table-column
+                            prop="price"
+                            label="单价">
+                        </el-table-column>
+                    </el-table>
+                </div>
+                <el-pagination
+                    small
+                    class="right"
+                    style="margin-top: 20px;"
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :page-sizes="[10, 20, 30, 40,50]"
+                    :current-page="currentPage"
+                    :page-size="pagesize"
+                    layout="total,sizes, prev, pager, next, jumper"
+                    :total="totalCount">
+                </el-pagination>
+                <a href="javascript:void(0)" @click="exportloadData" class="export_excle1 left">导出excel</a>
+
+                <div class="right" style="margin-top: 20px;width:100%">
+                    <!--待签收 显示取消退货按钮-->
+                    <a href="javascript:void(0)" class="buttonColor3 right" @click="dialog2 = true" v-if="status == 7">取消退货</a>
+                </div>
+            </div>
+            <div style="height:160px;">
+                &nbsp;
+            </div>
+        </div>
+        <el-dialog
+            title="订单动态"
+            :visible.sync="dialog1"
+            size="small">
+            <div class="dynamic">
+                <el-col :span="12">档口名称：{{busiName}}</el-col>
+                <el-col :span="12"> <p>{{status == 7?'待签收':status == 8?'已签收':status == 9?'退货成功':status == 10?'退货失败':status == 50?'已取消':status == 99?'已完成':''}}</p></el-col>
+                <el-col :span="12">订单编号：{{orderCode}}</el-col>
+            </div>
+            <el-col class="dynamicList">
+                <div class="track-rcol">
+                    <div class="track-list">
+                        <ul>
+                            <li v-for="list in salesList">
+                                <i class="node-icon"></i>
+                                <span class="time">{{list.createTime | mydateFormat}}</span>
+                                <div class="txt">
+                                    <p>{{list.description}}</p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </el-col>
+            <span slot="footer" class="dialog-footer flex2" style="width:100%;">
+                <!-- <a href="javascript:void(0)" @click="reminder" class="buttonColor3">催 单</a> -->
+            </span>
+        </el-dialog>
+        <el-dialog
+            title="取消退货"
+            :visible.sync="dialog2"
+            size="tiny">
+           <div class="flex2">
+                确定取消此次退货？
+           </div>
+            <span slot="footer" class="dialog-footer flex2" style="width:100%;">
+                <a href="javascript:void(0)" class="buttonColor3" @click="cancelRefund">确 定</a>
+                <a href="javascript:void(0)" @click="dialog2 = false" class="buttonColor2">取 消</a>
+            </span>
+        </el-dialog>
+    </div>
+</template>
+<script>
+    import {setStore,getStore,userInfo} from  '../config/mUtils'
+    import {queryOrderDetailByOrderId,queryOrderLog,remindBusi,cancelOrder} from '@/api/getData'
+    import {formatDate,timeZoneCovertDay} from '../utils/date.js'
+    import {export_json_to_excel} from '../vendor/Export2Excel.js'
+    const _XLSX = require('xlsx')
+    const X = typeof XLSX !== 'undefined' ? XLSX : _XLSX;
+
+    export default {
+        data() {
+            return {
+                currentPage: 1,
+                pagesize:10,
+                start: 1,
+                //默认数据总数
+                totalCount:0,
+                dialog1:false,
+                dialog2:false,
+                orderId:'',
+                busiName:'',
+                totalNum:'',
+                totalFee:'',
+                status:'',
+                orderCode:'',
+                memo:'',
+                imgUrl_main:'',
+                orderImgUrl_main:'',
+                productName:'',
+                closeStutas:'',
+                closeFee:'',
+                tableData: [],
+                salesList:[],
+                roleForm: {
+                    userId: '',
+                    roleId: '',
+                    compId:''
+                },
+                busiCompId:'',
+                closingFee:0,
+            }
+        },
+        watch:{
+            '$route':function (route) {
+                this.orderId = this.$route.query.orderId;
+                this.orderImgUrl_main = '';
+                this.initData();
+            }
+        },
+        mounted(){
+            this.roleForm.userId=userInfo().userId;
+            this.roleForm.compId = userInfo().companyId;
+            this.orderId = this.$route.query.orderId;
+            this.initData();
+        },
+        filters: {
+            mydateFormat(time) {
+                if (time == undefined || time == '') {
+                    return "";
+                }
+                let date = new Date(time);
+                return formatDate(date, 'yyyy-MM-dd hh:mm');
+            },
+        },
+        methods: {
+            quickRecivePay(){
+                this.$router.push({path:'/stallSettlementImmediately',query:{backPath:'/salesReturnDetails?orderId='+this.orderId,activeName:'first',salesId:this.orderId,saleCompanyId:this.busiCompId}});
+            },
+
+            handleSizeChange(val) {
+                this.pagesize = val;
+                this.getQueryPara();
+            },
+            handleCurrentChange(val) {
+                this.currentPage = val;
+                this.getQueryPara();
+            },
+         async cancelRefund(){
+                this.dialog2 = false;
+                let param = {
+                    "backPurchase":1,
+                    "orderId":this.orderId
+                };
+                const res = await cancelOrder(param);
+                if(res.isSuccess == true){
+                    this.$message({
+                        type: 'success',
+                        message: '已取消退货！'
+                    });
+                }
+                this.$router.push('/salesReturn');
+            },
+            getQueryPara(){
+                this.tableData=[];
+                this.initData();
+            },
+            async initData(){
+                let param = {
+                    "companyId":this.roleForm.compId,
+                    "orderId":this.orderId,
+                    "pageSize": this.pagesize,
+                    "pageIndex": this.currentPage,
+                    "getHeader":1
+                };
+                const res = await queryOrderDetailByOrderId(param);
+                if (res.isSuccess == true){
+                    this.tableData=[];
+                    let table = res.result.data.results;
+                    let order = res.result.order;
+                    this.busiCompId = order.busiCompId;
+                    table.forEach(obj => {
+                    	let imgUrl_main = "";
+                    	let title = "";
+                    	let productCode = "";
+                    	let colors = ",";
+                    	let sizes = ",";
+                    	let num = 0;
+                    	let price = "";
+                    	if(obj.productName){
+                    		title = obj.productName;
+                    	}
+                    	if(obj.productCode){
+                    		productCode = obj.productCode;
+                    	}
+                    	if(obj.details){
+                    		obj.details.forEach(obj2 => {
+                    			if(obj2.color && colors.indexOf(","+obj2.color+",")<0){
+                    				colors = colors + obj2.color +",";
+                    			}
+                    			if(obj2.size && sizes.indexOf(","+obj2.size+",")<0){
+                    				sizes = sizes + obj2.size +",";
+                    			}
+                    			if(obj2.orderNum){
+                    				num += obj2.orderNum;
+                    			}
+                    			if(obj2.price && price == ""){
+                    				price = obj2.price;
+                    			}
+                    			if(obj.imgUrl_main && imgUrl_main == ""){
+                    				imgUrl_main = obj.imgUrl_main;
+                    			}
+                    		})
+                    	}
+                    	colors = colors.substring(1);
+                    	colors = colors.substring(0,colors.length-1);
+                    	sizes = sizes.substring(1);
+                    	sizes = sizes.substring(0,sizes.length-1);
+                    	let row = {
+                    		productName:title,
+                    		imgUrl_main:imgUrl_main,
+                    		productCode:productCode,
+                    		color:colors,
+                    		size:sizes,
+                    		orderNum:num,
+                    		price:price
+                    	}
+                    	this.tableData.push(row);
+                    })
+                    //this.tableData = table[0].details;
+                    this.totalCount = res.result.data.totalCount;
+                    this.memo=order.memo;
+                    this.productName = order.productName;
+                    this.closeFee = order.closeFee;
+                    this.closingFee = order.closingFee;
+                    this.closeStutas= order.closeStutas;
+                    this.status = order.status;
+                    this.totalFee = order.totalFee;
+                    this.totalNum = order.totalNum;
+                    this.orderCode = order.orderCode;
+                    this.busiName = order.busiName;
+                    this.tableData.forEach(obj => {
+                    	if(this.orderImgUrl_main == "" && obj.imgUrl_main){
+                    		this.orderImgUrl_main = obj.imgUrl_main;
+                    	}
+                    })
+                }
+            },
+            chakan(){
+                this.$router.push({path: '/salesReturnDetailsAccounts',query:{orderId:this.orderId,orderCode:this.orderCode}});
+            },
+           async salesDialog(){
+              this.dialog1 = true;
+               let param = {
+                   "companyId":this.roleForm.compId,
+                   "orderId":this.orderId,
+                   "pageIndex":1,
+                   "pageSize":10,
+               };
+              const res = await queryOrderLog(param);
+              if(res.isSuccess == true){
+                  this.salesList = res.result.results;
+              }
+            },
+            async reminder(){
+               this.dialog1 = false;
+               let param = {
+                    "orderId":this.orderId,
+                    "remindType": 0
+                    }
+               const res = await remindBusi(param);
+                if(res.isSuccess == true){
+                    this.dialog1 = false;
+                    this.$message({
+                        type: 'success',
+                        message: '已催单！'
+                    });
+                }
+            },
+
+            //导出文档
+			async exportloadData() {
+                let param = {
+                    "companyId":this.roleForm.compId,
+                    "orderId":this.orderId,
+                    "pageSize": this.pagesize*this.currentPage,
+                    "pageIndex": 1,
+                    "getHeader":1
+                };
+                const res = await queryOrderDetailByOrderId(param);
+                const list = [];
+                if (res.isSuccess == true) {
+                	if(res.result.data.results){
+                		res.result.data.results.forEach(obj => {
+	                    	let imgUrl_main = "";
+	                    	let title = "";
+	                    	let productCode = "";
+	                    	let colors = ",";
+	                    	let sizes = ",";
+	                    	let num = 0;
+	                    	let price = "";
+	                    	if(obj.productName){
+	                    		title = obj.productName;
+	                    	}
+	                    	if(obj.productCode){
+	                    		productCode = obj.productCode;
+	                    	}
+	                    	if(obj.details){
+	                    		obj.details.forEach(obj2 => {
+	                    			if(obj2.color && colors.indexOf(","+obj2.color+",")<0){
+	                    				colors = colors + obj2.color +",";
+	                    			}
+	                    			if(obj2.size && sizes.indexOf(","+obj2.size+",")<0){
+	                    				sizes = sizes + obj2.size +",";
+	                    			}
+	                    			if(obj2.orderNum){
+	                    				num += obj2.orderNum;
+	                    			}
+	                    			if(obj2.price && price == ""){
+	                    				price = obj2.price;
+	                    			}
+	                    			if(obj.imgUrl_main && imgUrl_main == ""){
+	                    				imgUrl_main = obj.imgUrl_main;
+	                    			}
+	                    		})
+	                    	}
+	                    	colors = colors.substring(1);
+	                    	colors = colors.substring(0,colors.length-1);
+	                    	sizes = sizes.substring(1);
+	                    	sizes = sizes.substring(0,sizes.length-1);
+	                    	let row = {
+	                    		productName:title,
+	                    		imgUrl_main:imgUrl_main,
+	                    		productCode:productCode,
+	                    		color:colors,
+	                    		size:sizes,
+	                    		orderNum:num,
+	                    		price:price
+	                    	}
+	    					list.push(row);
+                    	})
+
+                	}
+
+                    const tHeader = ['商品货号', '商品名称','颜色','尺码','退货数量','单价'];
+			　　　　const filterVal = ['productCode', 'productName','color','size','orderNum','price'];
+			　　　　const data = this.formatJson(filterVal, list);
+			　　　　export_json_to_excel(tHeader, data, '卖家退货详情表');
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+            formatJson(filterVal, jsonData) {
+		　　　　　　return jsonData.map(v => filterVal.map(j => v[j]));
+		　　　},
+        }
+    }
+</script>
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/salesReturn';
+    .detailsLeft,.detailsCenter{
+        p{
+            white-space: nowrap;
+            .observe1{
+                border-color: @red;
+                color: @red;
+                margin-left: 50px;
+            }
+            .jiesuan{
+                &:hover,&:focus{
+                    color: #fff;
+                }
+                margin-left: 155px;
+                transform: translateY(5px);
+            }
+        }
+    }
+</style>

@@ -1,0 +1,128 @@
+.inventoryInitialize{
+    margin:0 30px;
+    background: #fff;
+    padding:0 40px;
+    height:100%;
+    .initializeTop{
+        input{
+            width: 200px;
+            margin-right: 10px;
+        }
+    }
+    .initializeButton{
+        padding: 20px 0;
+        overflow: hidden;
+        width:100%;
+        sup{
+            color: red;
+            font-size: 12px;
+            margin-left: 100px;
+        }
+    }
+    .initializeTable{
+        img{
+            width: 40px;
+            height: 40px;
+        }
+    }
+}
+//添加新商品 弹窗
+.newCommodity{
+    padding:0 30px;
+    .avatar-uploader .el-upload {
+        border: 1px dashed #d9d9d9;
+        border-radius: 6px;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+    .avatar-uploader .el-upload:hover {
+        border-color: #20a0ff;
+    }
+    .avatar-uploader-icon {
+        font-size: 28px;
+        color: #8c939d;
+        width: 128px;
+        height: 128px;
+        line-height: 128px;
+        text-align: center;
+    }
+    .avatar {
+        width: 128px;
+        height: 128px;
+        display: block;
+    }
+    .newInput{
+        width: 300px;
+    }
+}
+
+//导入库存表 弹窗
+.dialogImport{
+    .importFirst{
+        display: flex;
+        align-items: flex-start;
+        .uploatName{
+            background: #e7f3fd;
+            margin-left: 10px;
+            margin-bottom: 5px;
+            p{
+                max-width: 189px;
+                white-space:nowrap;
+                overflow:hidden;
+                text-overflow:ellipsis;
+            }
+        }
+        .uploatButton{
+            position: relative;
+            #uploatfile{
+                background: pink;
+                width: 96px;
+                height: 30px;
+                position: absolute;
+                top:0;
+                left:0;
+                opacity: 0;
+            }
+            .importUploat{
+                background:#fff;
+                border:1px solid #ccc;
+                border-radius: 15px;
+                padding: 4px 9px;
+                font-size: 12px;
+                margin-left: 10px;
+                img{
+                    width: 18px;
+                    height: 18px;
+                }
+            }
+        }
+    }
+
+    .dialogImport,.importTips{
+        height: 40px;
+        line-height: 40px;
+    }
+    .importTips{
+     font-size: 12px;
+        color:#999;
+    }
+    .importDownload{
+        padding: 0 8%;
+        a{
+            border:1px solid @blue2;
+            height: 30px;
+            border-radius: 5px;
+            color:#333;
+        }
+    }
+}
+.colorend{
+    padding: 7px 17px;
+    border-radius: 5px;
+    color: #fff;
+    background: #cccccc;
+    border: none;
+    font-size: 12px;
+    margin-right: 10px;
+}

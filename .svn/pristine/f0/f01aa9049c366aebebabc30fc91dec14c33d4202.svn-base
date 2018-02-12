@@ -1,0 +1,446 @@
+<template>
+    <div class="fillcontain">
+        <ul :class="[identity ==1 ?'stallShareMenu':identity ==2 ?'sellerShareMenu':'']">
+            <li class="ListMenu" v-if="getMenuAuthFun('financialManagement')">
+                <router-link :to='{path:"/financialManagement"}'>账户总览</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('financialManagement2')">
+                <router-link :to='{path:"/financialManagement2"}'>财务交易记录</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('accountSetting')">
+                <router-link :to='{path:"/accountSetting"}'>账户设置</router-link>
+            </li>
+            <!--<li>-->
+                <!--<router-link :to='{path:"/financialManagement3"}'>金币交易记录</router-link>-->
+            <!--</li>-->
+        </ul>
+        <div class="financialManagement" :class="[identity ==1 ?'stallContent':identity ==2 ?'sellerContent':'']">
+            <div class="AccountOverview">
+                <ul class="overviewLists" style="overflow: hidden;width:100%;">
+                    <li style="width:25%">
+                        <p class="listTitle">账户余额</p>
+                        <div class="flex overvoewMoney">
+                            <span class="bigMoney">{{platformAccountVO.blance}}元</span><span>冻结：{{platformAccountVO.freezed}}元</span>
+                        </div>
+                        <div class="right">
+                            <el-button type="info" size="small" class="buttonColorFM"><router-link :to='{path:"/remainingSum",query:{tabsIndex:tabsIndex1}}'>充值</router-link></el-button>
+                            <el-button type="info" size="small" class="buttonColorFM"><router-link :to='{path:"/remainingSum",query:{tabsIndex:tabsIndex2}}'>提现</router-link></el-button>
+                            <el-button type="info" size="small" class="buttonColorFM"><router-link :to='{path:"/remainingSum",query:{tabsIndex:tabsIndex3}}'>转账</router-link></el-button>
+                        </div>
+                    </li>
+                    <!--<li style="width:25%">-->
+                        <!--<p>金币余额</p>-->
+                        <!--<div class="flex overvoewMoney">-->
+                            <!--<span class="bigMoney">{{platformAccountVO.goldBalance}}金币</span>-->
+                        <!--</div>-->
+                        <!--<div class="right">-->
+                            <!--<el-button type="info" size="mini"><router-link :to='{path:"/remainingSum",query:{tabsIndex:tabsIndex4}}'>充值</router-link></el-button>-->
+
+                        <!--</div>-->
+                    <!--</li>-->
+                    <li style="width:25%">
+                        <p class="listTitle">其他账户</p>
+                        <div  v-for="account in platformAccountVO.financeAccounts"  class="flex otherAccount left">
+                            <img src="../image/tpayment.png" alt=""><span class="payType">{{bindingAccFormat(account.accType)}}</span>
+                        </div>
+                        <div class="right">
+                            <el-button type="info" size="small" class="buttonColorFM"><router-link :to='{path:"/otherManagement"}'>管理</router-link></el-button>
+                        </div>
+                    </li>
+                </ul>
+                <div class="earlyWarning flex">
+                    <p>可用余额预警：</p>
+                    <el-switch @change="swithNotice()"
+                               class="swich-on"
+                               v-model="warningalue"
+                               on-text="开"
+                               off-text="关"
+                               on-color="#999"
+                               off-color="#ccc">
+                    </el-switch>
+                    <p>预警阈值为 <span>￥{{platformAccountVO.threshold}}</span></p>
+                    <a href="javascript:void(0)" class="revamp colorFM"  @click="dialogFormVisible = true">修改</a>
+                </div>
+                <div class="tradingRecord">
+                    <table class="table" cellpadding="0" border="0" cellspacing="0">
+                        <tr>
+                            <th colspan="2">最近交易记录</th>
+                        </tr>
+                        <tr>
+                            <td class="Recentecords">
+                                <span>最近交易记录：</span>
+                                <ul>
+                                    <li @click="loadData2(1)"><a href="javascript:void(0);">充值记录</a></li>
+                                    <li @click="loadData2(2)"><a href="javascript:void(0);">提现记录</a></li>
+                                    <li @click="loadData2(3)"><a href="javascript:void(0);">转账记录</a></li>
+                                </ul>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="tradingTable">
+                    <el-table
+                        :data="tableData"
+                        style="width: 100%">
+                        <el-table-column
+                            prop="flowNo"
+                            label="流水"
+                        >
+                        </el-table-column>
+                        <el-table-column
+                            prop="createTime"
+                            label="日期"
+                            :formatter="mydateFormat"
+                        >
+                        </el-table-column>
+                        <el-table-column
+                            prop="recordType"
+                            label="类型名称"
+                            :formatter="flowTypeFormat"
+                        >
+                        </el-table-column>
+                        <el-table-column
+                            prop="accountType"
+                            label="交易账户"
+                            width="160"
+                            :formatter="accountFormat">
+                        </el-table-column>
+                        <el-table-column
+                            prop="changeFee"
+                            label="金额变化">
+                        </el-table-column>
+                        <el-table-column
+                            prop="freezed"
+                            label="冻结金额">
+                        </el-table-column>
+                        <el-table-column
+                            prop="stutas"
+                            label="状态"
+                            width="160"
+                            :formatter="stutasFormat">
+                        </el-table-column>
+                        <el-table-column
+                            prop="memo"
+                            label="描述">
+                        </el-table-column>
+                        <el-table-column label="操作">
+                            <template scope="scope">
+                                <el-button type="info" size="mini" class="buttonColorFM">
+                                    <router-link :to='{path:"/financialManagementDetail",query:{backPath:"/financialManagement",financeRecordId:scope.row.id,orderId:scope.row.orderId}}' style="color:#fff;padding:3px 5px;display: block;">查看凭证详情</router-link>
+                                </el-button>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </div>
+
+            </div>
+
+            <el-dialog title="修改预警" :visible.sync="dialogFormVisible" size="tiny">
+                <el-form :model="modifyform">
+                    <el-form-item label="预警值：">
+                        <el-input v-model="modifyform.val" auto-complete="off" style="width:110px;" size="small"></el-input><span style="margin-left: 5px">元</span>
+                    </el-form-item>
+                </el-form>
+                <div slot="footer" class="dialog-footer flex2">
+                    <el-button type="primary" @click="modifyNotice()" style="margin-right:20px;" class="buttonColorFM">确 定</el-button>
+                    <el-button @click="dialogFormVisible = false" class="buttonCancel" style="background:#d7d7d7;border:none;">取 消</el-button>
+                </div>
+            </el-dialog>
+
+
+        </div>
+    </div>
+
+
+
+
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {queryPlatformAccount,queryFinanceRecord,swithNotice,modifyThreshold} from '@/api/getData'
+    import {mapActions, mapState} from 'vuex'
+    import {formatDate} from '../utils/date.js'
+    import {userInfo,getStore,setStore} from  '../config/mUtils'
+    import {isNullObject,getCompanyType} from  '../utils/common'
+    import {stutasFormat,accountFormat,flowTypeFormat,mydateFormat,bindingAccFormat} from '../utils/dataFormater.js'
+    import {getMenuAuth} from  '../utils/AuthMenu.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+//               1为档口、2为卖家身份
+                identity:2,
+
+                tabsIndex1:1,
+                tabsIndex2:2,
+                tabsIndex3:3,
+                tabsIndex4:4,
+                platformAccountVO: {
+                    name: '',
+                    blance: '',
+                    freezed: '',
+                    companyId: '',
+                    status: '',
+                    balanceNotice:'',
+                    threshold: '',
+                    goldBalance:'',
+                    financeAccounts:[]
+
+                },
+                dialogFormVisible:false,
+
+                modifyform:{val:0},
+
+                warningalue:false,
+
+                financeAccount:{
+                    "accType":"",
+                    "blance":0,
+                    "defaultAcc":false,
+                    "id":"",
+                    "platformAccountId":"",
+                    "status":0
+                },
+                options: [{
+                    value: '选项1',
+                    label: '支付宝明细'
+                }, {
+                    value: '选项2',
+                    label: '微信明细'
+                }, {
+                    value: '选项3',
+                    label: '网银明细'
+                }],
+                value: '选项1',
+
+                tableData: [{}],
+                //默认每页数据量
+                pagesize: 4,
+
+                //默认高亮行数据id
+                highlightId: -1,
+
+                //当前页码
+                currentPage: 1,
+
+                //查询的页码
+                start: 1,
+                formLabelWidth: '90px'
+            }
+
+        },
+
+        mounted(){
+        	this.identity =getCompanyType(getStore("curCompany"));
+            this.loadData();
+            this.loadData2();
+        },
+
+        computed: {
+            financeAccounts: function () {
+                if(financeAccounts.length()>0){
+                }
+            }
+        },
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            handleIconClick(ev) {
+                console.log(ev);
+            },
+            ...mapActions(['queryPlatformAccount']),
+            //从服务器读取数据
+            async loadData() {
+                let param ={companyId:userInfo().companyId};
+                const res = await queryPlatformAccount(param);
+
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: '加载数据成功'
+                    });
+                    this.platformAccountVO = res.result;
+                    this.warningalue = this.platformAccountVO.balanceNotice;
+                    this.modifyform.val =this.platformAccountVO.threshold;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            async loadData2(filter) {
+                if(!userInfo().companyId)
+                    return ;
+                let  param = {
+                    "params": {
+                        "companyId": userInfo().companyId//,
+                       // "accountType":"1"
+                    },
+                    "pageSize": this.pagesize,
+                    "pageIndex": this.currentPage
+                };
+
+                if(filter){
+                    param.params.recordType=filter;
+                }
+
+                const res = await queryFinanceRecord(param);
+                if (res.isSuccess == true) {
+                    this.$message({
+                       type: 'success',
+                       message: '加载数据成功'
+                    });
+
+                    this.tableData = res.result.results;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+            async modifyNotice() {
+                this.dialogFormVisible = false
+                let  param = {
+                    "companyId": userInfo().companyId,
+                    "modifyThreshold": this.modifyform.val
+                };
+
+                const res = await modifyThreshold(param);
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: '数据修改成功'
+                    });
+                    this.platformAccountVO.threshold =this.modifyform.val;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+
+            async swithNotice() {
+
+
+
+
+                let param = {
+                    "companyId": userInfo().companyId,
+                    "balanceNotice":this.warningalue
+                }
+
+
+                  const res = await swithNotice(param);
+                    if (res.isSuccess == true) {
+                        this.$message({
+                            type: 'success',
+                            message: '预警修改成功'
+                        });
+                    }else{
+                        this.$message({
+                            type: 'error',
+                            message: res.errorMsg
+                        });
+                    }
+            },
+            viewDetail: function(index, row) {
+                setStore("financeRecordId",row.id)
+
+				this.$router.push("financialManagementDetai")
+            //    this.$router.go({path : 'financialManagementDetai' , query: { financeRecordId: row.id} })
+
+            },
+
+
+
+
+            bindingAccFormat,
+
+            //数据格式化
+            stutasFormat:function(row, column) {
+                let data = row[column.property];
+                if (data == undefined||data=='') {
+                    return "";
+                }
+                if(data =='1'){
+                    return '待审核';
+                }else if(data=='2'){
+                    return '审核中'
+                }else if(data=='3'){
+                    return '已完成'
+                }
+
+            },
+
+            //数据格式化
+            accountFormat:function(row, column) {
+                // 01 余额 02 支付宝 03 微信 04 银行卡 05 其他
+                let data = row[column.property];
+                if (data == undefined||data=='') {
+                    return "";
+                }
+
+                if(data =='1'){
+                    return '账户余额';
+                }else if(data=='3'){
+                    return '支付宝'
+                }else if(data=='4'){
+                    return '微信'
+                }else if(data=='5'){
+                    return '银行卡'
+                }
+
+            },
+            //数据格式化
+            flowTypeFormat:function(row, column) {
+                let data = row[column.property];
+                console.log(data)
+                if (data == undefined||data=='') {
+                    return "";
+                }
+                if(data =='1'){
+                    return '充值';
+                }else if(data=='2'){
+                    return '提现'
+                }else if(data=='3'){
+                    return '转账'
+                }else{
+                    return '其他'
+                }
+
+            },
+
+            //时间格式化
+            mydateFormat:function(row, column) {
+                var time = row[column.property];
+                if (time == undefined||time=='') {
+                    return "";
+                }
+                let date = new Date(time);
+                return formatDate(date,'yyyy-MM-dd hh:mm');
+            }
+
+
+        }
+
+    }
+
+
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/financialManagement';
+</style>

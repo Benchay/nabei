@@ -1,0 +1,77 @@
+import {setStore,getStore,userInfo} from  '../config/mUtils'
+import {isJSON} from  '../utils/common'
+
+/*
+*  是否有菜单权限
+*  @params   menuKey  菜单的method 属性值
+*  @return   true  有权限
+*/
+export function getMenuAuth(menuKey) {
+   var userId=userInfo().id;
+   var key= "AUTH_" + userId;
+   var sjson=getStore(key);
+   var json = JSON.parse(sjson);
+   for(var i=0; i<json.length; i++){
+	   if(json[i].type== 1 && json[i].parentAuthId !=null){
+		   if(json[i].method== menuKey) return true;
+	   }
+   }
+   //return true;
+   return false;
+};
+/*
+*  找出授权的id
+*/
+export function getMenuAuthId(menuKey) {
+   var userId=userInfo().id;
+   //var compId=userInfo().companyId;
+   var key= "AUTH_" + userId;
+   var sjson=getStore(key);
+   var json = JSON.parse(sjson);
+   for(var i=0; i<json.length; i++){
+	   if(json[i].type== 1 && json[i].parentAuthId !=null){
+		   if(json[i].method== menuKey) return json[i].id;
+		}
+   }
+   return false;
+};
+
+/*
+*  是否有菜单权限的查看权限或者编辑权限
+*  @params   menuKey  菜单的method 属性值
+*  @mode     0:查看   1：编辑
+*  @return   true  有权限  false:无权限
+*/
+export function haveMenuAuth(menuKey,mode) {
+   var userId=userInfo().id;
+   var key= "AUTH_" + userId;
+   var sjson=getStore(key);
+   var json = JSON.parse(sjson);
+   var authId='';
+   var method="readonly_";
+   if(mode==0){
+	   method="readonly_";
+   }else if(mode==1){
+	   method="editall_";
+   }else{
+   		method = mode;
+   }
+   for(var i=0; i<json.length; i++){
+	   if(json[i].type== 1 && json[i].parentAuthId !=null){
+		   if(json[i].method== menuKey){
+			   authId=json[i].id;
+			   break;
+		   }
+		}
+   }
+    if(authId=='') return false;
+    for(var i=0;i<json.length;i++){
+	    if(json[i].type== 2 && json[i].parentAuthId !=null&&json[i].parentAuthId==authId){
+		    if(json[i].method.startsWith(method)||json[i].method==method){
+			    return true;
+		    }
+	    }
+    }
+   return false;
+};
+

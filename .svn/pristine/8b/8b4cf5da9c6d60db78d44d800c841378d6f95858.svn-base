@@ -1,0 +1,203 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/warehouseManagement"}'>仓库管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/stockTakingManagement"}'>库存盘点单</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/stockAllotManagement"}'>库存调拨单</router-link>
+            </li>
+            <li class="menuIndex3">
+                <router-link :to='{path:"/checkDiffManagement"}'>库存差异单</router-link>
+            </li>
+        </ul>
+        <div class="checkDiffManagement">
+            <div class="stocktakingTop">
+                <div class="left flex input2">
+                    <el-date-picker
+                        size="small"
+                        v-model="operateTime"
+                        type="date"
+                        placeholder="选择盘点月份"
+                        :formatter="formatDate"
+                        @change="handleTimeClick"
+                    >
+                    </el-date-picker>
+                    <el-input
+                        placeholder="档口名称搜索"
+                        size="small"
+                        icon="search"
+                        v-model="stallName"
+                        class="width2"
+                        :on-icon-click="stallNameClick">
+                    </el-input>
+                </div>
+            </div>
+            <div class="stocktakingTable">
+                <el-table
+                    :data="tableData"
+                    style="width: 100%">
+                    <el-table-column
+                        prop="stallName"
+                        label="档口名称">
+                    </el-table-column>
+                    <el-table-column
+                        prop="times"
+                        label="盘点次数">
+                    </el-table-column>
+                    <el-table-column
+                        prop="stockNum"
+                        label="库存数">
+                    </el-table-column>
+                    <el-table-column
+                        prop="checkActualNum"
+                        label="盘点数">
+                    </el-table-column>
+                    <el-table-column
+                        prop="diffNum"
+                        label="差异数">
+                    </el-table-column>
+                    <el-table-column
+                        prop="diffFee"
+                        label="差异金额">
+                    </el-table-column>
+                    <el-table-column
+                        prop="createTime"
+                        label="盘点月份"
+                        :formatter="formatDate">
+                    </el-table-column>
+                    <el-table-column
+                        label="操作">
+                        <template scope="scope">
+                            <router-link :to='{path:"/checkDiffDetails",query:{param:scope.row.storeOrderId,stallName:scope.row.stallName}}' class="blue2">查看详情</router-link>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+            <el-pagination
+                small
+                class="right"
+                style="margin-top: 20px;"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :current-page="currentPage"
+                :page-sizes="[10, 20, 30, 40]"
+                :page-size="pagesize"
+                layout="total, sizes, prev, pager, next, jumper"
+                :total="totalCount">
+            </el-pagination>
+            <a href="javascript:void(0)" class="export_excle">导出excel</a>
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {queryCheckDiffInfo} from '@/api/getData'
+    import {formatDate} from '../utils/date.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                operateTime:'',
+                stallName:'',
+                tableData: [],
+                //默认每页数据量
+                pageSize: 8,
+                //默认高亮行数据id
+                highlightId: -1,
+                //当前页码
+                currentPage: 1,
+                //查询的页码
+                start: 1,
+                //默认数据总数
+                totalCount: 0,
+            }
+        },
+        mounted(){
+            let param = {
+                "createTime":this.operateTime,
+                "stallName":'',
+                "pageIndex":this.currentPage,
+                "pageSize":this.pageSize
+            }
+            this.initloadData(param);
+        },
+        methods: {
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+            },
+            handleTimeClick(){
+                let param = {
+                    "createTime":this.operateTime,
+                    "stallName":'',
+                    "pageIndex":this.currentPage,
+                    "pageSize":this.pageSize
+                }
+                this.initloadData(param);
+            },
+            stallNameClick(){
+                let param = {
+                    "createTime":'',
+                    "stallName":this.stallName,
+                    "pageIndex":this.currentPage,
+                    "pageSize":this.pageSize
+                }
+                this.initloadData(param);
+            },
+
+            async initloadData(param){
+                const res = await queryCheckDiffInfo(param);
+            	if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message:'数据加载成功!'
+                    });
+                    this.tableData = res.result.data;
+                    this.totalCount = res.result.totalCount
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+            //页码变更
+            handleCurrentChange: function(val) {
+                this.currentPage = val;
+                let param = {
+                    "createTime":'',
+                    "stallName":'',
+                    "pageIndex":this.currentPage,
+                    "pageSize":this.pagesize
+                }
+                this.initloadData(param);
+            },
+            //数据格式化
+            formatDate:function(row, column) {
+                let data = row[column.property];
+                if (data == undefined||data=='') {
+                    return "";
+                }
+                var date2 = new Date(data);
+                return formatDate(date2,'yyyy-MM');
+            }
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/checkDiffManagement';
+</style>

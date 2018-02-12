@@ -1,0 +1,108 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/webStoreOrderSalesBuy"}'>网店订单</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/purchaseRequireBuy"}'>采购需求</router-link>
+            </li>
+            <li class="menuIndex2">
+                <router-link :to='{path:"/orderPurchaseBuy"}'>采购订单</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/addShop"}'>绑定店铺</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/packageDetails"}'>包裹管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/salesForecast"}'>采购统计</router-link>
+            </li>
+        </ul>
+        <div class="sellerSettlement">
+            <router-link :to='{path:"/orderPurchaseBuyDetails"}' class="right comeBack2">返回</router-link>
+            <div class="details">
+                <el-col :span="24" v-for="list in info">
+                    <el-col :span="6">档口名称：哈哈哈哈哈</el-col>
+                    <el-col :span="6">
+                        <div  class="flex">
+                            <p v-bind:class="[list.state ==1?'style1':list.state ==2?'style2':'']">{{list.state == 1?'周结':list.state == 2?'月结':''}}</p>
+                            <p>{{list.date}}</p>
+                        </div>
+                    </el-col>
+                    <el-col :span="6">状态：财务未结清</el-col>
+                </el-col>
+                <el-col :span="24">
+                    <el-col :span="6">当前总欠款金额：6000</el-col>
+                    <el-col :span="6">已结金额：2000</el-col>
+                    <el-col :span="6" class="colorText">待结金额：2000</el-col>
+                    <!--已结算状态 无此按钮-->
+                    <el-col :span="6"><router-link :to='{path:"/stallSettlementImmediately"}' class="buttonColor3">立即付款</router-link></el-col>
+                    <!---->
+                </el-col>
+            </div>
+            <div class="detailsTable">
+                <p class="tableTop">付款记录：</p>
+                <el-table
+                    :data="tableData6"
+                    style="width: 100%">
+                    <el-table-column
+                        prop="date"
+                        label="结算时间"
+                        width="180">
+                    </el-table-column>
+                    <el-table-column
+                        prop="newSum"
+                        label="本次结算金额（￥）">
+                    </el-table-column>
+                    <el-table-column
+                        prop="clearingForm"
+                        label="结算方式">
+                    </el-table-column>
+                    <el-table-column
+                        prop="practicalSum"
+                        label="实际付款金额（￥）">
+                    </el-table-column>
+                    <el-table-column
+                        label="操作">
+                        <template scope="scope">
+                            <router-link :to='{path:"/orderFinancialDetails"}' class="red">查看详情</router-link>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+        </div>
+    </div>
+</template>
+<script>
+    import headTop from '../components/headTop'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                info:[{
+                    state:1,
+                    date:'1号',
+                }],
+                tableData6:[{
+                    date:'2017-02-11',
+                    newSum:1200,
+                    clearingForm:'支付宝',
+                    practicalSum:1000
+                },]
+            }
+        },
+        methods: {
+
+        }
+    }
+</script>
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/sellerSettlement';
+</style>

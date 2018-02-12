@@ -1,0 +1,310 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('menuManagement')">
+                <router-link :to='{path:"/menuManagement"}'>菜单管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('platformSettings')">
+                <router-link :to='{path:"/platformSettings"}'>平台基础配置</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('msgParamsConfig')">
+                <router-link :to='{path:"/msgParamsConfig"}'>短信参数配置</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('msgSendInterfaceConfig')">
+                <router-link :to='{path:"/msgSendInterfaceConfig"}'>短信发送接口配置</router-link>
+            </li>
+            <li class="menuIndex3" v-if="getMenuAuthFun('logManagement')">
+                <router-link :to='{path:"/logManagement"}'>日志管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('inviteCode')">
+                <router-link :to='{path:"/inviteCode"}'>邀请码</router-link>
+            </li>
+        </ul>
+        <div class="logManagement">
+            <div>
+                <div class="logManagementTop">
+                    <div class="left" >
+                        <el-date-picker
+                            v-model="filters.date.startDate"
+                            type="date"
+                            placeholder="选择开始日期"
+                            :picker-options="startDateBefore"
+                            >
+                        </el-date-picker>
+                        -
+                        <el-date-picker
+                            v-model="filters.date.endDate"
+                            type="date"
+                            placeholder="选择截止日期"
+                            :picker-options="startDateAfter"
+                        >
+                        </el-date-picker>
+                    </div>
+                    <div class="left " style="padding-left:10px;" >
+                        <el-select v-model="app" placeholder="请选择所属平台" @change="switchSystem">
+                            <el-option
+                                v-for="item in appSystem"
+                                :key="item.value"
+                                :label="item.label"
+                                :value="item.value">
+                            </el-option>
+                        </el-select>
+                    </div>
+                    <div class="left operatorsearch">
+                        <el-input
+                            placeholder="操作人搜索"
+                            icon="search"
+                            v-model="operName"
+                            :on-icon-click="handleIconClick">
+                        </el-input>
+                    </div>
+                </div>
+                <div class="logInfoTable" >
+                    <el-table
+                        ref="multipleTable"
+                        :data="logVO"
+                        tooltip-effect="dark"
+                        style="width: 100%"
+                        >
+                        <el-table-column class="selecttd"
+                            type="selection"
+                            width="55">
+                        </el-table-column>
+                        <el-table-column
+                            prop="applicationName"
+                            label="平台类型"
+                           >
+                        </el-table-column>
+                        <el-table-column
+                            prop="compName"
+                            label="公司名称"
+                            >
+                        </el-table-column>
+                        <el-table-column
+                            prop="authName"
+                            label="操作模块"
+                            show-overflow-tooltip>
+                        </el-table-column>
+                        <el-table-column
+                            prop="type"
+                            label="操作类型"
+                            show-overflow-tooltip>
+                        </el-table-column>
+                        <el-table-column
+                            prop="operName"
+                            label="操作人"
+                        >
+                        </el-table-column>
+                        <el-table-column
+                           prop="operTime"
+                           label="操作时间"
+                           :formatter="formatDate"
+                           show-overflow-tooltip>
+                        </el-table-column>
+                        <el-table-column
+                            prop="msg"
+                            label="操作内容"
+                        >
+                        </el-table-column>
+                    </el-table>
+                </div>
+
+                <el-pagination
+                    small
+                    class="right"
+                    style="margin-top: 20px;"
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :current-page="currentPage"
+                    :page-sizes="[10, 20, 30, 40]"
+                    :page-size="pageSize"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    :total="totalCount">
+                </el-pagination>
+                <a href="javascript:void(0)" class="export_excle">导出excel</a>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {queryApplications,queryLogDetail,queryCompInfoByIds} from '@/api/getData'
+    import {mapActions, mapState} from 'vuex'
+    import {formatDate} from '../utils/date.js'
+    import {getMenuAuth} from  '../utils/AuthMenu.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                filters:{
+                    date:{
+                        startDate:'',
+                        endDate:''
+                    }
+                },
+                startDateBefore:{
+                    disabledDate: (time) => {
+                        let beginDateVal = this.filters.date.endDate;
+                        if (beginDateVal) {
+                            return time.getTime() > beginDateVal;
+                        }
+                    }
+                },
+                startDateAfter:{
+                    disabledDate: (time) => {
+                        let beginDateVal = this.filters.date.startDate;
+                        if (beginDateVal) {
+                            return time.getTime() < beginDateVal;
+                        }
+                    }
+                },
+                logVO:[],
+
+                applicationName:'',
+                appSystem:[],
+                app:'',
+                //操作人搜索
+                operName:'',
+
+                pageSize:8,
+
+                //默认高亮行数据id
+                highlightId: -1,
+
+                //当前页码
+                currentPage: 1,
+
+                //查询的页码
+                start: 1,
+
+                //默认数据总数
+                totalCount: 0,
+
+                multipleSelection: [],
+
+            }
+        },
+        mounted(){
+            this.queryApplication();
+            let param = {
+                "start":'',
+                "end":'',
+                "applicationId":this.app,
+                "operName":this.operName,
+                "pageIndex":this.currentPage,
+                "pageSize":this.pageSize
+            };
+            this.loadData(param);
+        },
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+            },
+            handleSelectionChange(val) {
+                this.multipleSelection = val;
+            },
+
+            async queryApplication(){
+                const res = await queryApplications();
+                if(res.isSuccess){
+                    let table = res.result.data;
+                    for(let i = 0 ;i<table.length;i++){
+                        let param = {
+                            "label":table[i].name,
+                            "value":table[i].id
+                        };
+                        this.appSystem.push(param);
+                    }
+                }
+            },
+
+            async switchSystem(){
+                let param = {
+                    "start":'',
+                    "end":'',
+                    "operName":'',
+                    "applicationId":this.app,
+                    "pageIndex":this.currentPage,
+                    "pageSize":this.pageSize
+                };
+                this.loadData(param);
+            },
+
+            handleCurrentChange:function(val) {
+                this.currentPage = val;
+                let param = {
+                    "start":this.filters.date.startDate,
+                    "end":this.filters.date.endDate,
+                    "applicationId":this.app,
+                    "operName":this.operName,
+                    "pageIndex":this.currentPage,
+                    "pageSize":this.pageSize
+                };
+                this.loadData(param);
+            },
+
+            handleIconClick(){
+                let param = {
+                    "start":'',
+                    "end":'',
+                    "applicationId":'',
+                    "operName":this.operName,
+                    "pageIndex":this.currentPage,
+                    "pageSize":this.pageSize
+                };
+                this.loadData(param);
+            },
+
+            async loadData(param){
+                const res = await queryLogDetail(param);
+                if(res.isSuccess){
+                    this.totalCount = res.result.totalCount;
+                    let compIds = [];
+                    let table = res.result.data;
+                    for(let i = 0 ;i<table.length;i++){
+                        compIds.push(table[i].companyId);
+                    }
+                    const result = await queryCompInfoByIds({compIds:compIds});
+                    if(result.isSuccess){
+                        let comps = result.result.data;
+                        for(let i = 0;i<table.length;i++){
+                            if(comps[i].name==undefined){
+                                table[i].compName = comps[0].name;
+                            }else{
+                                table[i].compName = comps[i].name;
+                            }
+                        }
+                    }
+                    this.logVO = table;
+                }
+            },
+            //数据格式化
+            formatDate:function(row, column) {
+                let data = row[column.property];
+                if (data == undefined||data=='') {
+                    return "";
+                }
+                var date2 = new Date(data);
+                return formatDate(date2,'yyyy-MM-dd hh:mm:ss');
+            }
+
+        },
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/logManagement';
+</style>

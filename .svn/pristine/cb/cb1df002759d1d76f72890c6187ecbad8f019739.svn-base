@@ -1,0 +1,292 @@
+<template>
+    <div class="fillcontain">
+        <ul :class="[identity ==1 ?'stallShareMenu':identity ==2 ?'sellerShareMenu':'']">
+            <li class="ListMenu">
+                <router-link :to='{path:"/messageCenter"}'>消息中心</router-link>
+            </li>
+        </ul>
+        <div class="messageCenter">
+            <div :class="[identity ==1 ?'stallShareMenu':identity ==2 ?'sellerShareMenu':'']">
+                <div>
+                    <a href="javascript:void(0)" class="buttonColor11">删除</a>
+                    <a href="javascript:void(0)" class="buttonColor11" @click="markWorkMessageFun">标记已读</a>
+                </div>
+                <el-col :span="24" class="radioColor messageRadio">
+                    <el-radio-group v-model="radio" size="small" @change="change">
+                        <el-radio-button label="0">全部</el-radio-button>
+                        <el-radio-button label="2">未读(20)</el-radio-button>
+                        <el-radio-button label="1">已读(300)</el-radio-button>
+                    </el-radio-group>
+                </el-col>
+                <div class="messageTable">
+                    <el-table
+                        :data="tableData"
+                        style="width: 100%">
+                        <el-table-column
+                            type="selection"
+                            width="55">
+                        </el-table-column>
+                        <el-table-column
+                            label=""
+                            width="75">
+                            <template scope="scope">
+                                <div class="flex2">
+                                    <img v-if="scope.row.bread == true" src="../image/read.png" alt="">
+                                    <img v-if="scope.row.bread == false" src="../image/unread.png" alt="">
+                                </div>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            label="标题"
+                            width="100"
+                            >
+                            <template scope="scope">
+                                <p>【{{scope.row.messageType | mytitleFormat}}】</p>
+                                <!--
+                                消息类型：档口：系统消息、新订单确认、订单配货、包裹动态、订单付款、新订单退货、商品货号修改
+                                         卖家：系统消息、交易动态、订单付款、退货动态、商品货号修改
+                                -->
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            prop="messageType"
+                            :formatter="mystateFormat"
+                            label="状态"  width="100">
+                        </el-table-column>
+                        <el-table-column
+                            label="内容">
+                            <template scope="scope">
+                                <router-link :to='{path:"/messageCenterDetails"}' class="messageContent">{{scope.row.messageType | mycontentFormat}}:{{JSON.parse(scope.row.message).orderCode}},{{scope.row.messageType | mynameFormat}}{{scope.row.companyName}}{{scope.row.messageType | mydetailFormat}}</router-link>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            prop="createTime"
+                            label="时间 "
+                            :formatter="mydateFormat"
+                            width="200">
+                        </el-table-column>
+                    </el-table>
+                    <el-pagination
+                        small
+                        class="right"
+                        style="margin-top: 20px;"
+                        @size-change="handleSizeChange"
+                        @current-change="handleCurrentChange"
+                        :current-page="currentPage"
+                        :page-sizes="[10, 20, 30, 40]"
+                        :page-size="pagesize"
+                        layout="total, sizes, prev, pager, next, jumper"
+                        :total="totalCount">
+                    </el-pagination>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+     import {setStore,getStore} from  '../config/mUtils'
+     import {formatDate} from '../utils/date.js'
+    import {queryWorkMessageLog,markWorkMessage} from '@/api/getData'
+
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                 roleForm: {
+                    userId: '',
+                    roleId: '',
+                    compId:''
+                },
+                //1为档口、2为卖家身份
+                identity:2,
+
+                radio:0,
+                tableData: [],
+                 //默认每页数据量
+                pagesize: 10,
+                //默认高亮行数据id
+                highlightId: -1,
+                //当前页码
+                currentPage: 1,
+                //查询的页码
+                start: 1,
+                //默认数据总数
+                totalCount: 0,
+                messageId:[]
+            }
+        },
+        filters:{
+            mytitleFormat(messageType){
+                if(messageType =="15"){
+                    return "系统消息";
+                }else{
+                    return "待处理";
+                }
+            },
+            mycontentFormat(messageType){
+                if(messageType =="5,6,7"){
+                    return "退货订单";
+                }else{
+                    return "销售订单";
+                }
+            },
+            mynameFormat(messageType){
+                    if(messageType =="1,2,6,7,8,13,14"){
+                    return "档口";
+                }else{
+                    return "卖家";
+                }
+            },
+            mydetailFormat(messageType){
+                 if(messageType =="0"){
+                    return "提醒配货";
+                }else if(messageType =="1"){
+                     return "提醒拿货";
+                }else if(messageType =="2"){
+                     return "发起结算提醒";
+                }else if(messageType =="3"){
+                     return "待配货";
+                }else if(messageType =="4"){
+                     return "部分待配货";
+                }else if(messageType =="5"){
+                     return "退货待入库 ";
+                }else if(messageType =="6"){
+                     return "退货待确认";
+                }else if(messageType =="7"){
+                     return "退货待签收";
+                }else if(messageType =="8"){
+                     return "确认收款";
+                }else if(messageType =="9"){
+                     return "采购待签收";
+                }else if(messageType =="10"){
+                     return "待入库";
+                }else if(messageType =="11"){
+                     return "等待装车";
+                }else if(messageType =="12"){
+                     return "等待拿货";
+                }else if(messageType =="13"){
+                     return "发起收款";
+                }else if(messageType =="14"){
+                     return "确认收款";
+                }else if(messageType =="15"){
+                     return "已拿货";
+                }
+            }
+        },
+        mounted () {
+          var userInfo=getStore("userInfo");
+            var vjson = JSON.parse(userInfo);
+            this.roleForm.userId=vjson.id;
+            var currentComp=getStore("curCompany");
+            var vcom = JSON.parse(currentComp);
+            this.roleForm.compId=vcom.id;
+            this.queryWorkMessageLogFun()
+        },
+        methods: {
+            mydateFormat:function(row, column) {
+                var time = row[column.property];
+                if (time == undefined||time=='') {
+                    return "";
+                }
+                let date = new Date(time);
+                return formatDate(date,'yyyy-MM-dd hh:mm');
+            },
+            mystateFormat:function(row,column){
+                var state = row.messageType;
+                if(state =="0"){
+                    return "提醒配货";
+                }else if(state =="1"){
+                     return "提醒拿货";
+                }else if(state =="2"){
+                     return "档口发起结算提醒";
+                }else if(state =="3"){
+                     return "待配货";
+                }else if(state =="4"){
+                     return "部分待配货";
+                }else if(state =="5"){
+                     return "退货待入库 ";
+                }else if(state =="6"){
+                     return "退货待确认";
+                }else if(state =="7"){
+                     return "退货待签收";
+                }else if(state =="8"){
+                     return "确认收款";
+                }else if(state =="9"){
+                     return "采购待签收";
+                }else if(state =="10"){
+                     return "待入库";
+                }else if(state =="11"){
+                     return "等待装车";
+                }else if(state =="12"){
+                     return "等待拿货";
+                }else if(state =="13"){
+                     return "档口发起收款";
+                }else if(state =="14"){
+                     return "档口确认收款";
+                }else if(state =="15"){
+                     return "卖家已拿货";
+                }
+            },
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+            },
+            change(){
+                },
+            async queryWorkMessageLogFun(){
+                let param = {
+                    "companyId":this.roleForm.compId,
+                    "createUserId":this.roleForm.userId,
+                    "read":this.radio,
+                    "pageIndex": this.currentPage,
+                    "pageSize":this.pagesize
+                }
+                const res = await queryWorkMessageLog(param);
+                if(res.isSuccess){
+                    this.tableData = res.result.results;
+                    this.totalCount = res.result.totalCount;
+                    this.tableData.forEach((obj)=>{
+                        this.messageId.push(obj.id);
+                    })
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            async markWorkMessageFun(){
+                let param = {
+                    userId:this.roleForm.userId,
+                    messageId:this.messageId,
+                }
+                console.log(param)
+                const res = await markWorkMessage(param);
+                if(res.isSuccess){
+                    this.tableData = res.result.results;
+                    this.totalCount = res.result.totalCount;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            }
+        },
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin.less';
+    @import "../style/common";
+    @import '../style/messageCenter';
+
+</style>

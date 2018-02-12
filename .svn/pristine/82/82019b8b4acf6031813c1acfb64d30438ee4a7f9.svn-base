@@ -1,0 +1,69 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/logToolsSeller"}'>日志查看</router-link>
+            </li>
+            <li class="menuIndex2">
+                <router-link :to='{path:"/MSConfigSeller"}'>系统配置</router-link>
+            </li>
+        </ul>
+        <div class="MSConfigSeller">
+            <el-tabs v-model="activeName" @tab-click="handleClick">
+                <el-tab-pane label="货号编码规则设置" name="second">
+                    <div class="secondContent">
+                        <div class="secondTop flex2">
+                            <p>三段式编码</p>
+                            <el-input v-model="input21" placeholder="卖家ID" class="secondInput"></el-input>
+                            <span>——</span>
+                            <el-input v-model="input21" placeholder="档口货号" class="secondInput"></el-input>
+                            <span>——</span>
+                            <el-input v-model="input21" placeholder="任意" class="secondInput"></el-input>
+                        </div>
+                        <div class="flex2 secondButton">
+                            <a href="javascript:void(0)" class="buttonColor3">保  存</a>
+                        </div>
+                    </div>
+                    <div class="secondTips">
+                        <div>
+                            <el-col :span="24"><el-col :span="2">例子：</el-col>ppg-MG1001-1231</el-col>
+                            <el-col :span="24"><el-col :span="2">说明：</el-col>第一段为固定值，建议选用卖家代码区分；</el-col>
+                            <el-col :span="24"><el-col :span="2">&nbsp;</el-col>第二段为动态值，默认用档口的货号为准；</el-col>
+                            <el-col :span="24"><el-col :span="2">&nbsp;</el-col>第三段未任意值</el-col>
+                            <el-col :span="24"><el-col :span="2">&nbsp;</el-col>编码规则只需设置一次，对所有商品生效。</el-col>
+                        </div>
+                    </div>
+                </el-tab-pane>
+
+            </el-tabs>
+        </div>
+
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+          return{
+              input21:'',
+              activeName: 'second',
+            }
+        },
+        methods:{
+            handleClick(tab, event) {
+                console.log(tab, event);
+            },
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/MSConfig';
+</style>

@@ -1,0 +1,223 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('returnManagement2')">
+                <router-link :to='{path:"/returnManagement2"}'>快速退货</router-link>
+            </li>
+            <li class="menuIndex" v-if="getMenuAuthFun('sellReturn')">
+                <router-link :to='{path:"/sellReturn"}'>销售退货</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('returnManagement2')">
+                <router-link :to='{path:"/returnManagement2"}'>退货统计</router-link>
+            </li>
+        </ul>
+        <div class="returns-content">
+            <div class="returnsAll">
+                <div class="right">
+                    <router-link :to='{path:"/sellReturn"}' class="comeBack">返回</router-link>
+                </div>
+                <div class="left">
+                    <a href="javascript:void(0)" class="buttonColor" @click="signIn">签收</a>
+                </div>
+                <div class="orderDetails" style="margin: 40px 0 0;">
+                    <div class="flex detailsLeft">
+                        <img :src="image" alt="">
+                        <div>
+                            <p>订单编号：{{orderCode}}</p>
+                            <p>卖家名称：{{busiName}}</p>
+                            <p>共计金额：￥{{totalFee}}</p>
+                        </div>
+                    </div>
+                    <div  class="detailsCenter">
+                        <p></p>
+                        <p>下单时间：{{formateDataInfo(orderTime)}}</p>
+                        <p>商品数量：{{totalNum}}</p>
+                    </div>
+                    <div class="flex detailsRight">
+                    </div>
+                </div>
+                <div class="returnsRemark">
+                    退货原因：商品质量问题！
+                </div>
+                <div class="returnsTable">
+                    <el-table
+                        :data="tableData"
+                        height="360"
+                        style="width: 100%">
+                        <el-table-column
+                            width="230"
+                            label="主图/货号">
+                            <template scope="scope">
+                                <div class="flex">
+                                    <img :src="scope.row.imgUrl_main" alt=""  class="tableImg">
+                                    <p>{{scope.row.productCode}}</p>
+                                </div>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            prop="productName"
+                            width="230"
+                            label="商品名称">
+                        </el-table-column>
+                        <el-table-column
+                            prop="color"
+                            label="颜色">
+                            <template scope="scope">
+                                <p v-for="item in scope.row.details">{{item.color}}</p>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            prop="size"
+                            label="尺码">
+                            <template scope="scope">
+                                <p v-for="item in scope.row.details">{{item.size}}</p>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            prop="orderNum"
+                            label="数量">
+                            <template scope="scope">
+                                <p v-for="item in scope.row.details">{{item.orderNum}}</p>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            prop="unitPrice"
+                            label="单价">
+                            <template scope="scope">
+                                <p v-for="item in scope.row.details">{{item.price}}</p>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </div>
+                <el-pagination
+                    small
+                    class="right"
+                    style="margin-top: 20px;"
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :current-page="currentPage"
+                    :page-size="pageSize"
+                    layout="total, prev, pager, next, jumper"
+                    :total="totalCount">
+                </el-pagination>
+                <a href="javascript:void(0)" class="export_excle left">导出excel</a>
+            </div>
+        </div>
+    </div>
+</template>
+<script>
+    import {queryOrderDetailByOrderId,auditOrder} from '@/api/getData'
+    import {formatDate} from '../utils/date.js'
+    import {userInfo}   from '../config/mUtils'
+    import {getMenuAuth} from  '../utils/AuthMenu.js'
+
+    export default {
+        data() {
+            return {
+                roleForm: {
+                    userId: '',
+                    roleId: '',
+                    compId:''
+                },
+                tableData: [],
+                pageSize:10,
+                currentPage:1,
+                totalCount:0,
+                orderId:'',
+                totalFee:0.00,
+                busiName:'',
+                stallName:'',
+                orderCode:'',
+                totalNum:0,
+                orderTime:'',
+                status:0,
+
+            }
+        },
+        watch:{
+            '$route':function (route) {
+                this.orderId = this.$route.query.orderId;
+                },
+        },
+        mounted(){
+            this.roleForm.compId = userInfo().companyId;
+            this.roleForm.userId = userInfo().userId;
+
+            this.orderId = this.$route.query.orderId;
+
+            this.initloadData();//加载订单详情
+        },
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            //加载订单详情
+            async initloadData(){
+                this.tableData = [];
+                let param = {
+                    "companyId":this.roleForm.compId,
+                    "orderId":this.orderId,
+                    "pageSize": this.pageSize,
+                    "pageIndex": this.currentPage,
+                    "getHeader":1
+                };
+                const res = await queryOrderDetailByOrderId(param);
+                if(res.isSuccess){
+                    this.tableData = res.result.data.results;
+                    let order = res.result.order;
+                    this.busiName = order.busiName;
+                    this.orderCode = order.orderCode;
+                    this.totalFee = order.totalFee;
+                    this.totalNum = order.totalNum;
+                    this.orderTime = order.orderTime;
+                    this.image = order.imgUrl_main;
+                    this.status = order.status;
+                    this.totalCount = res.result.data.totalCount;
+                }else{
+                    this.$message({
+                        duration:this.GLOBAL.MESSAGE_DISSMISS_TIME_MID,
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            //签收
+            async signIn(){
+              let param = {
+                  "orderId":this.orderId,
+                  "auditFlag":50
+              }
+                const res = await auditOrder(param);
+                if(res.isSuccess){
+                    this.$message({
+                        type: 'success',
+                        message: '已签收！'
+                    });
+                }
+            },
+            //数据格式化
+            formateDataInfo(val){
+                if(val==undefined||val==''){
+                    return '';
+                }
+                return formatDate(val*1,'yyyy-MM-dd hh:mm:ss');
+            },
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+                this.pageSize = val;
+                this.initloadData();
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+                this.currentPage = val;
+                this.initloadData();
+            },
+        }
+    }
+</script>
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/salesReturn';
+</style>

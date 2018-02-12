@@ -1,0 +1,62 @@
+.statisticalStatement{
+    margin:0 30px;
+    background: #fff;
+    padding: 20px 80px 20px 40px;
+    height:77%;
+    .statisticalPattern{
+        font-size: 12px;
+        margin-bottom: 20px;
+        li{
+            display: flex;
+            align-items: center;
+        }
+        .change{
+            background: @blue;
+            color:#fff;
+        }
+    }
+    .statisticalList>div{
+        border-radius: 5px;
+        padding: 25px 0 0 40px;
+        height: 130px;
+        margin-right: 40px;
+        margin-bottom: 40px;
+        color:#fff;
+        .title1{
+            font-size: 26px;
+            margin-bottom: 10px;
+        }
+        .title2{
+            font-size: 16px;
+        }
+        img{
+            height: 55px;
+            width: 55px;
+        }
+        .listContent{
+            margin-left: 25px;
+        }
+    }
+    .list1{
+        background: #b5c85a;
+    }
+    .list2{
+        background: #f1bb39;
+    }
+    .statisticalList>.list3{
+        padding: 0;
+        background: #97dea7;
+        align-items: center;
+        .title3{
+            font-size: 16px;
+        }
+    }
+    .list4{
+        background: #7ecef4;
+    }
+    .list5{
+        color:#666;
+        background: #fff;
+        border: 1px solid #d4d4d4;
+    }
+}

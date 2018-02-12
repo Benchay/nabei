@@ -1,0 +1,344 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('fastShipping2')">
+                <router-link :to='{path:"/fastShipping2"}'>快速出货</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('indentManagement')">
+                <router-link :to='{path:"/indentManagement"}'>订单管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('takeGoods')">
+                <router-link :to='{path:"/takeGoods"}'>取货码</router-link>
+            </li>
+            <li class="menuIndex" v-if="getMenuAuthFun('sellerSettlement')">
+                <router-link :to='{path:"/sellerSettlement"}'>客户结算</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('SettlementRecordsStall')">
+                <router-link :to='{path:"/SettlementRecordsStall"}'>结算单</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('customerManagement')">
+                <router-link :to='{path:"/customerManagement"}'>客户管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('statisticalStatement')">
+                <router-link :to='{path:"/statisticalStatement"}'>销售统计</router-link>
+            </li>
+        </ul>
+        <div class="sellerSettlement">
+            <router-link :to='{path:"/sellerSettlement"}' class="right comeBack">返回</router-link>
+            <div class="details" >
+                <el-col :span="24">
+                    <el-col :span="24">电商卖家名称：{{customName}}</el-col>
+                    <el-col :span="6">当前总欠款：{{unClosedFee==undefined?0:unClosedFee}}</el-col>
+                    <el-col :span="18">
+                        <div  class="flex" v-for="list in info">
+                            <p v-bind:class="[list.state ==1?'style1':list.state ==2?'style2':'']">{{list.state == 1?'周结':list.state == 2?'月结':''}}</p>
+                            <p>{{list.date}}</p>
+                        </div>
+                    </el-col>
+                    <el-col :span="6" v-if="this.settlementOrderId==undefined||this.settlementOrderId==''">已到期：{{toReviceFee==undefined?0:toReviceFee}}</el-col>
+                    <el-col :span="18" v-if="this.settlementOrderId==undefined||this.settlementOrderId==''">未到期：{{undueFee==undefined?0:undueFee}}</el-col>
+                </el-col>
+            </div>
+            <div class="detailsTable">
+                <el-table
+                    :data="tableData6"
+                    height="440"
+                    @selection-change="handleSelectionChange"
+                    style="width: 100%;">
+                    <el-table-column
+                        type="selection"
+                        :selectable="checkboxInit"
+                        width="55">
+                    </el-table-column>
+                    <el-table-column
+                        prop="orderNo"
+                        label="订单编号">
+                    </el-table-column>
+                    <el-table-column
+                        prop="closeFee"
+                        label="已结金额">
+                        <template scope="scope">{{scope.row.closeFee.toFixed(2)}}</template>
+                    </el-table-column>
+                    <el-table-column
+                        label="未结金额">
+                        <template scope="scope">
+                           <p>{{(scope.row.totalFee-scope.row.closeFee).toFixed(2)}}</p>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="hasExpireDays"
+                        label="是否到期">
+                        <template scope="scope">{{scope.row.hasExpireDays==0?'到期':scope.row.hasExpireDays<0?'未到期（剩' + Math.abs(scope.row.hasExpireDays) + '天）':scope.row.hasExpireDays > 0?'已逾期（' + scope.row.hasExpireDays + '天）':''}}</template>
+                    </el-table-column>
+                    <el-table-column
+                        label="操作">
+                        <template scope="scope">
+                            <el-button class="blue2" type="text" @click="queryDetails(scope.row.id,scope.row.orderType)">查看详情</el-button>
+                        </template>
+                    </el-table-column>
+                </el-table>
+                <!--<el-pagination-->
+                    <!--small-->
+                    <!--class="right"-->
+                    <!--style="margin-top: 20px;"-->
+                    <!--@size-change="handleSizeChange"-->
+                    <!--@current-change="handleCurrentChange"-->
+                    <!--:current-page="currentPage"-->
+                    <!--:page-sizes="[10, 20, 30, 40]"-->
+                    <!--:page-size="pageSize"-->
+                    <!--layout="total, sizes, prev, pager, next, jumper"-->
+                    <!--:total="totalCount">-->
+                <!--</el-pagination>-->
+                <a href="javascript:void(0)" class="buttonColor" style="margin-top: 40px;" @click="quickSettlement" v-if="this.settlementOrderId==undefined||this.settlementOrderId==''">{{this.type==4?'立即付款':'立即收款'}}</a>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {getDebtInfo,queryOrderBySettlementOrder,querySettlementDay,getSettlement} from '@/api/getData'
+    import {userInfo} from  '../config/mUtils'
+    import {formatDate} from '../utils/date.js'
+    import {mydateFormat} from '../utils/dataFormater.js'
+    import {getMenuAuth,haveMenuAuth} from  '../utils/AuthMenu.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                checked:false,
+                info:[],
+                tableData6:[],
+                initData:{
+                    companyId:'',
+                    saleCompanyId:'',
+                },
+                //多选数组
+                multipleSelection: [],
+                sumTotalFee:0,
+
+                saleName:'',
+                unClosedFee:0,
+                toReviceFee:0,
+                undueFee:0,
+                orderIds:[],
+                settlementDay:'',
+                settlementOrderId:'',
+                type:0,
+                currentPage:1,
+                pageSize:10,
+                totalCount:0
+            }
+        },
+        watch: {
+            '$route': function (route) {
+
+                this.initData.saleCompanyId  =  this.$route.query.saleCompanyId;
+                this.initData.companyId = userInfo().companyId;
+                this.unClosedFee  =  this.$route.query.unClosedFee;
+                this.unClosedFee = (this.unClosedFee*1).toFixed(2);
+                this.settlementOrderId = this.$route.query.settlementOrderId;
+                this.toReviceFee  =  this.$route.query.toReviceFee;
+                this.toReviceFee = (this.toReviceFee*1).toFixed(2);
+
+                this.querySettlementDay();//查询结算日
+
+                if(this.toReviceFee==undefined||this.toReviceFee==''){
+                    this.toReviceFee = 0;
+                }
+                this.undueFee = (this.unClosedFee*1- this.toReviceFee*1).toFixed(2);
+                this.customName = this.$route.query.customName
+                this.type = this.$route.query.type;
+                if(this.type==undefined||this.type==''){
+                    this.type=2;
+                }
+
+                this.loadData();
+            }
+        },
+
+        mounted(){
+            this.initData.saleCompanyId  =  this.$route.query.saleCompanyId;
+            this.initData.companyId = userInfo().companyId;
+            this.unClosedFee = this.$route.query.unClosedFee;
+            this.unClosedFee = (this.unClosedFee*1).toFixed(2);
+            this.settlementOrderId = this.$route.query.settlementOrderId;
+            this.toReviceFee  =  this.$route.query.toReviceFee;
+            this.toReviceFee = (this.toReviceFee*1).toFixed(2);
+
+            this.querySettlementDay();//查询结算日
+
+            if(this.toReviceFee==undefined||this.toReviceFee==''){
+                this.toReviceFee = 0;
+            }
+            this.undueFee = (this.unClosedFee- this.toReviceFee).toFixed(2);
+            this.customName = this.$route.query.customName
+            this.type = this.$route.query.type;
+            if(this.type==undefined||this.type==''){
+                this.type=2;
+            }
+            this.loadData();
+        },
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+
+            handleSizeChange(val){
+        	    this.pageSize = val;
+                this.loadData();
+            },
+
+            handleCurrentChange(val){
+                this.currentPage = val;
+                this.loadData();
+            },
+
+            //加载欠款订单
+            async loadData(){
+                let para = {
+                    "companyId":userInfo().companyId,
+                    "saleCompanyId":this.initData.saleCompanyId,
+                    "orderType":this.type,
+                    "withTotal":true
+                };
+                const res = await getDebtInfo(para);
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message:'数据加载成功!'
+                    });
+                    this.tableData6 = res.result.results;
+                    var groupData = res.result.groupData;
+                    this.totalCount = res.result.totalCount;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+            //查看结算日
+            async querySettlementDay(){
+                this.info = [];
+                let param = {
+                    params:{
+                    "companyId":userInfo().companyId,
+                    "settlementCompanyId":this.initData.saleCompanyId},
+                    pageIndex:1,
+                    pageSize:1
+                };
+                const res = await querySettlementDay(param);
+                if(res.isSuccess){
+                    if(this.info.length==1){
+                        return;
+                    }
+                    var settlementDay = '';
+                    if(res.result.results[0].settlementType==1){
+                        var day = res.result.results[0].settlementDay;
+                        if(day==1){
+                            settlementDay = '周一';
+                        }else if(day==2){
+                            settlementDay = '周二';
+                        }else if(day==3){
+                            settlementDay = '周三';
+                        }else if(day==4){
+                            settlementDay = '周四';
+                        }else if(day==5){
+                            settlementDay = '周五';
+                        }else if(day==6){
+                            settlementDay = '周六';
+                        }else if(day==7){
+                            settlementDay = '周日';
+                        }
+
+                    }else if(res.result.results[0].settlementType==2){
+                        settlementDay = res.result.results[0].settlementDay + '号';
+                    }
+
+                    let pa = {
+                        state:res.result.results[0].settlementType,
+                        date:settlementDay
+                    };
+                    this.info.push(pa);
+                }
+            },
+
+            checkboxInit(row,index){
+               if((this.tableData6[index].closingFee!=undefined&&this.tableData6[index].closingFee!=''&&this.tableData6[index].closingFee>0)||(this.tableData6[index].closeFee!=undefined&&this.tableData6[index].closeFee==this.tableData6[index].totalFee)){
+                   return 0;
+               }else{
+                   return 1;
+               }
+            },
+
+            //多选响应
+            handleSelectionChange: function(val) {
+                this.multipleSelection = val;
+            },
+            //立即结算
+            quickSettlement(){
+                var sumTotalFee=0;
+                var closeFee = 0;
+                this.orderIds = [];
+                var ids = '';
+                this.multipleSelection.forEach((item) => {
+                    if(item.closingFee!=undefined&&item.closingFee!=''&&item.closingFee>0){
+
+                    }else{
+                        this.orderIds.push(item.id);
+                        ids = item.id + ',' + ids;
+                        var closedFee = 0;
+                        if(item.closeFee==undefined||item.closeFee==''){
+                            closedFee = 0;
+                        }else{
+                            closedFee = item.closeFee;
+                        }
+                        sumTotalFee = sumTotalFee*1 + item.totalFee*1 - (closedFee*1) ;
+                        closeFee = closeFee*1 +  closedFee*1;
+                    }
+                })
+                ids = ids.substring(0,ids.length-1);
+                if(this.orderIds.length <1){
+                    this.$message({
+                        duration:this.GLOBAL.MESSAGE_DISSMISS_TIME_MID,
+                        type: 'error',
+                        message: '请先勾选要结算的订单！'
+                    });
+                    return;
+                }
+                var path1 = "/sellerSettlementDetailsl?saleCompanyId="+ this.initData.saleCompanyId +"&unClosedFee="+ this.unClosedFee +"&toReviceFee="+ this.toReviceFee +"&customName="+this.customName;
+                var path2 = "/sellerSettlementDetailsl?type="+ this.type +"&customName="+ this.customName +"&saleCompanyId="+ this.initData.saleCompanyId +"&unClosedFee="+ this.unClosedFee +"&toReviceFee"+this.toReviceFee;
+                if(this.type!=4){
+                    this.$router.push({path:"/sellerSettlementImmediately",query:{orderIds:ids,saleCompanyId:this.initData.saleCompanyId,customName:this.customName,activeName:'first',collectPath:path1}});
+                }else{
+                    this.$router.push({path:'/sellerSettlementImmediately',query:{actualPayFee:sumTotalFee,backOrderIds:ids,saleCompanyId:this.initData.saleCompanyId,customName:this.customName,activeName:'second',payPath:path2}});
+                }
+
+            },
+
+            //查看详情
+            queryDetails(id,orderType){
+                if(orderType==2){
+                    this.$router.push({path:"/indentManagementPortionPicking",query:{orderId:id}});
+                }else if(orderType==4){
+                    this.$router.push({path:"/sellReturnStorage",query:{orderId:id}});
+                }
+            },
+
+
+
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/sellerSettlement';
+</style>

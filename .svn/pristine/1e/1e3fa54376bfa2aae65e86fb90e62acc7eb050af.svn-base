@@ -1,0 +1,650 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li class="menuIndex">
+                <router-link :to='{path:"/stallProductManagement"}'>商品管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/classificationGoods"}'>商品分类</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/commodityStatistics"}'>商品统计</router-link>
+            </li>
+        </ul>
+        <div class="product">
+            <div>
+                <div class="flex productTop right">
+                    <el-input
+                        size="small"
+                        placeholder="供应商搜索"
+                        icon="search"
+                        v-model="supplierName"
+                        :on-icon-click="initFirstPageData">
+                    </el-input>
+                    <el-input
+                        size="small"
+                        placeholder="货号搜索"
+                        icon="search"
+                        v-model="productCode"
+                        :on-icon-click="initFirstPageData">
+                    </el-input>
+                </div>
+                <div class="productButton left">
+                	<a href="javascript:void(0)" class="buttonColor" @click="showstallAddGoods2()">+添加新商品</a>
+                    <a href="javascript:void(0)" class="buttonColor"  @click="batchDeleteConfig">批量删除</a>
+                    <el-select v-model="productCatalog" placeholder="分类至" @change="checkProductCatalog" style="width: 100px;" size="small">
+                        <el-option
+	                        v-for="item in options"
+	                        :key="item.id"
+	                        :label="item.name"
+	                        :value="item.id">
+	                    </el-option>
+                    </el-select>
+                </div>
+            </div>
+            <el-col :span="24" style="margin-bottom: 15px">
+                <div class="productTabs radioGreen">
+                    <el-radio-group v-model="saleState" @change="initFirstPageData" size="small">
+                        <el-radio-button label="1">出售中</el-radio-button>
+                        <el-radio-button label="0">已下架</el-radio-button>
+                    </el-radio-group>
+                </div>
+            </el-col>
+
+
+            <div class="productTable">
+                <el-table
+                    :data="tableData"
+                    @selection-change="handleSelectionChange"
+                    style="width: 100%">
+                    <el-table-column
+                        type="selection"
+                        width="55">
+                    </el-table-column>
+                    <el-table-column
+                        label="主图/货号">
+                        <template scope="scope">
+                            <div class="flex">
+                                <img src="../image/111.png" alt=""  class="tableImg">
+                                <p>{{tableData[scope.$index].productCode}}</p>
+                            </div>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="supplierName"
+                        label="供应商">
+                    </el-table-column>
+                    <el-table-column
+                        prop="catelogName"
+                        label="类别">
+                    </el-table-column>
+                    <el-table-column
+                        prop="sellPrice"
+                        label="销售价">
+                    </el-table-column>
+                    <el-table-column
+                        prop="stockNum"
+                        label="库存数">
+                    </el-table-column>
+                    <el-table-column
+                        width="280"
+                        label="操作">
+                        <template scope="scope">
+                            <div class="tableFoot">
+                                <a href="javascript:void(0)" class="blue2" @click="showstallAddGoods(tableData[scope.$index])">编辑</a>
+                                <a href="javascript:void(0)" class="blue2" @click="showSaleStateConfig(tableData[scope.$index].id,tableData[scope.$index].saleState)">{{scope.row.saleState==1?'下架':scope.row.saleState==0?'上架':''}}</a>
+                                <a href="javascript:void(0)" class="blue2" @click="showSpecificsellerForStallDia(tableData[scope.$index].id,tableData[scope.$index].companyId)">特定商家定价</a>
+                                <!--<a href="javascript:void(0)" class="blue2" @click="configWarehour(tableData[scope.$index].id,tableData[scope.$index].warehouseId,tableData[scope.$index].warehouseSeatId)">设置仓位</a>-->
+                            </div>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+            <el-pagination
+                small
+                class="right"
+                style="margin-top: 20px;"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :current-page="currentPage"
+                :page-sizes="[10, 20, 30, 40]"
+                :page-size="pageSize"
+                layout="total, sizes, prev, pager, next, jumper"
+                :total="totalCount">
+            </el-pagination>
+            <a href="javascript:void(0)" class="export_excle">导出excel</a>
+        </div>
+        <el-dialog
+            :title="statusTip"
+            :visible.sync="dialogVisible"
+            size="tiny">
+            <div>{{saleStatusTip}}</div>
+            <span slot="footer" class="dialog-footer flex2">
+                <a href="javascript:void(0)" @click="updateSaleStateForStall" class="buttonColor">确 定</a>
+                <a href="javascript:void(0)" @click="dialogVisible = false" class="buttonColor2">取 消</a>
+              </span>
+        </el-dialog>
+        <el-dialog
+            title="设置仓位"
+            :visible.sync="dialogVisible1"
+            size="tiny">
+            <div>
+                <div class="flex2">
+                    <el-col :span="5" v-for="list in warehouseList" class="radioGreen">
+                        <el-radio class="radio" v-model="seatRadio" :label="list.id" >{{list.name}}</el-radio>
+                    </el-col>
+                </div>
+            </div>
+            <span slot="footer" class="dialog-footer flex2">
+                <a href="javascript:void(0)" @click="updateWarehouseSeat" class="buttonColor">确 定</a>
+                <a href="javascript:void(0)" @click="dialogVisible1 = false" class="buttonColor2">取 消</a>
+              </span>
+        </el-dialog>
+        <el-dialog
+            title="添加特定商家定价"
+            :visible.sync="dialogVisible2"
+            size="tiny">
+            <div style="width:100%;overflow: hidden">
+                <el-form :model="addSpecialCompform" :rules="addSpecialCompformRule" ref="addSpecialCompform" label-width="130px">
+                    <el-col :span="24">
+                        <el-form-item label="商家名：">
+                            <el-autocomplete v-model="addSpecialCompform.companySpecialName" :fetch-suggestions="querySearchAsync" placeholder="请输入内容" @select="handleSelect"></el-autocomplete>
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="24">
+                        <el-form-item prop="companySpecialPrice" label="特定价格：">
+                            <el-input v-model="addSpecialCompform.companySpecialPrice"></el-input>
+                        </el-form-item>
+                    </el-col>
+                </el-form>
+            </div>
+            <span slot="footer" class="dialog-footer flex2">
+                <a href="javascript:void(0)" @click="addSpecificsellerForStall('addSpecialCompform')" class="buttonColor">确 定</a>
+                <a href="javascript:void(0)" @click="dialogVisible2 = false" class="buttonColor2">取 消</a>
+              </span>
+        </el-dialog>
+
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {queryResultForStallProduct,queryWarehouseSeatForStall,updateWarehouseSeatByProduct,findCompanysByNameAndMoblie,addSpecificsellerForStall,updateSaleStateForStall,batchDeleteProductForStall,getProductCatalogByParam,batchUpdateProductCatalog} from '@/api/getData'
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+        	//校验所需金额
+        	var validatePrice = (rule, value, cb) => {
+                var pattern = /^(-?\d+)(\.\d+)?$/;
+                var pattern2 = /^-?\d+\.?\d{0,2}$/;
+                if (!pattern.test(value)) {
+                    cb(new Error('特定价格必须为数字'))
+                }else if(value <0){
+                	cb(new Error('特定价格必须为正数'))
+                }else if(!pattern2.test(value)){
+                	cb(new Error('特定价格不能超过两位小数'))
+                }else{
+                	cb();
+                }
+            }
+            return {
+            	addSpecialCompformRule:{
+            		companySpecialPrice:[
+                    	{ validator: validatePrice, trigger: 'blur' }
+                    ],
+            	},
+            	addSpecialCompform:{
+            		companySpecialName:'',
+                	companySpecialPrice:'',
+            	},
+            	statusTip:'',
+            	saleStatusTip : '',
+                //商家集合
+                restaurants: [],
+
+                tempProductId: '',
+                tempCompanyId: '',
+                tempSaleState: '',
+                sellPrice:'',
+            	supplierName:'',
+            	productCode:'',
+            	saleState:1,
+            	//默认每页数据量
+                pageSize: 10,
+
+                //当前页码
+                currentPage: 1,
+
+                totalCount:0,
+
+                seatRadio:'',
+
+                productId:'',
+
+                productCatalog:'',
+
+                input2:'',
+                currentPage4: 4,
+                dialogVisible:false,
+                dialogVisible1:false,
+                dialogVisible2:false,
+                tableData: [{
+                    supplier: '我是供应商xxx',
+                    type: '女装',
+                    sellingPrice:25,
+                    inventoryNum:111,
+                    state:1,
+                },{
+                    supplier: '我是供应商xxx',
+                    type: '女装',
+                    sellingPrice:25,
+                    inventoryNum:111,
+                    state:2,
+                },{
+                    supplier: '我是供应商xxx',
+                    type: '女装',
+                    sellingPrice:25,
+                    inventoryNum:111,
+                    state:1,
+                },{
+                    supplier: '我是供应商xxx',
+                    type: '女装',
+                    sellingPrice:25,
+                    inventoryNum:111,
+                    state:1,
+                }],
+                form: {
+                    name: '',
+                    region: '',
+                    type: '',
+                    telephone:''
+                },
+                options: [],
+                value: '',
+                ruleForm: {
+                    name: '',
+                    number:'',
+                },
+                warehouseList:[
+                    {
+                        label:1,
+                        list:'仓位1'
+                    },
+                    {
+                        label:2,
+                        list:'仓位2'},
+                    {
+                        label:3,
+                        list:'仓位3'},
+                ],
+                radio:1,
+
+            }
+        },
+        watch:{
+            '$route':function (route) {
+            	this.initloadData();
+            }
+        },
+        async mounted(){
+        	this.initCompany();
+            this.initloadData();
+            this.initloadCatalogData();
+        },
+        methods: {
+            handleIconClick(){
+                console.log(1)
+            },
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+                this.currentPage = 1;
+                this.pageSize = val;
+                this.initloadData();
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+                this.currentPage = val;
+                this.initloadData();
+            },
+
+            async initCompany(){
+		      	let param = {
+        			pageSize:100,
+        			pageIndex:1
+        		}
+		      	let result = [];
+        		const res = await findCompanysByNameAndMoblie(param);
+                if (res.isSuccess == true) {
+                	res.result.data.results.forEach((obj) => {
+                		let row = {
+                			value:obj.nickName,
+                			address:obj.compId,
+                			compId:obj.compId
+                		}
+                		this.restaurants.push(row);
+                	});
+                }
+		    },
+
+			//从服务器获取数据
+            async initloadData() {
+            	this.tableData = [];
+            	let param ={
+            		companyId:userInfo().companyId,
+            		pageIndex:this.currentPage,
+    				pageSize:this.pageSize,
+    				supplierName:this.supplierName,
+    				productCode:this.productCode,
+    				saleState:this.saleState
+            	}
+                const res = await queryResultForStallProduct(param);
+                if (res.isSuccess == true) {
+                	this.tableData = res.result.results;
+                	if(this.currentPage == 1){
+                		this.totalCount =  res.result.totalCount;
+                	}
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.isSuccess
+                    });
+                }
+            },
+
+            initFirstPageData(){
+            	this.currentPage = 1;
+            	this.initloadData();
+            },
+
+            async configWarehour(id,warehouseId,warehouseSeatId){
+            	this.productId = id;
+            	this.seatRadio = warehouseSeatId;
+            	let param = {
+            		warehouseId:warehouseId
+            	}
+            	this.warehouseList = [];
+            	const res = await queryWarehouseSeatForStall(param);
+                if (res.isSuccess == true) {
+                	res.result.forEach((obj) => {
+                		let seat = {
+                			id:obj.id,
+                			name:obj.name
+                		}
+                		this.warehouseList.push(seat);
+                		this.dialogVisible1 = true;
+                	});
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.isSuccess
+                    });
+                }
+            },
+
+            async updateWarehouseSeat(){
+            	let param = {
+            		productId:this.productId,
+            		warehouseSeatId:this.seatRadio
+            	}
+            	const res = await updateWarehouseSeatByProduct(param);
+                if (res.isSuccess == true) {
+                	this.$message({
+                        type: 'success',
+                        message: res.result.msg
+                    });
+                    this.dialogVisible1 = false;
+                    this.initloadData();
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.isSuccess
+                    });
+                }
+            },
+
+            querySearchAsync(queryString, cb) {
+		        var restaurants = this.restaurants;
+		        var results = queryString ? restaurants.filter(this.createStateFilter(queryString)) : restaurants;
+
+		        clearTimeout(this.timeout);
+		        this.timeout = setTimeout(() => {
+		          cb(results);
+		        }, 3000 * Math.random());
+		      },
+		      createStateFilter(queryString) {
+		        return (state) => {
+		          return (state.value.indexOf(queryString.toLowerCase()) === 0);
+		        };
+		      },
+		      handleSelect(item) {
+		        console.log(item);
+		      },
+
+		      showstallAddGoods(newVaule){
+		      	this.$router.push({path: '/stallAddGoods',query:{object1:newVaule,status:'OK'}});
+		      },
+
+		      showstallAddGoods2(){
+		      	this.$router.push({path: '/stallAddGoods',query:{status:'NO'}});
+		      },
+
+		      showSpecificsellerForStallDia(productId,companyId){
+		      	this.tempProductId = productId;
+		      	this.tempCompanyId = companyId;
+		      	this.dialogVisible2 = true;
+		      },
+
+
+		      async addSpecificsellerForStall(formName){
+            	this.$refs[formName].validate(async (valid) => {
+					if (valid) {
+						let specificCompId = '';
+				      	this.restaurants.forEach((obj) => {
+				      		if(obj.value == this.addSpecialCompform.companySpecialName){
+				      			specificCompId = obj.compId;
+				      		}
+				      	});
+				      	this.addSpecialCompform.specificCompId = specificCompId;
+				      	this.addSpecialCompform.productId = this.tempProductId;
+				      	this.addSpecialCompform.companyId = this.tempCompanyId;
+                        const res = await addSpecificsellerForStall(this.addSpecialCompform);
+                        if (res.isSuccess == true) {
+                            this.$message({
+                                type: 'success',
+                                message: res.result.msg
+                            });
+                            this.dialogVisible2 = false
+                        }else{
+                            this.$message({
+                                type: 'error',
+                                message: res.errorMsg
+                            });
+                        }
+					} else {
+
+						return false;
+					}
+				});
+          	},
+
+          	showSaleStateConfig(productId, status){
+          		if(status == 1){
+          			this.statusTip = '产品下架';
+          			this.saleStatusTip = '是否下架该商品？';
+          		}else{
+          			this.statusTip = '产品上架';
+          			this.saleStatusTip = '是否上架该商品？';
+          		}
+          		this.tempProductId = productId;
+          		this.tempSaleState = status;
+          		this.dialogVisible = true;
+          	},
+
+          	async updateSaleStateForStall(){
+          		let saleState = 1;
+          		if(this.tempSaleState == 1){
+          			saleState = 0;
+          		}
+          		let params = {
+          			productId: this.tempProductId,
+          			saleState: saleState
+          		};
+          		const res = await updateSaleStateForStall(params);
+          		if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: res.result.msg
+                    });
+                    this.dialogVisible = false
+                    this.initloadData();
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+          	},
+
+          	//多选响应
+            handleSelectionChange: function(val) {
+                this.multipleSelection = val;
+            },
+
+            batchDeleteConfig() {
+		    	if(this.multipleSelection == undefined || this.multipleSelection.length==0){
+		    		this.$message({
+                        type: 'error',
+                        message: '请先勾选要删除的商品！'
+                    });
+                    return;
+		    	}
+                var array = [];
+                this.multipleSelection.forEach((item) => {
+                    array.push(item.id);
+                })
+                if(array.length <1){
+                	this.$message({
+                        type: 'error',
+                        message: '请先勾选要删除的商品！'
+                    });
+                    return;
+                }
+		        this.$confirm('是否确认删除选中的商品?', '提示', {
+		          confirmButtonText: '确定',
+		          cancelButtonText: '取消',
+		          type: 'warning'
+		        }).then(() => {
+		          this.batchDelete(array);
+		        }).catch(() => {
+
+		        });
+		    },
+
+		    async batchDelete(array){
+                let param = {
+                	productIds:array
+                }
+                const res = await batchDeleteProductForStall(param);
+            	if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: res.result.msg
+                    });
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.isSuccess
+                    });
+                }
+                this.initloadData();
+
+            },
+
+            //从服务器获取数据
+            async initloadCatalogData() {
+            	this.tableData = [];
+            	let param ={
+            		companyId:userInfo().companyId,
+            		pageIndex:1,
+    				pageSize:1000
+            	}
+                const res = await getProductCatalogByParam(param);
+                if (res.isSuccess == true) {
+                	this.options = res.result.results;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.isSuccess
+                    });
+                }
+            },
+
+            checkProductCatalog(){
+            	if(this.productCatalog == ''){
+            		return;
+            	}
+            	if(this.multipleSelection == undefined || this.multipleSelection.length==0){
+		    		this.$message({
+                        type: 'error',
+                        message: '请先勾选要修改的商品！'
+                    });
+                    this.productCatalog = '';
+                    return;
+		    	}
+                var array = [];
+                this.multipleSelection.forEach((item) => {
+                    array.push(item.id);
+                })
+                if(array.length <1){
+                	this.$message({
+                        type: 'error',
+                        message: '请先勾选要修改的商品！'
+                    });
+                    this.productCatalog = '';
+                    return;
+                }
+
+		        this.$confirm('是否确认修改选中的商品?', '提示', {
+		          confirmButtonText: '确定',
+		          cancelButtonText: '取消',
+		          type: 'warning'
+		        }).then(() => {
+		          this.batchUpdate(array);
+		        }).catch(() => {
+					this.productCatalog = '';
+		        });
+           },
+
+           async batchUpdate(array){
+                let param = {
+                	productIds:array,
+                	productCatalogId:this.productCatalog
+                }
+                const res = await batchUpdateProductCatalog(param);
+                this.productCatalog = '';
+            	if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: res.result.msg
+                    });
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.isSuccess
+                    });
+                }
+                this.initloadData();
+
+            },
+
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/stallProductManagement';
+</style>

@@ -1,0 +1,230 @@
+.commodityMnagement{
+    margin:1px 30px;
+    background: #fff;
+    padding: 20px 40px;
+    height:100%;
+    overflow: auto;
+    .commodityList{
+        margin:50px 0;
+        .tableFirst{
+            padding: 2px 0 ;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            div{
+                width: 18px;
+                height: 18px;
+            }
+        }
+        .masterDrawing{
+            width: 40px;
+            height: 40px;
+            margin-right: 10px;
+        }
+        .trefresh>img {
+            width: 25px;
+            height: 25px;
+        }
+        .operation{
+            img{
+                border-right: 1px solid #ccc;
+                padding: 0 10px;
+            }
+            img:last-child{
+                border-right: none;
+            }
+        }
+    }
+    .commodityTop>div{
+        width: 200px;
+    }
+    .commodityButton{
+        width:100%;
+        margin: 15px 0;
+    }
+}
+.binding{
+    background: #fff;
+    margin:0 30px 20px;
+    height:83%;
+    flex-direction: column;
+    img{
+        width: 100px;
+    }
+    p{
+        font-size: 13px;
+        margin: 10px 0;
+        color:#999;
+    }
+    p>a{
+        font-size: 16px;
+        border-bottom: 1px solid @blue;
+        color:@blue;
+    }
+}
+//修改弹窗内容
+.settingRelevance{
+    color:@red;
+    margin: 20px 0 5px;
+}
+.dialog-footer{
+    margin-top: 20px;
+    padding-top: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width:100%;
+    border-top: 1px solid #f4f4f4;
+}
+//添加新商品弹窗
+.dialogAdd{
+    height: 655px;
+    .addTitle{
+        margin-bottom: 20px;
+    }
+    .DialogTitle{
+        width: 100px;
+        text-align: right;
+        margin-right: 10px;
+    }
+    .choose{
+        border: none;
+        color:@red;
+        margin-left: 5px;
+        font-size: 12px;
+        border-bottom: 1px solid @red;
+        border-radius: 0;
+    }
+    .addImg{
+        width: 125px;
+    }
+}
+.el-dialog {margin-bottom: 0;}
+.continueAdd{
+    font-size: 12px;
+    color:@red;
+    margin-top: 5px;
+}
+.chooseRadio{
+    font-size: 12px;
+    margin-top: 15px;
+    display: flex;
+    flex-direction: column;
+    max-height: 200px;
+    overflow: scroll;
+    padding-left: 30px;
+}
+//new
+.dialogAdd2{
+    .dialogSearch{
+        margin-top: 20px;
+        .search1{
+            width: 300px;
+        }
+    }
+    .dialogTable2{
+        margin-top: 20px;
+    }
+    .addList{
+        margin-top: 20px;
+    }
+    .addInput{
+        width: 400px;
+    }
+    .DialogTitle{
+        width: 85px;
+        text-align: right;
+    }
+}
+
+
+.dialogImport{
+    .importFirst{
+        display: flex;
+        align-items: flex-start;
+        .uploatName{
+            background: #e7f3fd;
+            margin-left: 10px;
+            margin-bottom: 5px;
+            p{
+                max-width: 189px;
+                white-space:nowrap;
+                overflow:hidden;
+                text-overflow:ellipsis;
+            }
+        }
+        .uploatButton{
+            position: relative;
+            #uploatfile{
+                background: pink;
+                width: 96px;
+                height: 30px;
+                position: absolute;
+                top:0;
+                left:0;
+                opacity: 0;
+            }
+            .importUploat{
+                background:#fff;
+                border:1px solid #ccc;
+                border-radius: 15px;
+                padding: 4px 9px;
+                font-size: 12px;
+                margin-left: 10px;
+                img{
+                    width: 18px;
+                    height: 18px;
+                }
+            }
+        }
+    }
+
+    .dialogImport,.importTips{
+        height: 40px;
+        line-height: 40px;
+    }
+    .importTips{
+     font-size: 12px;
+        color:#999;
+    }
+    .importDownload{
+        padding: 0 8%;
+        a{
+            border:1px solid #da444f;
+            height: 30px;
+            border-radius: 5px;
+            color:#333;
+        }
+    }
+}
+
+//打印
+.printDialog{
+    .printInput{
+        width: 150px;
+        margin-right: 10px;
+    }
+    &.printDialog>.list{
+        height: 40px;
+        line-height: 40px;
+    }
+    .printRadio{
+        label{
+            margin-right: 20px;
+        }
+    }
+    .printTable{
+       margin-top: 10px;
+    }
+}
+//预览
+.previewDialog{
+    width:80%;
+    height:84%;
+    position: fixed;
+    top:10% !important;
+    box-sizing: border-box;
+    &.previewDialog>div{
+        overflow-y: auto;
+    }
+}

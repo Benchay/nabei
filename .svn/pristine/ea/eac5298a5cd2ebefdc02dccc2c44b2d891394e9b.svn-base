@@ -1,0 +1,160 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/menuManagement"}'>菜单管理</router-link>
+            </li>
+            <li class="menuIndex3">
+                <router-link :to='{path:"/platformSettings"}'>平台基础配置</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/msgParamsConfig"}'>短信参数配置</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/msgSendInterfaceConfig"}'>短信发送接口配置</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/logManagement"}'>日志管理</router-link>
+            </li>
+        </ul>
+        <div class="platformSettings">
+            <div>
+                <div class="platformSettingsTop">
+                    <div class="right" >
+                        <el-button  @click="handleIconClickCancle">取消</el-button>
+                    </div>
+                    <div class="right" style="margin-right:10px;">
+                        <el-button  @click="handleIconSaveInfo">保存</el-button>
+                    </div>
+                    <div class="right" style="margin-right:10px;">
+                        <el-button type="primary" @click="handleIconClickReset">重置</el-button>
+                    </div>
+                </div>
+                <div class="platformTable">
+                    <div class="edit">
+                        <el-col :span="24">
+                        </el-col>
+                        <el-col :span="24" >
+                            <el-col :span="12" class="flex2">
+                                <el-col :span="5"><span>平台名称：</span></el-col>
+                                <el-col :span="14">
+                                    <el-input
+                                        placeholder="请输入平台名称"
+                                        v-model="name">
+                                    </el-input>
+                                </el-col>
+                            </el-col>
+                        </el-col>
+
+                        <el-col :span="24" style="padding-top: 20px;">
+                            <el-col :span="12" class="flex2">
+                                <el-col :span="5"><span>平台logo：</span></el-col>
+                                <el-col :span="14">
+                                    <el-upload
+                                        class="upload-demo"
+                                        action="https://jsonplaceholder.typicode.com/posts/"
+                                        :on-preview="handlePreview"
+                                        :on-remove="handleRemove"
+                                        :file-list="fileList">
+                                        <el-button size="small" type="primary">选择LOGO</el-button>
+                                    </el-upload>
+                                </el-col>
+                            </el-col>
+                        </el-col>
+                        <el-col :span="24" style="padding-top: 20px;">
+                            <el-col :span="12" class="flex2">
+                                <el-col :span="5"><span>网站链接：</span></el-col>
+                                <el-col :span="14">
+                                    <el-input
+                                        placeholder="请输入网站链接"
+                                        v-model="platformUrl">
+                                    </el-input>
+                                </el-col>
+                            </el-col>
+                        </el-col>
+                        <el-col :span="24" style="padding-top: 20px;">
+                            <el-col :span="12" class="flex2">
+                                <el-col :span="5"><span>广告图链接：</span></el-col>
+                                <el-col :span="14">
+                                    <el-input
+                                        placeholder="请输入广告图链接"
+                                        v-model="advertisUrl">
+                                    </el-input>
+                                </el-col>
+                            </el-col>
+                        </el-col>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {queryPlatformInfo,savePlatformInfo} from '@/api/getData'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                advertisUrl:'',
+                platformUrl:'',
+                fileList:[],
+                name:'',
+                propInfo:'',
+            }
+        },
+        mounted(){
+            this.loadData();
+        },
+        methods: {
+            handleIconClickCancle(){
+                this.loadData();
+            },
+            handleIconSaveInfo(){
+			alert("id==="+this.propInfo.id);
+                let param = {
+                    "advertisUrl":this.advertisUrl,
+                    "platformUrl":this.platformUrl,
+                    "name":this.name,
+                    "id":this.propInfo.id
+                }
+                this.saveInfo(param);
+            },
+            handleIconClickReset(){
+                this.advertisUrl='';
+                this.platformUrl='';
+                this.name='';
+            },
+            async loadData(){
+                const res = await queryPlatformInfo();
+                if(res.isSuccess){
+                    this.propInfo = res.result.data;
+                    this.advertisUrl = this.propInfo.advertisUrl;
+                    this.platformUrl = this.propInfo.platformUrl;
+                    this.name = this.propInfo.name;
+                }
+            },
+
+            async saveInfo(param){
+                const res = await savePlatformInfo({platformProp:param});
+                if(res.isSuccess){
+                    this.$message({
+                        "type":'info',
+                        "message":res.result.msg
+                    });
+                }
+
+            }
+        },
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/platformSettings';
+</style>

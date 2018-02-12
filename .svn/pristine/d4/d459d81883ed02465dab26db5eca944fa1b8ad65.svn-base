@@ -1,0 +1,267 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/fastShipping2"}'>快速出货</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/returnManagement2"}'>快速退货</router-link>
+            </li>
+            <li class="menuIndex">
+                <router-link :to='{path:"/orderPurchaseStall"}'>订单管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/sellerSettlement"}'>客户结算</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/customerManagement"}'>客户管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/statisticalStatement"}'>销售统计</router-link>
+            </li>
+        </ul>
+        <div class="indentManagement">
+            <div style="height: 45px;">
+                <div class="flex2 left" style="margin-right: 50px">
+                    <el-date-picker
+                        size="small"
+                        v-model="value6"
+                        type="daterange"
+                        placeholder="选择日期范围">
+                    </el-date-picker>
+                </div>
+                <div class="left flex2">
+                    <el-input v-model="input1" size="small" placeholder="订单号搜索" style="margin-right: 10px" ></el-input>
+                    <el-input v-model="input3" size="small" placeholder="电商卖家搜索"></el-input>
+                </div>
+               <el-col :span="24" class="indentList radioGreen">
+                   <el-radio-group v-model="radio" size="small">
+                       <el-radio-button label="1">全部</el-radio-button>
+                       <el-radio-button label="2">待处理</el-radio-button>
+                       <el-radio-button label="3">已完成</el-radio-button>
+                   </el-radio-group>
+               </el-col>
+            </div>
+            <el-table
+                :data="tableData"
+                style="width: 100%">
+                <el-table-column
+                    prop="number"
+                    label="序号">
+                </el-table-column>
+                <el-table-column
+                    prop="orderCode"
+                    label="订单编号">
+                </el-table-column>
+                <el-table-column
+                    prop="busiName"
+                    label="电商卖家">
+                </el-table-column>
+                <el-table-column
+                    prop="totalNum"
+                    label="订单数量">
+                </el-table-column>
+                <el-table-column
+                    prop="totalFee"
+                    label="订单金额">
+                </el-table-column>
+                <el-table-column
+                    width="180"
+                    label="下单时间">
+                    <template scope="scope">{{scope.row.createTime | formatDate }}</template>
+                </el-table-column>
+                <el-table-column
+                    prop="payType"
+                    label="结算方式">
+                </el-table-column>
+                <el-table-column
+                    label="状态">
+                    <template scope="scope">
+                        <p  v-bind:class="[scope.row.status>6?'color2':scope.row.status<7?'color3':'']">{{scope.row.status==1?'待确认':scope.row.status==2?'待拿货':scope.row.status==3?'卖家待入库':scope.row.status==5?'待配货':scope.row.status==6?'部分配货':scope.row.status==7?'退货待签收':scope.row.status==8?'退货待确认':scope.row.status==9?'退货待入库':scope.row.status==99?'已完成':''}}</p>
+                    </template>
+                </el-table-column>
+                <el-table-column
+                    label="操作">
+                    <template scope="scope">
+                        <a href="javascript:void(0);" class="color4" @click="Stateialog(scope.row.status,scope.row.id,scope.row.orderType)">
+                            {{scope.row.status==1?'立即确认':scope.row.status==2?'通知取货':scope.row.status==3?'立即入库':scope.row.status==5?'立即配货':scope.row.status==6?'继续配货':scope.row.status==7?'立即签收':scope.row.status==8?'立即确认':scope.row.status==9?'立即入库':''}}
+                        </a>
+                        <a href="javascript:void(0);" class="color4" v-if="scope.row.status==4" @click="dialog = true">通知取货</a>
+                    </template>
+                </el-table-column>
+            </el-table>
+            <el-pagination
+                small
+                class="right"
+                style="margin-top: 20px;"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :current-page="currentPage"
+                :page-sizes="[10, 20, 30, 40]"
+                :page-size="pageSize"
+                layout="total, sizes, prev, pager, next, jumper"
+                :total="totalCount">
+
+            </el-pagination>
+            <a href="javascript:void(0)" class="export_excle" @click="exportTableData">导出excel</a>
+        </div>
+        <el-dialog
+            title="通知取货"
+            :visible.sync="dialog"
+            size="tiny">
+            <div class="flex2 inform">
+                <p>取货通知已发送给商家！</p>
+            </div>
+        </el-dialog>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {formatDate} from '../utils/date.js'
+    import {export_json_to_excel} from '../vendor/Export2Excel.js'
+    import {queryStallOrder} from '@/api/getData'
+    import {getStore} from  '../config/mUtils'
+
+    export default {
+        components: {
+            headTop,
+        },
+        filters:{
+            formatDate(time){
+                return formatDate(time,"yyyy-MM-dd hh:mm:ss");
+            }
+        },
+        data() {
+            return {
+                roleForm: {
+                    userId: '',
+                    roleId: '',
+                    compId:''
+                },
+                dialog:false,
+                radio:1,
+                selects:false,
+                value6:'',
+                input:'',
+                input1: '',
+                input2: '',
+                input3: '',
+                tableData:[],
+
+                pageSize:10,
+                totalCount:0,
+                currentPage:1
+
+            }
+        },
+        mounted() {
+//            var userInfo=getStore("user_info_user");
+//            var vjson = JSON.parse(userInfo);
+//            this.roleForm.userId=vjson.id;
+//            this.roleForm.compId=vjson.curCompany.id;
+
+            this.initloadData();//加载数据
+
+            const s = document.createElement('script');
+			s.type = 'text/javascript';
+			s.src = 'http://oss.sheetjs.com/js-xlsx/xlsx.full.min.js';
+			document.body.appendChild(s);
+        },
+        methods: {
+
+            async initloadData() {
+                this.tableData = [];
+                let param ={
+                    "pageIndex":this.currentPage,
+                    "pageSize":this.pageSize,
+                    "companyId":"1000",
+                    "status":""
+                }
+                const res = await queryStallOrder(param);
+                if (res.isSuccess == true) {
+                    this.tableData = res.result.results;
+                    this.totalCount = res.result.totalCount;
+                    this.pageSize = res.result.pageSize;
+                    this.currentPage = res.result.currentPage;
+                }else{
+                    this.$message({
+                        duration:this.GLOBAL.MESSAGE_DISSMISS_TIME_MID,
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+                this.pageSize = val;
+                this.initloadData();
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+                this.currentPage = val;
+                this.initloadData();
+            },
+            handleIconClick(ev) {
+                console.log(ev);
+            },
+            Stateialog(state,id,orderType){
+//                if(state == 2 || state == 1 || state == 6|| state == 7|| state == 9){
+//                    this.$router.push('/indentManagementReturnDetails');
+//                }else
+//                if(state == 3 || state == 5){
+//                    this.$router.push('/indentManagementReturnDetails2');
+//                }else if(state ==4){
+//                    this.$router.push('/indentManagementPackageDetails');
+//                }else if(state == 8){
+//                    this.$router.push({path:'/indentManagementComplete',query:{orderId:id}});
+//                }
+                if(state == 1 || state == 2 ){
+                    this.$router.push('/indentManagementReturnDetails');
+                }else if(state == 5 ){
+                    this.$router.push('/indentManagementReturnDetails2');
+                }else if(state == 6){
+                    this.$router.push('/indentManagementPackageDetails');
+                }else if(state == 7 || state == 8 || state == 9){
+                    this.$router.push({path:'/indentManagementReturnDetails',query:{orderId:id}});
+                }else if(state == 99 && orderType==4){
+                    this.$router.push({path:'/indentManagementComplete',query:{orderId:id}});
+                }
+
+            },
+            async exportTableData() {
+            	for(let i=0;i<this.tableData.length;i++){
+            		let data1 = this.tableData[i];
+            		if(data1.state && data1.state == 1){
+            			data1.showState = '待配货';
+            		}else if(data1.state && data1.state == 2){
+            			data1.showState = '已配货';
+            		}else if(data1.state && data1.state == 3){
+            			data1.showState = '待确认';
+            		}else if(data1.state && data1.state == 4){
+            			data1.showState = '待收货';
+            		}else if(data1.state && data1.state == 5){
+            			data1.showState = '待付款';
+            		}else if(data1.state && data1.state == 6){
+            			data1.showState = '待入库';
+            		}
+                }
+            	const list = this.tableData;
+                const tHeader = ['订单编号', '电商卖家','订单数量','订单金额','下单时间','结算方式','状态'];
+			　　　const filterVal = ['orderNumber', 'seller','orderQuantity','orderMoney','date','clearing','showState'];
+			　　　const data = this.formatJson(filterVal, list);
+			　　　export_json_to_excel(tHeader, data, '订单管理表');
+            },
+            formatJson(filterVal, jsonData) {
+		　　　　　　return jsonData.map(v => filterVal.map(j => v[j]))
+		　　　　},
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/indentManagement';
+</style>

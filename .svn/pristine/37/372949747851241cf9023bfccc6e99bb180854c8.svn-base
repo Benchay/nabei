@@ -1,0 +1,253 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/stallProductManagement"}'>商品管理</router-link>
+            </li>
+            <li  class="menuIndex">
+                <router-link :to='{path:"/classificationGoods"}'>商品分类</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/"}'>商品统计</router-link>
+            </li>
+        </ul>
+        <div class="product">
+            <router-link :to='{path:"/classificationGoods"}' class="comeBack right">返回</router-link>
+            <div class="flex productTop">
+                <el-input
+                    size="small"
+                    placeholder="供应商搜索"
+                    icon="search"
+                    v-model="input2"
+                    :on-icon-click="handleIconClick">
+                </el-input>
+                <el-input
+                    size="small"
+                    placeholder="货号搜索"
+                    icon="search"
+                    v-model="input2"
+                    :on-icon-click="handleIconClick">
+                </el-input>
+            </div>
+            <div class="productButton" style="margin-top: 15px">
+                <a href="javascript:void(0)" class="buttonColor" @click="dialogVisible3 = true">+添加分类</a>
+                <a href="javascript:void(0)" class="buttonColor"  @click="dialogDelete = true">批量删除</a>
+                <el-select v-model="value" placeholder="分类至" style="width: 100px;" size="small">
+                    <el-option
+                        v-for="item in options"
+                        :key="item.value"
+                        :label="item.label"
+                        :value="item.value">
+                    </el-option>
+                </el-select>
+            </div>
+            <div class="productTable">
+                <p class="title">女装列表：</p>
+                <el-table
+                    :data="tableData"
+                    style="width: 100%">
+                    <el-table-column
+                        type="selection"
+                        width="55">
+                    </el-table-column>
+                    <el-table-column
+                        label="主图/货号">
+                        <template scope="scope">
+                            <div class="flex2 tableFirst">
+                                <img src="../image/111.png" alt=""  class="tableImg">
+                                <p>YH112</p>
+                            </div>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="supplier"
+                        label="供应商">
+                    </el-table-column>
+                    <el-table-column
+                        prop="type"
+                        label="类别">
+                    </el-table-column>
+                    <el-table-column
+                        prop="sellingPrice"
+                        label="销售价">
+                    </el-table-column>
+                    <el-table-column
+                        prop="inventoryNum"
+                        label="库存数">
+                    </el-table-column>
+                    <el-table-column
+                        prop="lastWeek"
+                        label="最近一周销量">
+                    </el-table-column>
+                    <el-table-column
+                        width="250"
+                        label="操作">
+                        <template scope="scope">
+                            <div class="tableFoot">
+                                <a href="javascript:void(0)" class="blue2" @click="dialogVisible = true">下架</a>
+                                <a href="javascript:void(0)" class="blue2" @click="dialogVisible2 = true">添加工厂</a>
+                                <a href="javascript:void(0)" class="blue2" @click="dialogVisible1 = true">设置仓位</a>
+                            </div>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+            <el-pagination
+                small
+                class="right"
+                style="margin-top: 20px;"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :current-page="currentPage"
+                :page-sizes="[10, 20, 30, 40]"
+                :page-size="pagesize"
+                layout="total, sizes, prev, pager, next, jumper"
+                :total="totalCount">
+            </el-pagination>
+            <a href="javascript:void(0)" class="export_excle">导出excel</a>
+        </div>
+        <el-dialog
+            title="添加分类"
+            :visible.sync="dialogVisible3"
+            size="tiny"
+            :before-close="handleClose">
+            <div>
+                <el-input
+                    placeholder="请输入分类名称..."
+                    v-model="input2"
+                    :on-icon-click="handleIconClick">
+                </el-input>
+            </div>
+            <span slot="footer" class="dialog-footer flex2">
+                <a href="javascript:void(0)" @click="dialogVisible = false" class="buttonColor">确 定</a>
+                <a href="javascript:void(0)" @click="dialogVisible = false" class="buttonColor2">取 消</a>
+              </span>
+        </el-dialog>
+        <el-dialog
+            title="产品下架"
+            :visible.sync="dialogVisible"
+            size="tiny">
+            <div>
+                是否下架该商品？
+            </div>
+            <span slot="footer" class="dialog-footer flex2">
+                <a href="javascript:void(0)" @click="dialogVisible = false" class="buttonColor">确 定</a>
+                <a href="javascript:void(0)" @click="dialogVisible = false" class="buttonColor2">取 消</a>
+              </span>
+        </el-dialog>
+        <el-dialog
+            title="设置仓位"
+            :visible.sync="dialogVisible1"
+            size="tiny">
+            <div>
+                <div class="flex2">
+                    <el-col :span="5" v-for="list in warehouseList" class="radioGreen">
+                        <el-radio class="radio" v-model="radio" :label="list.label" >{{list.list}}</el-radio>
+                    </el-col>
+                </div>
+            </div>
+            <span slot="footer" class="dialog-footer flex2">
+                <a href="javascript:void(0)" @click="dialogVisible1 = false" class="buttonColor">确 定</a>
+                <a href="javascript:void(0)" @click="dialogVisible1 = false" class="buttonColor2">取 消</a>
+              </span>
+        </el-dialog>
+        <el-dialog
+            title="添加工厂"
+            :visible.sync="dialogVisible2"
+            size="tiny">
+            <div style="width:100%;overflow: hidden">
+                <el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-width="130px">
+                    <el-col :span="24">
+                        <el-form-item label="工厂名称：">
+                            <el-input v-model="ruleForm.name"  placeholder="请输入工厂名称..."></el-input>
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="24">
+                        <el-form-item label="进价：">
+                            <el-input v-model="ruleForm.number" placeholder="请输入进货价..."></el-input>
+                        </el-form-item>
+                    </el-col>
+                </el-form>
+            </div>
+            <span slot="footer" class="dialog-footer flex2">
+                <a href="javascript:void(0)" @click="dialogVisible2 = false" class="buttonColor">确 定</a>
+                <a href="javascript:void(0)" @click="dialogVisible2 = false" class="buttonColor2">取 消</a>
+              </span>
+        </el-dialog>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                input2:'',
+                dialogVisible:false,
+                dialogVisible1:false,
+                dialogVisible2:false,
+                dialogVisible3:false,
+                tableData: [{
+                    supplier: '我是供应商xxx',
+                    type: '女装',
+                    sellingPrice:25,
+                    inventoryNum:111,
+                    lastWeek:112,
+                }],
+                form: {
+                    name: '',
+                    region: '',
+                    type: '',
+                    telephone:''
+                },
+                options: [{
+                    value: '1',
+                    label: '女装'
+                }, {
+                    value: '2',
+                    label: '男装'
+                }],
+                value: '',
+                warehouseList:[
+                    {
+                        label:1,
+                        list:'仓位1'
+                    },
+                    {
+                        label:2,
+                        list:'仓位2'},
+                    {
+                        label:3,
+                        list:'仓位3'},
+                ],
+                radio:1,
+                ruleForm: {
+                    name: '',
+                    number:'',
+                },
+
+            }
+        },
+        methods: {
+            handleIconClick(){
+                console.log(1)
+            },
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+            },
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/stallProductManagement';
+</style>

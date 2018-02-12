@@ -1,0 +1,149 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li class="menuIndex2">
+                <router-link :to='{path:"/salesReturn"}'>退货管理</router-link>
+            </li>
+        </ul>
+        <div class="sellerSettlement">
+            <router-link :to='{path:"/salesReturnDetails",query:{orderId:this.orderId}}' class="right comeBack2">返回</router-link>
+           <!-- <div class="details">
+                <el-col :span="24">
+                    <el-col :span="6">档口名称：{{stallName}}</el-col>
+                    <el-col :span="6">
+                        <div  class="flex">
+                            <p>月结</p>
+                            <p>5号</p>
+                        </div>
+                    </el-col>
+                    <el-col :span="6">状态：{{closeStutas == 0?'未结算':closeStutas == 1?'已结算':closeStutas == 2?'部分结算':''}}</el-col>
+                </el-col>
+                <el-col :span="24">
+                    <el-col :span="6">当前总欠款金额：{{totalFee}}</el-col>
+                    <el-col :span="6">已结金额：{{closeFee}}</el-col>
+                    <el-col :span="6" class="colorText">待结金额：{{totalFee-closeFee}}</el-col>
+
+                    <el-col :span="6"><router-link :to='{path:"/stallSettlementImmediately"}' class="buttonColor3">立即结算</router-link></el-col>
+                </el-col>
+            </div>-->
+            <div class="detailsTable">
+                <p class="tableTop">结算记录：</p>
+                <el-table
+                    :data="tableData"
+                    style="width: 100%">
+                    <el-table-column
+                        prop=""
+                        label="支付类型">
+                    </el-table-column>
+                    <el-table-column
+                        prop=""
+                        label="支付账户">
+                    </el-table-column>
+                    <el-table-column
+                        prop="orderFee"
+                        label="结算金额">
+                    </el-table-column>
+                    <el-table-column
+                        prop="createTime"
+                        label="结算时间"
+                        width="180">
+                    </el-table-column>
+                    <el-table-column
+                        prop="status"
+                        label="结算状态">
+                        <template scope="scope">
+                            {{scope.row.status==0?等待付款:scope.row.status==1?'付款成功':scope.row.status==2?'付款失败':scope.row.status==3?'已关闭':scope.row.status==4?'付款中':'等待确认'}}
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        label="操作">
+                        <template scope="scope">
+                            <!--<router-link :to='{path:"/salesReturnAccountsDetails",query:{id:scope.row.id}}' class="red">查看详情</router-link>-->
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+            <el-pagination
+                small
+                class="right"
+                style="margin-top: 20px;"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :page-sizes="[10, 20, 30, 40,50]"
+                :current-page="currentPage"
+                :page-size="pagesize"
+                layout="total,sizes, prev, pager, next, jumper"
+                :total="totalCount">
+            </el-pagination>
+        </div>
+    </div>
+</template>
+<script>
+    import {setStore,getStore,userInfo} from  '../config/mUtils'
+    import {querySettlementDetail} from '@/api/getData'
+
+    export default {
+        data() {
+            return {
+                tableData:[],
+                orderId:'',
+                busiCompId:'',
+                totalCount:0,
+                roleForm: {
+                    userId: '',
+                    roleId: '',
+                    compId:''
+                },
+                currentPage:1,
+                pagesize:10,
+                closeStutas:'',
+                stallName:'',
+                totalFee:0,
+                closeFee:0,
+            }
+        },
+        watch:{
+            '$route':function (route) {
+                this.orderId = this.$route.query.orderId;
+            }
+        },
+        mounted(){
+            this.roleForm.userId=userInfo().userId;
+            this.roleForm.compId = userInfo().companyId;
+            this.orderId = this.$route.query.orderId;
+            this.initData();
+        },
+
+        methods: {
+            handleSizeChange(val) {
+                this.pagesize = val;
+                this.getQueryPara();
+            },
+            handleCurrentChange(val) {
+                this.currentPage = val;
+                this.getQueryPara();
+            },
+            getQueryPara(){
+                this.tableData=[];
+                this.initData();
+            },
+         async initData(){
+             let param = {
+                 "orderId":this.orderId,
+                 "pageSize": this.pagesize,
+                 "pageIndex": this.currentPage,
+             }
+             const data  = await querySettlementDetail(param);
+             if (data.isSuccess == true){
+                 this.tableData = data.result.results;
+                 this.totalCount = data.result.results.totalCount;
+             }
+            }
+        }
+    }
+</script>
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/sellerSettlement';
+</style>

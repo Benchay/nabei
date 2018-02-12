@@ -1,0 +1,630 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li class="menuIndex3" v-if="getMenuAuthFun('menuManagement')">
+                <router-link :to='{path:"/menuManagement"}'>菜单管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('platformSettings')">
+                <router-link :to='{path:"/platformSettings"}'>平台基础配置</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('msgParamsConfig')">
+                <router-link :to='{path:"/msgParamsConfig"}'>短信参数配置</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('msgSendInterfaceConfig')">
+                <router-link :to='{path:"/msgSendInterfaceConfig"}'>短信发送接口配置</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('logManagement')">
+                <router-link :to='{path:"/logManagement"}'>日志管理</router-link>
+            </li>
+            <li >
+                <router-link :to='{path:"/inviteCode"}'>邀请码</router-link>
+            </li>
+        </ul>
+        <div class="menuManagement">
+            <div>
+                <div >
+                    <div class="menuManagementTop">
+                        <div class="left ">
+                            <el-select v-model="applicationName" placeholder="请选择所属系统" @change="switchSystem" size="small">
+                                <el-option
+                                    v-for="item in appSystem"
+                                    :key="item.value"
+                                    :label="item.label"
+                                    :value="item.value">
+                                </el-option>
+                            </el-select>
+                        </div>
+                    </div>
+                    <div class="left btn">
+                        <el-button type="primary" @click="addMenu" size="small">新增</el-button>
+                    </div>
+                </div>
+                <div class="menuInfoTable" style="">
+                    <el-table
+                        ref="multipleTable"
+                        :data="menu"
+                        tooltip-effect="dark"
+                        style="width: 100%"
+                        >
+                        <el-table-column
+                            type="selection"
+                            width="55">
+                        </el-table-column>
+                        <el-table-column
+                            prop="parentAuthName"
+                            label="所属菜单">
+                        </el-table-column>
+                        <el-table-column
+                            prop="name"
+                            label="当前菜单/按钮">
+                        </el-table-column>
+                        <el-table-column
+                            prop="method"
+                            label="跳转页面名称">
+                        </el-table-column>
+                        <el-table-column
+                            prop="type"
+                            label="类型"
+                            :formatter="setType">
+                        </el-table-column>
+                        <el-table-column
+                            prop="serialNum"
+                            label="排序"
+                            show-overflow-tooltip>
+                        </el-table-column>
+                        <el-table-column
+                            prop="isShowed"
+                            label="是否显示在下级菜单"
+                            :formatter="formatShow"
+                            show-overflow-tooltip>
+                        </el-table-column>
+                        <el-table-column
+                            prop="status"
+                            label="状态"
+                            :formatter="prepared"
+                            show-overflow-tooltip>
+                        </el-table-column>
+                        <el-table-column
+                            prop="operate"
+                            label="操作"
+                            show-overflow-tooltip>
+                            <template scope="scope">
+                                <el-button
+                                    size="small"
+                                    @click="showEdit(scope.$index)">编辑</el-button>
+                                <el-button
+                                    size="small"
+                                    type="danger"
+                                    @click="delMenu(scope.$index)">删除</el-button>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </div>
+                <el-pagination
+                    small
+                    class="right"
+                    style="margin-top: 20px;"
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :current-page="currentPage"
+                    :page-sizes="[10, 20, 30, 40]"
+                    :page-size="pageSize"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    :total="totalCount">
+                </el-pagination>
+                <a href="javascript:void(0)" class="export_excle">导出excel</a>
+                <el-dialog title="新增" :visible.sync="dialogSaveVisible" custom-class="dsaveialogSize" >
+                    <div class="edit">
+                        <el-col :span="24">
+                        </el-col>
+                        <el-col :span="24" >
+                            <el-col :span="12" class="flex2">
+                                <el-col :span="5"><span>名称：</span></el-col>
+                                <el-col :span="14">
+                                    <el-input
+                                        placeholder="请输入菜单/按钮名称"
+                                        v-model="menuName">
+                                    </el-input>
+                                </el-col>
+                            </el-col>
+                        </el-col>
+                        <el-col :span="24" style="padding-top: 20px;">
+                            <el-col :span="12" class="flex2">
+                                <el-col :span="5"><span>类型：</span></el-col>
+                                <el-col :span="14">
+                                    <el-radio-group v-model="radio1">
+                                        <el-radio :label="1">菜单</el-radio>
+                                        <el-radio :label="2" style="margin-left:10px;">按钮</el-radio>
+                                    </el-radio-group>
+                                </el-col>
+                            </el-col>
+                        </el-col>
+                        <el-col :span="24" style="padding-top: 20px;" v-show="radio1==1">
+                            <el-col :span="12" class="flex2">
+                                <el-col :span="5"><span>是否显示在下级菜单：</span></el-col>
+                                <el-col :span="14">
+                                    <el-radio-group v-model="radio2" >
+                                        <el-radio :label="0">不显示</el-radio>
+                                        <el-radio :label="1" style="margin-left:10px;">显示</el-radio>
+                                    </el-radio-group>
+                                </el-col>
+                            </el-col>
+                        </el-col>
+                        <el-col :span="24" style="padding-top: 20px;">
+                            <el-col :span="12" class="flex2">
+                                <el-col :span="5"><span>所属系统名称：</span></el-col>
+                                <el-col :span="14">
+                                    <el-select v-model="applicationName" placeholder="请选择所属系统" :disabled="true">
+                                        <el-option
+                                            v-for="item in appSystem"
+                                            :key="item.value"
+                                            :label="item.label"
+                                            :value="item.value">
+                                        </el-option>
+                                    </el-select>
+                                </el-col>
+                            </el-col>
+                        </el-col>
+                        <el-col :span="24" style="padding-top: 20px;">
+                            <el-col :span="12" class="flex2">
+                                <el-col :span="5"><span>菜单/按钮链接：</span></el-col>
+                                <el-col :span="14">
+                                    <el-input
+                                        placeholder="请输入菜单/按钮链接"
+                                        v-model="url">
+                                    </el-input>
+                                </el-col>
+                            </el-col>
+                        </el-col>
+                        <el-col :span="24" style="padding-top: 20px;">
+                            <el-col :span="12" class="flex2">
+                                <el-col :span="5"><span>菜单/按钮跳转页面：</span></el-col>
+                                <el-col :span="14">
+                                    <el-input
+                                        placeholder="请输入菜单/按钮跳转的页面名称"
+                                        v-model="method">
+                                    </el-input>
+                                </el-col>
+                            </el-col>
+                        </el-col>
+                        <el-col :span="24" style="padding-top: 20px;">
+                            <el-col :span="12" class="flex2">
+                                <el-col :span="5"><span>状态：</span></el-col>
+                                <el-col :span="14">
+                                    <el-radio-group v-model="radio">
+                                        <el-radio :label="0">禁用</el-radio>
+                                        <el-radio :label="1" style="margin-left:10px;">启用</el-radio>
+                                    </el-radio-group>
+                                </el-col>
+                            </el-col>
+                        </el-col>
+                        <div slot="footer" class="dialog-footer flex2" style="overflow: hidden;width:100%;padding-top: 20px;">
+                            <el-button type="primary" @click="addNewMenu">保存</el-button>
+                            <el-button  @click="dialogSaveVisible = false">取消</el-button>
+                        </div>
+                    </div>
+                </el-dialog>
+                <el-dialog title="编辑" :visible.sync="dialogEditVisible" custom-class="dialogSize" >
+                    <div class="edit">
+                        <el-col :span="24">
+                        </el-col>
+                        <el-col :span="24" >
+                            <el-col :span="12" class="flex2">
+                                <el-col :span="5"><span>当前菜单/按钮：</span></el-col>
+                                <el-col :span="14">
+                                    <el-input
+                                        placeholder="请输入当前菜单/按钮名称"
+                                        v-model="firstMenu">
+                                    </el-input>
+                                </el-col>
+                            </el-col>
+                        </el-col>
+                        <el-col :span="24" style="padding-top: 20px;">
+                            <el-col :span="12" class="flex2">
+                                <el-col :span="5"><span>所属系统名称：</span></el-col>
+                                <el-col :span="14">
+                                    <el-select v-model="applicationName" placeholder="请选择所属系统" :disabled="true">
+                                        <el-option
+                                            v-for="item in appSystem"
+                                            :key="item.value"
+                                            :label="item.label"
+                                            :value="item.value">
+                                        </el-option>
+                                    </el-select>
+                                </el-col>
+                            </el-col>
+                        </el-col>
+                        <el-col :span="24" style="padding-top: 20px;">
+                            <el-col :span="12" class="flex2">
+                                <el-col :span="5"><span>所属菜单：</span></el-col>
+                                <el-col :span="14">
+                                    <el-select v-model="parentAuthName" placeholder="请选择所属菜单" >
+                                        <el-option
+                                            v-for="item in parentNames"
+                                            :key="item.value"
+                                            :label="item.label"
+                                            :value="item.value">
+                                        </el-option>
+                                    </el-select>
+                                </el-col>
+                            </el-col>
+                        </el-col>
+                        <el-col :span="24" style="padding-top: 20px;">
+                            <el-col :span="12" class="flex2">
+                                <el-col :span="5"><span>排序：</span></el-col>
+                                <el-col :span="14">
+                                    <el-input
+                                        placeholder="请输入排序"
+                                        v-model="orderName">
+                                    </el-input>
+                                </el-col>
+                            </el-col>
+                        </el-col>
+                        <el-col :span="24" style="padding-top: 20px;">
+                            <el-col :span="12" class="flex2">
+                                <el-col :span="5"><span>菜单链接：</span></el-col>
+                                <el-col :span="14">
+                                    <el-input
+                                        placeholder="请输入菜单/按钮链接"
+                                        v-model="menuUrl">
+                                    </el-input>
+                                </el-col>
+                            </el-col>
+                        </el-col>
+                        <el-col :span="24" style="padding-top: 20px;">
+                            <el-col :span="12" class="flex2">
+                                <el-col :span="5"><span>菜单跳转页面：</span></el-col>
+                                <el-col :span="14">
+                                    <el-input
+                                        placeholder="请输入菜单/按钮跳转页面名称"
+                                        v-model="menuMethod">
+                                    </el-input>
+                                </el-col>
+                            </el-col>
+                        </el-col>
+                        <el-col :span="24" style="padding-top: 20px;" v-show="showed">
+                            <el-col :span="12" class="flex2">
+                                <el-col :span="5"><span>是否显示在下级菜单：</span></el-col>
+                                <el-col :span="14">
+                                    <el-radio-group v-model="isShowed">
+                                        <el-radio :label="0">不显示</el-radio>
+                                        <el-radio :label="1" style="margin-left:10px;">显示</el-radio>
+                                    </el-radio-group>
+                                </el-col>
+                            </el-col>
+                        </el-col>
+                        <el-col :span="24" style="padding-top: 20px;">
+                            <el-col :span="12" class="flex2">
+                                <el-col :span="5"><span>状态：</span></el-col>
+                                <el-col :span="14">
+                                    <el-radio-group v-model="radio">
+                                        <el-radio :label="0">禁用</el-radio>
+                                        <el-radio :label="1" style="margin-left:10px;">启用</el-radio>
+                                    </el-radio-group>
+                                </el-col>
+                            </el-col>
+                        </el-col>
+                        <div slot="footer" class="dialog-footer flex2" style="overflow: hidden;width:100%;padding-top: 20px;">
+                            <el-button type="primary" @click="saveInfo">确定</el-button>
+                            <el-button  @click="dialogEditVisible = false">取消</el-button>
+                        </div>
+                    </div>
+                </el-dialog>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {queryFirstMenu,queryChildMenu,deleteMenu,queryApplications,queryPrimaryMenu,addNemMenuInfo} from '@/api/getData'
+    import {mapActions, mapState} from 'vuex'
+    import {formatDate} from '../utils/date.js'
+    import {getMenuAuth,haveMenuAuth} from  '../utils/AuthMenu.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                firstMenu:'',
+                applicationName:'',
+                appSystem:[],
+                orderName:'',
+                menuUrl:'',
+                dialogEditVisible:false,
+                dialogSaveVisible:false,
+                menu:[],
+                radio:0,
+                radio1:1,
+                radio2:0,
+                currentPage:1,
+                pageSize:10,
+                totalCount:0,
+                //默认高亮行数据id
+                highlightId: -1,
+                multipleSelection: [],
+                application:[],
+                appName:'',
+                parentAuthName:'',
+                parentNames:[],
+                menuName:'',
+                url:'',
+                id:'',
+                method:'',
+                menuMethod:'',
+                isShowed:0,
+            }
+        },
+        mounted(){
+            this.queryApplication();//获取应用
+            let param = {"applicationId":'',"pageIndex":this.currentPage,"pageSize":this.pageSize};//默认查询的是档口
+            this.loadData(param);
+        },
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+                this.pageSize = val;
+                let param = {
+                    "applicationId":this.applicationName,
+                    "pageIndex":this.currentPage,
+                    "pageSize":val
+                };
+                this.loadData(param);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+            },
+            async queryApplication(){
+                    const res = await queryApplications();
+                    if(res.isSuccess){
+                        let table = res.result.data;
+                        for(let i = 0 ;i<table.length;i++){
+                            let param = {
+                                "label":table[i].name,
+                                "value":table[i].id
+                            };
+                            this.appSystem.push(param);
+                        }
+                    }
+            },
+            showed(){
+                if(this.menu[index].type=="1"){
+                    return true;
+                }else if(this.menu[index].type=="2"){
+                    return false;
+                }
+            },
+            async switchSystem(){
+                let param = {
+                    "applicationId":this.applicationName,
+                    "pageIndex":this.currentPage,
+                    "pageSize":this.pageSize
+                };
+                this.loadData(param);
+            },
+
+             async queryMenu(params,index){
+                const res = await queryPrimaryMenu(params);
+                if(res.isSuccess){
+                    let table = res.result.data;
+                    for(let i = 0 ;i<table.length;i++){
+                        let param = {
+                            "label":table[i].name,
+                            "value":table[i].id
+                        };
+                        this.parentNames.push(param);
+                    }
+                    let table1 = [];
+                    for(let i = 0 ;i<this.parentNames.length;i++){
+                        if(this.menu[index].id!=this.parentNames[i].value){
+                            table1.push(this.parentNames[i]);
+                        }
+                    }
+                    this.parentNames = table1;
+
+                }
+            },
+
+            handleCurrentChange:function(val){
+                this.currentPage = val;
+                let param = {
+                    "applicationId":this.applicationName,
+                    "pageIndex":this.currentPage,
+                    "pageSize":this.pageSize
+                };
+                this.loadData(param);
+            },
+            showEdit(index){
+                this.parentNames = [];
+                let params = {
+                    "applicationId":this.applicationName
+                };
+                this.queryMenu(params,index);
+
+                this.dialogEditVisible = true;
+                this.firstMenu = this.menu[index].name;
+                this.orderName = this.menu[index].serialNum;
+                this.menuUrl = this.menu[index].funPath;
+                this.id = this.menu[index].id;
+                this.parentAuthName = this.menu[index].parentAuthId;
+                this.menuMethod = this.menu[index].method;
+                this.isShowed = this.menu[index].isShowed;
+                if(this.menu[index].status){
+                    this.radio = 1;
+                }else{
+                    this.radio = 0;
+                }
+
+            },
+            handleSelectionChange(val) {
+                this.multipleSelection = val;
+            },
+            async loadData(param){
+                const res = await queryFirstMenu(param);
+                if(res.isSuccess){
+                    this.menu = res.result.data;
+                    this.applicationName = this.menu[0].applicationId;
+                    this.totalCount = res.result.totalCount;
+                }
+            },
+            addMenu(){
+                this.dialogSaveVisible = true;
+                this.menuName = '';
+                this.url = '';
+                this.method = '';
+            },
+            //添加新菜单
+            async addNewMenu(){
+                if(this.menuName==undefined||this.menuName==''){
+                    this.$message({
+                        type:'error',
+                        message:'菜单名称不能为空'
+                    });
+                    return ;
+                }
+                if(this.applicationName==undefined||this.applicationName==''){
+                    this.$message({
+                        type:'error',
+                        message:'所属系统不能为空，请在新增之前选择'
+                    });
+                    return ;
+                }
+                if(this.url==undefined||this.url==''){
+                    this.$message({
+                        type:'error',
+                        message:'菜单链接不能为空'
+                    });
+                    return ;
+                }
+                if(this.method==undefined||this.method==''){
+                    this.$message({
+                        type:'error',
+                        message:'菜单跳转页面名称不能为空'
+                    });
+                    return ;
+                }
+                let param = {
+                    "name":this.menuName,
+                    "type":this.radio1,
+                    "applicationId":this.applicationName,
+                    "funPath":this.url,
+                    "status":this.radio,
+                    "method":this.method,
+                    "isShowed":this.radio2
+                };
+                const res = await addNemMenuInfo({authvo:param});
+                if(res.isSuccess){
+                    this.$message({
+                        type:'info',
+                        message:res.result.msg
+                    });
+                    this.dialogSaveVisible = false;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            //更新菜单
+            async saveInfo(){
+                let param = {
+                    "id":this.id,
+                    "name":this.firstMenu,
+                    "applicationId":this.applicationName,
+                    "parentAuthId":this.parentAuthName,
+                    "serialNum":this.orderName,
+                    "status":this.radio,
+                    "funPath":this.menuUrl,
+                    "method":this.menuMethod,
+                    "isShowed":this.isShowed
+                };
+                const res = await addNemMenuInfo({authvo:param});
+                if(res.isSuccess){
+                    this.$message({
+                        type:'info',
+                        message:res.result.msg
+                    });
+                    this.dialogEditVisible = false
+                }else{
+                    this.$message({
+                        type:'error',
+                        message:res.errorMsg
+                    });
+                }
+            },
+            prepared:function(row,column){
+                let data = row[column.property];
+                if(data==0){
+                    data = '禁用';
+                }else if(data==1){
+                    data = '启用';
+                }
+                return data;
+            },
+            formatShow:function(row,column){
+                let data = row[column.property];
+                if(data==0){
+                    data = '不显示';
+                }else if(data==1){
+                    data = '显示';
+                }
+                return data;
+            },
+            preparedData:function(val){
+                if(val==1){
+                    val = '禁用';
+                }else if(val==0){
+                    val = '启用';
+                }
+                return val;
+            },
+            setType:function(row,column){
+                let data = row[column.property];
+                if(data==1){
+                    data = '菜单';
+                }else if(data==2){
+                    data = '按钮';
+                }
+                return data;
+            },
+            delMenu(val){
+                this.dialogDelete = true;
+                this.$confirm('是否强制删除该条菜单?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    this.deleteRow(val);
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消删除'
+                    });
+                });
+            },
+            async deleteRow(val){
+                let param = {"authId":this.menu[val].id,"forced":true};
+                const res = await deleteMenu(param);
+                if(res.isSuccess){
+                    this.$message({
+                        type:'info',
+                        message:res.result.msg
+                    });
+                }
+            },
+        },
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/menuManagement';
+</style>

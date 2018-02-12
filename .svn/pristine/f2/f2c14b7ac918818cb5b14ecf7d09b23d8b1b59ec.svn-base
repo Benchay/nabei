@@ -1,0 +1,259 @@
+.remainingSum{
+    margin:0 30px;
+    background: #fff;
+    padding: 20px 40px;
+    .tabs{
+        button{
+            width:80px;
+        }
+        .tabs{
+            background: @blue;
+            color:#fff;
+        }
+    }
+    .tabsList{
+        color:#333;
+        margin-top: 20px;
+        justify-content: center;
+        .recharge{
+            width:830px;
+            height:556px;
+            .tit{
+                background:#eee;
+                height: 40px;
+                line-height: 40px;
+                padding-left: 20px;
+                margin-bottom: 30px;
+                span{
+                    margin:0 50px 0 60px;
+                    color:@orange;
+                }
+                .tit2{
+                    font-size: 12px;
+                    color:#999;
+                }
+            }
+            .payelect{
+                ul{
+                    width:100%;
+                    li{
+                        margin: 0 3px 30px 3px;
+                        float: left;
+                        width:23.7%;
+                        height:36px;
+                        line-height: 36px;
+                        text-align: center;
+                        border:1px solid #ddd;
+                    }
+                }
+                .pays{
+                    background: #eee;
+                }
+                .payContent{
+                    .payList{
+                        width:100%;
+                        height:122px;
+                        .tx{
+                            width:100px;
+                            text-align: right;
+                        }
+                        .payTx{
+                            justify-content: center;
+                            margin-top: 20px;
+                            .zfbPay2{
+                                .zfbInput{
+                                    width:270px;
+                                    display: inline-block;
+                                    //padding-left: 20px;
+                                }
+                                span{
+                                    margin-left: 5px;
+                                }
+                            }
+
+                        }
+                        .txfs{
+                            margin-top: 20px;
+                            justify-content: center;
+                            .zfbPay3{
+                                justify-content: center;
+                                .lable1{
+                                    margin-right: 50px;
+                                }
+
+                            }
+                        }
+                        .zfbInput1{
+                            margin-left: 50px;
+                            width:200px;
+                            display: inline-block;
+                        }
+                    }
+                    .zfbPay{
+                        display: inline-block;
+                        .zfbRedio{
+                            width: 130px;
+                            margin-bottom: 30px;
+                            height:30px;
+                            line-height: 30px;
+                        }
+                        .zfbRedio:last-child{
+                            width: 220px;
+                        }
+                        .zfbPay2{
+                            .zfbInput{
+                                width:170px;
+                                display: inline-block;
+                            }
+                            span{
+                                margin-left: 5px;
+                            }
+                        }
+
+                    }
+                    .zfbButton{
+                        justify-content: center;
+                        margin-top: 50px;
+                        margin-bottom: 15px;
+                        button{
+                            margin-right: 30px;
+                        }
+                    }
+                    .EbankButton{
+                        justify-content: center;
+                        margin-bottom: 20px;
+                        button{
+                            margin-right: 30px;
+                        }
+                    }
+                    .payTip{
+                        font-size: 12px;
+                        overflow: hidden;
+                        width:100%;
+                        p{
+                            margin-bottom: 10px;
+                            margin-left: 20px;
+                        }
+                        span{
+                            color:@orange;
+                        }
+                        P:first-child{
+                            margin-left: 0;
+                        }
+                    }
+                    .payTip2{
+                        font-size: 12px;
+                        padding-top: 50px;
+                        span{
+                            color:@orange;
+                        }
+
+                    }
+                    .payTip3{
+                        overflow: hidden;
+                        width:100%;
+                        font-size: 12px;
+                        padding-top: 110px;
+                        span{
+                            color:@orange;
+                        }
+                        p{
+                            margin-bottom: 10px;
+                            margin-left: 20px;
+                        }
+                        P:first-child{
+                            margin-left: 0;
+                        }
+
+                    }
+                }
+
+            }
+            .Ebank{
+                .tip{
+                    color:@red;
+                    font-size: 12px;
+                    margin-left: 5px;
+                }
+
+            }
+            .EbankButton{
+                width:100%;
+                padding-top: 20px;
+            }
+            .Ebank>div{
+                height: 60px;
+            }
+        }
+        .withdraw{
+            .payList{
+                height:322px;
+            }
+        }
+        .Transfer{
+            .TransferList{
+                .title{
+                    font-size: 13px;
+                    width:120px;
+                    text-align: right;
+                    margin-right: 20px;
+                }
+                .ZZButton{
+                    justify-content: center;
+                    margin-top: 20px;
+                    margin-bottom: 20px;
+                    button{
+                        margin-right: 30px;
+                    }
+                }
+                .TransferLi{
+                    margin-bottom: 20px;
+                    input{
+                        width: 210px;
+                    }
+                    .TransferWay{
+                        width: 200px;
+                        margin-left:0;
+                    }
+                }
+            }
+        }
+    }
+    .tabsList{
+        .transfer{
+            width:830px;
+            height:556px;
+        }
+        .goldCont{
+            height: 700px;
+        }
+    }
+    .avatar-uploader .el-upload {
+        border: 1px dashed #d9d9d9;
+        border-radius: 6px;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        margin-top: 5px;
+    }
+    .avatar-uploader .el-upload:hover {
+        border-color: #20a0ff;
+    }
+    .avatar-uploader-icon {
+        font-size: 28px;
+        color: #8c939d;
+        width: 88px;
+        height: 88px;
+        line-height: 88px;
+        text-align: center;
+    }
+    .avatar {
+        width: 88px;
+        height: 88px;
+        display: block;
+    }
+    .EbankSelect{
+        width:400px;
+        display: inline-block;
+    }
+}

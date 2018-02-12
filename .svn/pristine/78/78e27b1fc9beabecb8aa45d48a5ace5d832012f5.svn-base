@@ -1,0 +1,235 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('fastShipping2')">
+                <router-link :to='{path:"/fastShipping2"}'>快速出货</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('indentManagement')">
+                <router-link :to='{path:"/indentManagement"}'>订单管理</router-link>
+            </li>
+            <li class="menuIndex" v-if="getMenuAuthFun('takeGoods')">
+                <router-link :to='{path:"/takeGoods"}'>取货码</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('sellerSettlement')">
+                <router-link :to='{path:"/sellerSettlement"}'>客户结算</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('SettlementRecordsStall')">
+                <router-link :to='{path:"/SettlementRecordsStall"}'>结算单</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('customerManagement')">
+                <router-link :to='{path:"/customerManagement"}'>客户管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('statisticalStatement')">
+                <router-link :to='{path:"/statisticalStatement"}'>销售统计</router-link>
+            </li>
+        </ul>
+        <div class="takeGoods radioGreen">
+            <el-col :span="11" class="isLeft">
+                <el-col :span="24" class="flex2 leftTop">
+                    <el-input
+                    placeholder="请输入取件码"
+                    size="large"
+                    v-model="pickUpCode"
+                    style="width: 400px;">
+                </el-input>
+                </el-col>
+                <el-col :span="24" class="flex2">
+                    <el-button class="buttonColor leftButton flex2" @click="packageInquire">查询</el-button>
+                </el-col>
+            </el-col>
+            <el-col :span="13" class="isRight">
+                <div class="rightContent" v-if="isSuccessShow" >
+                   <div class="first flex">
+                       <img :src="ownerCompanyLogo" alt="">
+                       <p>卖家名称：{{ownerCompanyName}}</p>
+                       <div class="flex">
+                           <p v-bind:class="[this.SettmentDayType==1?'weekSettlement':this.SettmentDayType==2?'monthSettlement':'cashSettlement']" v-if="this.SettmentDayType!=undefined">{{SettmentDayType === 1?'周结':SettmentDayType === 2?'月结':'现结'}}</p>
+                           <span>{{settlementDay}}</span>
+                       </div>
+                   </div>
+                    <div class="second">
+                        <p style="width:100%;">当前包裹编号：{{packagecode}} <router-link :to='{path:"/indentManagementPortionPicking",query:{orderId:this.orderId,packageId:this.packageId}}' class="blue2 right">查看详情</router-link></p>
+                        <p>当前商品总数：{{productNum}}</p>
+                        <p>当前包裹总金额：{{sumFee}}</p>
+                        <p>当前包裹状态：{{currPackageLogState == -1?'未打包':currPackageLogState == 0?'已打包':currPackageLogState == 1?'已拿货':currPackageLogState == 2?'装车':currPackageLogState == 21?'卸车':currPackageLogState == 3?'已拿货':currPackageLogState == 4?'退回':''}}</p>
+                    </div>
+                    <div class="flex2" v-if="haveMenuAuthFun('takeGoods',1)">
+                        <el-button size="large" :class="{'buttonColor':isOut,'buttonColor2': !isOut}" class="leftButton flex2" @click="affirmShipment" :disabled="disabled1">确认出货</el-button>
+                    </div>
+                    <p class="last">（还剩{{totalCount}}个包裹未领取！）</p>
+                </div>
+            </el-col>
+        </div>
+    </div>
+</template>
+
+<script>
+    import {loadByPickupCode,updatePackgeStatus,queryPackage} from '@/api/getData'
+    import {userInfo,getStore,setStore} from  '../config/mUtils'
+    import {getMenuAuth,haveMenuAuth} from  '../utils/AuthMenu.js'
+
+    export default {
+        components: {
+        },
+        data() {
+            return{
+                isOut:true,
+                disabled1:false,
+                pickUpCode:'',
+                isSuccessShow:false,
+                packagecode:'',
+                packageId:'',
+                companyName:'',
+                ownerCompanyName:'',
+                productNum:'',
+                sumFee:'',
+                image:'',
+                currPackageLogState:'',
+                SettmentDayType:'',
+                settlementDay:'',
+                ownerCompanyLogo:'',
+                orderId:'',
+                totalCount:'',
+                roleForm: {
+                    userId: '',
+                    roleId: '',
+                    compId:''
+                },
+
+            }
+        },
+        mounted() {
+
+
+        },
+        methods:{
+        	haveMenuAuthFun(pathName, mode){
+        		return haveMenuAuth(pathName, mode);
+        	},
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            async packageInquire(){
+                this.disabled1 = false;
+                this.isSuccessShow = false;
+        	    if(this.pickUpCode == ''){
+                    this.$message({
+                        type: 'error',
+                        message: '请输入取货码'
+                    });
+                    return;
+                }else  if(isNaN(this.pickUpCode)) {
+                    this.$message({
+                        type: 'error',
+                        message: '取货码不能包含字母 空格 字符'
+                    });
+                    return;
+                }
+                this.roleForm.userId=userInfo().userId;
+                this.roleForm.compId = userInfo().companyId;
+                this.companysValue=this.roleForm.compId;
+                let param ={
+                    "companyId":this.roleForm.compId,
+                    "pickUpCode":this.pickUpCode,
+                };
+                const res = await loadByPickupCode(param);
+                if (res.isSuccess) {
+                    this.isSuccessShow = true;
+                   let data = res.result;
+                   this.packagecode = data.packageCode;
+                   this.packageId=data.id;
+                   this.companyName =data.companyName;
+                   this.ownerCompanyName = data.ownerCompanyName;
+                   this.currPackageLogState = data.currPackageLogState;
+                   this.productNum = data.productNum;
+                   this.image = data.img;
+                    this.orderId = data.orderId;
+                    this.ownerCompanyLogo = data.ownerCompanyLogo;
+                   if(data.ownerCompanySettmentDay&&data.ownerCompanySettmentDay.settlementType&&data.ownerCompanySettmentDay.settlementDay){
+                       this.SettmentDayType = data.ownerCompanySettmentDay.settlementType;
+                       this.settlementDay = data.ownerCompanySettmentDay.settlementDay;
+                   }else{
+                        this.SettmentDayType = 0;
+                        this.settlementDay = '';
+                    }
+
+
+                    if(this.SettmentDayType == 1){
+                        if(this.settlementDay==1){
+                            this.settlementDay = '周一';
+                        }else if(this.settlementDay == 2){
+                            this.settlementDay = '周二';
+                        }else if(this.settlementDay == 3){
+                            this.settlementDay = '周三';
+                        }else if(this.settlementDay == 4){
+                            this.settlementDay = '周四';
+                        }else if(this.settlementDay == 5){
+                            this.settlementDay = '周五';
+                        }else if(this.settlementDay == 6){
+                            this.settlementDay = '周六';
+                        }else if(this.settlementDay == 7){
+                            this.settlementDay = '周日';
+                        }
+
+                    }else if(this.SettmentDayType == 2){
+                        this.settlementDay =this.settlementDay+'号';
+                    }
+                    if(this.currPackageLogState == 1){
+                        this.disabled1 = true;
+                    };
+                    if (this.currPackageLogState != 3) {
+                        this.isOut = true;
+                    }else{
+                        this.isOut = false;
+                    };
+                     if(data.sumFee){
+                			data.sumFee = Number(data.sumFee).toFixed(2);
+                     }
+                        this.sumFee = data.sumFee;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+                //剩余包裹数量查询
+                let param1 = {
+                    "currPackageLogState":0,
+                    "orderId":this.orderId
+                };
+                const num = await queryPackage(param1);
+                if (num.isSuccess == true) {
+                    this.totalCount = num.result.totalCount;
+                };
+            },
+            async affirmShipment(){
+                let param={
+                //    "status":1,
+                   "packageId":this.packageId
+                };
+                const res = await updatePackgeStatus(param);
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: res.result.msg
+                    });
+                	this.disabled1 = true;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+                this.packageInquire()
+            }
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/fastShipping2';
+
+</style>

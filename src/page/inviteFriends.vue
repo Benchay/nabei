@@ -1,0 +1,150 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <a href="javascript:void(0);">邀请好友</a>
+            </li>
+        </ul>
+        <div class="inviteContent">
+            <el-input
+                placeholder="用户搜索"
+                icon="search"
+                v-model="userName"
+                :on-icon-click="loadInviteUserData"
+                style="width:200px;margin: 10px;">
+            </el-input>
+            <el-col :span="24" style="text-align: center;display: block;margin:10px 20%;">
+                <el-col :span="12" style="background: #eee;text-align: center;">
+                    <span>邀请链接:</span>
+                    <el-input id="cpLink"
+                        v-model="inviteUrl"
+                        :closable="true"
+                        :on-icon-click="handleIconClick"
+                        style="width:400px;margin: 10px;">
+                        <i class="el-icon-circle-close"></i>
+                    </el-input>
+                    <span @click="copyLink()">复制</span>
+                </el-col>
+            </el-col>
+            <div style="padding: 0 10px;">
+                <el-table
+                    :data="tableData"
+                    style="width: 100%">
+                    <el-table-column
+                        prop="id"
+                        label="编号"
+                        width="400">
+                    </el-table-column>
+                    <el-table-column
+                        prop="userName"
+                        label="被邀请人"
+                        width="300">
+                    </el-table-column>
+                    <el-table-column
+                        prop="createTime"
+                        label="注册时间"
+                        :formatter="mydateFormat">
+                    </el-table-column>
+                </el-table>
+                <el-pagination
+                    small
+                    class="right"
+                    style="margin-top: 20px;"
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :current-page="currentPage"
+                    :page-sizes="[10, 20, 30, 40]"
+                    :page-size="pageSize"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    :total="totalCount">
+                </el-pagination>
+                <a href="javascript:void(0)" class="export_excle">导出excel</a>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {getStore} from  '../config/mUtils'
+    import {queryUser} from '@/api/getData'
+    import {mydateFormat} from '../utils/dataFormater.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                //默认每页数据量
+                pageSize: 10,
+
+                //当前页码
+                currentPage: 1,
+
+                //查询的页码
+                start: 1,
+
+                //默认数据总数
+                totalCount: 0,
+                
+                userName: '',
+                tableData: [],
+                userId:'',
+                inviteUrl:'',
+            }
+        },
+        mounted(){
+        	var vjson = JSON.parse(getStore("user_info_user"));
+        	this.userId = vjson.id;
+        	this.inviteUrl = 'http://192.168.0.123:8002/register?inviteUserId='+this.userId;
+        	this.loadInviteUserData();
+        },
+        methods: {
+            copyLink: function () {
+                var cpLink = document.getElementById("cpLink");
+                var url = cpLink.getElementsByTagName("input")[0];
+                url.select();
+                document.execCommand("copy");
+                this.$message.success('复制成功!');      
+            },
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+            },
+            handleIconClick(ev) {
+                console.log(ev);
+            },
+            async loadInviteUserData(){
+            	if(this.userId == ''){
+            		this.$message({
+                        type: 'error',
+                        message: '登录信息未获取，请重新登录。'
+                    });
+                    return;
+            	}
+            	let params = {
+            		inviteUserId:this.userId,
+            		userName:this.userName,
+            		pageIndex:this.currentPage,
+            		pageSize:this.pageSize
+            	};
+                const res = await queryUser(params);
+                if(res.isSuccess){
+                    this.tableData = res.result.data.results;
+                    this.totalCount = res.result.data.totalCount;
+                }
+            },
+            getStore,
+            mydateFormat,
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin.less';
+    @import '../style/common.less';
+    @import '../style/inviteFriends';
+</style>

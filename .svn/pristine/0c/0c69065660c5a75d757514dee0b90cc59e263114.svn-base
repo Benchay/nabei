@@ -1,0 +1,135 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li class="menuIndex2">
+                <router-link :to='{path:"/salesReturn"}'>退货</router-link>
+            </li>
+        </ul>
+        <div class="returnsAffirm">
+            <router-link :to='{path:"/salesReturn"}' class="right comeBack2">返回</router-link>
+            <div class="affirmButtom">
+                <a href="javascript:void(0)"  class="buttonColor3" @click="returnsAffirmDialog = true">确认退货</a>
+            </div>
+            <div class="returnsAffirmTable">
+                <table width="100%" border="0" cellpadding="0" cellspacing="0" class="tableFirst">
+                    <tr>
+                        <td>主图/货号</td>
+                        <td>颜色</td>
+                        <td>尺码</td>
+                        <td>单价</td>
+                        <td>数量</td>
+                        <td>备注</td>
+                    </tr>
+                </table>
+                <div class="tableHead">
+                    <!--表头-->
+                    <table width="100%" border="0" cellpadding="0" cellspacing="0" class="buyTable">
+                        <tr>
+                            <th colspan="3" class="flex unfinisdhedFirst"><span style="width: 80px;">我是档口名称1</span></th>
+                            <th>采购数量：15</th>
+                            <th>总金额：3200.00</th>
+                        </tr>
+                    </table>
+                    <!--表格内容-->
+                    <div class="tableContent2">
+                        <table width="100%" border="0" cellpadding="0" cellspacing="0" class="buyTable2">
+                            <tr>
+                                <td>
+                                    <div class="tdFirst">
+                                        <img class="buyImg1" src="../image/111.png" alt="">
+                                        <div>MG110</div>
+                                    </div>
+                                </td>
+                                <td>白色</td>
+                                <td>XL</td>
+                                <td>250.00</td>
+                                <td>25</td>
+                                <td class="remark">
+                                    <el-input
+                                        type="textarea"
+                                        :rows="2"
+                                        v-model="textarea">
+                                    </el-input>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                </td>
+                                <td>白色</td>
+                                <td>XL</td>
+                                <td>250.00</td>
+                                <td>25</td>
+                                <td class="remark">
+                                    <el-input
+                                        type="textarea"
+                                        :rows="2"
+                                        v-model="textarea">
+                                    </el-input>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <el-pagination
+                small
+                class="right"
+                style="margin-top: 20px;"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :current-page="currentPage4"
+                :page-sizes="[100, 200, 300, 400]"
+                :page-size="100"
+                layout="total, sizes, prev, pager, next, jumper"
+                :total="400">
+            </el-pagination>
+            <a href="javascript:void(0)" class="export_excle">导出excel</a>
+        </div>
+        <el-dialog
+            title=""
+            :visible.sync="returnsAffirmDialog"
+            size="tiny">
+            <div class="flex2 returnsAffirmDialog">
+                <img src="../image/correct.png" alt="">
+                <p>下单成功，等待档口签收！</p>
+            </div>
+        </el-dialog>
+    </div>
+</template>
+<script>
+    import headTop from '../components/headTop'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                textarea:'',
+                currentPage4:4,
+                returnsAffirmDialog:false,
+            }
+        },
+        methods: {
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+            },
+        },
+        created () {
+            this.intervalid1 = setInterval(() => {
+                this.returnsAffirmDialog = false;
+            }, 5000)
+        },
+        beforeDestroy(){
+            clearInterval(this.intervalid1)
+        },
+    }
+</script>
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/salesReturn';
+</style>

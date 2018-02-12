@@ -1,0 +1,507 @@
+<template>
+    <div class="manage_page fillcontain">
+        <el-row class="manage-content">
+            <el-col :span="24">
+                <el-col :span="4">
+                    <div class=" manage-logo">
+                        <img src="../image/logo_m.png" alt="" v-if="identity ==2">
+                        <img src="../image/logo_d.png" alt="" v-if="identity ==1">
+                        <img src="../image/logo_y.png" alt="" v-if="identity ==3">
+                    </div>
+                </el-col>
+                <el-col :span="identity_length" class="manage-company">
+                    <el-select v-model="companysValue" placeholder="请选择公司" @change="changeValue">
+                        <el-option v-for="item in userInfoList.companys" :key="item.id" :label="item.name" :value="item.id">
+                        </el-option>
+                    </el-select>
+                </el-col>
+                <!--卖家不显示仓库-->
+                <el-col :span="3" class="manage-company" v-if="identity==this.GLOBAL.COMPANY_TYPE_STALL">
+                    <el-select v-model="warehouseId" placeholder="请选择仓库"  @change="changeWarehouse">
+                        <el-option v-for="item in warehouseList" :key="item.id" :label="item.name" :value="item.id"></el-option>
+                    </el-select>
+                </el-col>
+                <el-col :span="9">
+                    <ul class="manage-top-menu right">
+                        <li>
+                            <el-popover
+                                ref="popover1"
+                                visible-arrow="false"
+                                placement="top-start"
+                                width="200"
+                                popper-class="helpPopover"
+                                trigger="hover">
+                                <template>
+                                    <div class="helpFirst">
+                                        <p class="tit">帮助中心</p>
+                                        <p>有问题？马上为您解答。</p>
+                                        <p @click="helpChose"><a href="javascript:void(0)">进入》</a></p>
+                                    </div>
+                                    <div class="helpSecond">
+                                        <p class="tit">联系方式</p>
+                                        <p class="flex">客服01：<a target="_blank" href="http://wpa.qq.com/msgrd?v=3&uin=204345085&site=qq&menu=yes" class="flex2"><img border="0" src="http://wpa.qq.com/pa?p=2:204345085:51" alt="点击这里给我发消息" title="点击这里给我发消息"/></a></p>
+                                        <p class="flex">客服02：<a target="_blank" href="http://wpa.qq.com/msgrd?v=3&uin=3172426073&site=qq&menu=yes" class="flex2"><img border="0" src="http://wpa.qq.com/pa?p=2:3172426073:51" alt="点击这里给我发消息" title="点击这里给我发消息"/></a></p>
+                                        <p>客服电话：0592-5523549</p>
+                                    </div>
+                                </template>
+                            </el-popover>
+                            <a href="javascript:void(0)" class="topMenuLists" v-popover:popover1>
+                                <img src="../assets/img/thelp.png" alt=""><span>帮助</span>
+                            </a>
+                        </li>
+                        <li>
+                            <router-link :to='{path:"/inviteFriends"}' class="topMenuLists">
+                                <img src="../assets/img/tinvite.png" alt=""><span>邀请好友</span>
+                            </router-link>
+                        </li>
+                        <li>
+                            <router-link :to='{path:"/messageCenter"}' class="topMenuLists">
+                                <img src="../assets/img/tmessage.png" alt=""><span>消息中心</span>
+                            </router-link>
+                        </li>
+                    </ul>
+                </el-col>
+                <el-col :span="4">
+                    <el-dropdown @command="handleCommand" menu-align='start' style="margin-top: 10px;" class="hand-user right">
+                        <img :src="picPath" :onerror="defaultUserPic" class="avator" v-if="this.picPath != ''">
+                        <img src="../image/icon0111.png"  class="avator" alt="" v-else="">
+                        <span>{{userInfoList.userName}}</span>
+                        <img src="../image/texit01.png" alt="" class="handOut" @click="singout">
+                        <el-dropdown-menu slot="dropdown">
+                            <el-dropdown-item command="manageRole">角色管理</el-dropdown-item>
+                            <el-dropdown-item command="manageStaff">员工管理</el-dropdown-item>
+                            <el-dropdown-item command="user">个人中心</el-dropdown-item>
+                        </el-dropdown-menu>
+                    </el-dropdown>
+                </el-col>
+            </el-col>
+        </el-row>
+        <el-row style="height:100%;">
+            <el-col :span=isCollapse?1:4  style="min-height: 100%; background-color: #324057;">
+                <div width="100%" v-model="isCollapse" class="button-left">
+                    <div class="right">
+                        <i @click="closeMenu" class="icon"  v-bind:class="{ 'iconRight': iconRight1,'iconLeft': iconLeft1}"></i>
+                    </div>
+                </div>
+                <el-menu default-active="1-4-1" class="el-menu-vertical-demo manageList" :collapse="isCollapse" theme="dark" router>
+                    <!--此处为动态菜单 配置数据库即可生效-->
+                    <div v-for="(authitem,index) in authsList">
+                        <el-submenu v-if="(authitem.type==1 && authitem.level==0  && authitem.bhaveSub)"  :index="index" >
+                            <template slot="title">
+                                <div class="manage-menu">
+                                    <i :class="authitem.iconClass"></i>
+                                    <span slot="title">{{authitem.label}}</span>
+                                </div>
+                            </template>
+                            <!--菜单栏仅显示一级
+                            <div v-for="item in authitem.children">
+                                <el-menu-item :index="item.index"  >{{item.label}}</el-menu-item>
+                            </div>-->
+                        </el-submenu>
+                        <div  v-if="(authitem.type==1 && authitem.level==0  && !authitem.bhaveSub)" >
+                            <el-menu-item :index="authitem.index">
+                                <i :class="authitem.iconClass"></i>
+                                <span slot="title" style="text-indent: 10px;">{{authitem.label}}{{authitem.method}}</span>
+                            </el-menu-item>
+                        </div>
+                    </div>
+
+
+                   <!--<el-menu-item index="homeSeller">
+                        <i class="icon-home icon"></i>
+                        <span slot="title" style="text-indent: 10px;">首页</span>
+                    </el-menu-item>
+
+                    <el-menu-item index="homeStall">
+                        <i class="icon-home icon"></i>
+                        <span slot="title" style="text-indent: 10px;">首页</span>
+                    </el-menu-item>
+
+                    <el-menu-item index="stallProductManagement">
+                        <i class="icon-commodity icon"></i>
+                        <span slot="title" style="text-indent: 10px;">商品管理</span>
+                    </el-menu-item>
+                    <el-menu-item index="fastShipping2">
+                        <i class="icon-commodity icon"></i>
+                        <span slot="title" style="text-indent: 10px;">销售管理</span>
+                    </el-menu-item>
+                    <el-menu-item index="sellReturn">
+                        <i class="icon-commodity icon"></i>
+                        <span slot="title" style="text-indent: 10px;">销售退货</span>
+                    </el-menu-item>
+                    <el-menu-item index="stallProcurement">
+                        <i class="icon-procurement icon"></i>
+                        <span slot="title" style="text-indent: 10px;">采购管理</span>
+                    </el-menu-item>
+
+                    <el-menu-item index="webStoreOrderSalesBuy">
+                        <i class="icon-procurement icon"></i>
+                        <span slot="title" style="text-indent: 10px;">采购管理</span>
+                    </el-menu-item>
+
+                    <el-menu-item index="salesReturn">
+                        <i class="icon-procurement icon"></i>
+                        <span slot="title" style="text-indent: 10px;">退货管理</span>
+                    </el-menu-item>
+
+                    <el-menu-item index="stallManage">
+                        <i class="icon-procurement icon"></i>
+                        <span slot="title" style="text-indent: 10px;">档口管理</span>
+                    </el-menu-item>
+
+                    <el-menu-item index="commodityMnagement">
+                        <i class="icon-commodity icon"></i>
+                        <span slot="title" style="text-indent: 10px;">商品管理</span>
+                    </el-menu-item>
+
+                    <el-menu-item index="financialManagement">
+                        <i class="icon-commodity icon"></i>
+                        <span slot="title" style="text-indent: 10px;">财务管理</span>
+                    </el-menu-item>
+
+                    <el-menu-item index="logTools">
+                        <i class="icon-other icon"></i>
+                        <span slot="title" style="text-indent: 10px;">系统管理</span>
+                    </el-menu-item>
+
+                    <el-menu-item index="logToolsSeller">
+                        <i class="icon-other icon"></i>
+                        <span slot="title" style="text-indent: 10px;">系统管理</span>
+                    </el-menu-item>
+
+                    <el-menu-item index="currentInventory">
+                        <i class="icon-warehouse icon"></i>
+                        <span slot="title" style="text-indent: 10px;">仓库管理</span>
+                    </el-menu-item>
+
+                    <el-menu-item index="SellerSettlementMethod">
+                        <i class="icon-other icon"></i>
+                        <span slot="title" style="text-indent: 10px;">其他管理</span>
+                    </el-menu-item>
+
+                    <el-menu-item index="userCenter">
+                        <i class="icon-other icon"></i>
+                        <span slot="title" style="text-indent: 10px;">客户管理-运营平台</span>
+                    </el-menu-item>
+
+                    <el-menu-item index="bindWebstoreForPlatform">
+                        <i class="icon-other icon"></i>
+                        <span slot="title" style="text-indent: 10px;">业务管理-运营平台</span>
+                    </el-menu-item>
+
+                    <el-menu-item index="verifyManage">
+                        <i class="icon-other icon"></i>
+                        <span slot="title" style="text-indent: 10px;">财务管理-运营平台</span>
+                    </el-menu-item>
+
+                    <el-menu-item index="warehouseManagement">
+                        <i class="icon-other icon"></i>
+                        <span slot="title" style="text-indent: 10px;">仓库管理-运营平台</span>
+                    </el-menu-item>
+
+                    <el-menu-item index="messageManagement">
+                        <i class="icon-other icon"></i>
+                        <span slot="title" style="text-indent: 10px;">消息管理-运营平台</span>
+                    </el-menu-item>
+
+                    <el-menu-item index="menuManagement">
+                        <i class="icon-other icon"></i>
+                        <span slot="title" style="text-indent: 10px;">基础管理-运营平台</span>
+                    </el-menu-item>-->
+
+                </el-menu>
+            </el-col>
+            <el-col :span=isCollapse?23:20 style="height: 100%;overflow: auto;">
+                <keep-alive>
+                    <router-view></router-view>
+                </keep-alive>
+                <div class="bottomText">Copyright &copy; 2017 Nabei.net 版权所有</div>
+            </el-col>
+        </el-row>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {logout,loadUserInfo,getUserAuthsMenu,updateLoginInfo,queryWarehouse} from '@/api/getData'
+    import {baseImgPath} from '@/config/env'
+    import {mapActions, mapState} from 'vuex'
+    import {setStore,getStore,userInfo} from  '../config/mUtils'
+    import {getAuth,getSubAuth,getMenuAuth} from '../utils/Auth.js'
+    import {isJSON,isNullObject,getCompanyType} from  '../utils/common'
+
+    export default {
+        data(){
+
+            return {
+                identity:this.GLOBAL.COMPANY_TYPE_STALL,
+                identity_length:3,
+                authsList:[],
+                cssMap:{purchasingManagementCSS:"manage-menu","":""},
+                iconMap:{purchasingManagementICON:"icon-procurement icon","":""},
+                userId:'',
+                iconRight1:true,
+                iconLeft1:false,
+                isCollapse: false,
+                baseImgPath,
+                companyId:'',
+                userInfoList:{
+                    companys:[{
+                        compCode:'',
+                        id:'',
+                        name:'',
+                        status:''
+                    }],
+                    mobile:'',
+                    userName:'',
+                    gender:''
+
+                },
+                companysValue:'',
+                roleForm: {
+                    userId: '',
+                    roleId: '',
+                    compId:'',
+                    nickName:''
+                },
+                warehouseList:[],
+                warehouseId:'',
+                picPath:'',
+                defaultUserPic:'this.src="'+require('../image/icon0111.png')+'"'
+            }
+        },
+        watch: {
+            warehouseId: function(val) { //此处不要使用箭头函数
+                if(val!=userInfo().warehouseId&&undefined!=userInfo().warehouseId){
+                    this.$router.go(0)
+                }
+            }
+
+        },
+        created(){
+            if (!this.adminInfo.id) {
+                this.getAdminData()
+            }
+        },
+        computed: {
+            ...mapState(['adminInfo']),
+            ...mapState(['loadUserInfo']),
+            ...mapState(['getUserAuthsMenu']),
+            defaultActive: function(){
+                return this.$route.path.replace('/', '');
+            },
+        },
+        mounted(){
+            var userInfo=getStore("userInfo");
+            var vjson = JSON.parse(userInfo);
+            this.roleForm.userId=vjson.id;
+            var currentComp=getStore("curCompany");
+            if(isJSON(currentComp)){
+                var vcom = JSON.parse(currentComp);
+                this.roleForm.compId = vcom.id;
+                this.companysValue=vcom.id;
+            }
+            this.identity =getCompanyType(getStore("curCompany"));
+            this.identity_length=this.getTypeLength(this.identity);
+            this.UserInfoData().then(()=>this.selectWareHouse());
+
+        },
+        methods: {
+            //帮助中心
+            helpChose(){
+              if(this.identity ==2){
+                  this.$router.push('/helpCenter');
+              }  else if(this.identity ==1){
+                  this.$router.push('/helpCenterStall');
+              }
+            },
+        	getTypeLength(type){
+        		if(type==this.GLOBAL.COMPANY_TYPE_STALL){
+        			return 3;
+        		}
+        		return 6;
+        	},
+            closeMenu() {
+                this.isCollapse = !this.isCollapse;
+                if(this.isCollapse ==true) {
+                    this.iconRight1=false,
+                        this.iconLeft1=true
+                }else {
+                    this.iconRight1=true,
+                        this.iconLeft1=false
+                }
+            },
+            ...mapActions(['getAdminData']),
+            async handleCommand(command) {
+                if (command == 'manageRole') {
+                    this.$router.push('/manageRole');
+                }else if(command == 'manageStaff'){
+                    this.$router.push('/manageStaff');
+                }else if(command == 'message'){
+                    this.$router.push('/messageManagement');
+                }else if(command == 'user'){
+                    this.$router.push('/basicInformation');
+                }
+            },
+            //退出
+            async singout(){
+            const res = await logout()
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: '退出成功'
+                    });
+                    setStore("token","");
+                    setStore("userInfo","");
+                    setStore("user_info_user","");
+                    this.$router.push('/');
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.message
+                    });
+                }
+        },
+            //载入用户信息
+            async UserInfoData() {
+                //this.userId = this.$route.query.userId;
+                this.userId =this.roleForm.userId;
+                const res = await loadUserInfo({userId:this.userId});
+                if (res.isSuccess == true) {
+                	//alert(JSON.stringify(res.result))
+                    this.userInfoList = res.result;
+                    this.picPath = res.result.picPath;
+                    var currentComp=getStore("curCompany");
+                    if (!isNullObject(currentComp)) {
+                        var vcom = JSON.parse(currentComp);
+                        this.roleForm.compId = vcom.id;
+                        this.companysValue=vcom.id;
+                    }
+                    this.userAuthsData();
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            //公司选择
+            async changeValue(value) {
+                this.companyId = value;
+                this.userAuthsData();
+                let userInfo = JSON.parse(getStore("userInfo"));
+                userInfo.companyId = value;
+                setStore("userInfo",userInfo);
+                var currentComp=[];
+                for(var item in this.userInfoList.companys){
+                    var tempcom=this.userInfoList.companys[item];
+                    if(tempcom.id== value){
+                        currentComp=this.userInfoList.companys[item];
+                        let  param = {
+                            "userId":this.roleForm.userId,
+                            "userName": this.roleForm.nickName,
+                            "compId": value,
+                            "compName":currentComp.name,
+                        };
+                        const res=await updateLoginInfo(param);
+                        if (res.isSuccess == true) {
+                            this.roleForm.compId=value;
+                            this.companyId=this.roleForm.compId;
+                            this.UserInfoData();
+                        }else{
+                            this.$message({
+                                type: 'error',
+                                message: res.errorMsg
+                            });
+                            return false;
+                        }
+                        setStore("curCompany",currentComp);
+                        break;
+                    }
+                }
+                //
+            },
+            changeWarehouse(value) {
+                let userInfo = JSON.parse( getStore("userInfo"));
+                userInfo.warehouseId = value
+                userInfo.warehouseList = this.warehouseList;
+                setStore("userInfo",userInfo)
+            },
+            //仓库选择
+            async selectWareHouse(){
+                if(!isNullObject(userInfo().warehouseId)&&(!isNullObject(userInfo().warehouseList))){
+
+                        this.warehouseId = userInfo().warehouseId;
+                        this.warehouseList = userInfo().warehouseList;
+                }else if(isNullObject(userInfo().companyId)&&isNullObject(this.companysValue)){
+                    //this.$message({type:'error',message: '请先选择公司信息！'});
+                    return ;
+                }else{
+                    let param = {"params":{"companyId":userInfo().companyId?userInfo().companyId:this.companysValue},"pageInex":1,"pageSize":10};
+                    const res=await queryWarehouse(param);
+                    if (res.isSuccess == true) {
+                        this.warehouseList= res.result.results
+                        if(this.warehouseList&&this.warehouseList.length>0){
+                            this.warehouseList.forEach(({isStall,id})=>{
+                                if(isStall==1){
+                                    this.warehouseId = id;
+                                    return ;
+                                }
+                            })
+                        }
+                    }
+                }
+
+
+
+            },
+            //获取用户权限
+            async userAuthsData() {
+                this.userId = this.roleForm.userId;
+                this.companyId=this.roleForm.compId;
+                const res = await getUserAuthsMenu({userId:this.userId,companyId:this.companyId});
+                if (res.isSuccess == true) {
+                    //this.authsList = res.result.data;
+                    var znMenu=getMenuAuth( res.result.data);
+                    this.authsList=znMenu;
+                    //this.getAuthById(res.result.data);
+                }else{
+                    if (res.errorCode == '2001') {
+                        this.authsList='';
+                    }else{
+                        this.$message({
+                            type: 'error',
+                            message: res.errorMsg
+                        });
+                    }
+
+                }
+            },
+            //bianli
+            getAuthById(resdata){
+                var templist;
+                for(var i=0; i<resdata.length; i++){
+                    //for(var resultData in resdata){
+                    var resultData = resdata[i];
+                    if(resultData.type=='1' ){
+                        //templist.push(resultData);
+                    }
+                }
+            }
+        }
+    }
+</script>
+
+
+<style lang="less" scoped>
+    @import '../style/mixin.less';
+    @import '../style/common.less';
+    @import '../style/manage';
+
+    ::-webkit-scrollbar
+    {
+        width: 0;
+        height: 0;
+        background-color: #F5F5F5;
+    }
+</style>

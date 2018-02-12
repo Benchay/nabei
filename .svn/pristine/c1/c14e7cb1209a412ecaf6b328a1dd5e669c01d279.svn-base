@@ -1,0 +1,132 @@
+<template>
+    <div class="fillcontain">
+       <div class="moreDynamic">
+            <p>更多动态</p>
+           <ul :class="identity ==1?'moreList2':identity ==2?'moreList':''">
+               <li v-for="list in listData">
+                   <p :class="[
+                       list.status == 0?'MoreSprite':
+                       list.status == 1?'MoreSprite1':
+                       list.status == 2?'MoreSprite2':
+                       list.status == 3?'MoreSprite3':
+                       list.status == 10?'MoreSprite10':
+                       list.status == 11?'MoreSprite11':
+                       list.status == 12?'MoreSprite12':
+                       list.status == 99?'MoreSprite99':
+                       '']" class="moreImg"></p>
+                   <p class="ListTitle">{{
+                       list.status == 0?'已接收':
+                       list.status == 1?'已确认':
+                       list.status == 2?'部分配货':
+                       list.status == 3?'配货完成':
+                       list.status == 10?'退货已签收':
+                       list.status == 11?'退货已确认':
+                       list.status == 12?'退货已入库':
+                       list.status == 99?'已完成':
+                       ''}}</p>
+                   <p>{{list.date}}</p>
+                   <p>{{list.stallName}}</p>
+                   <p>订单编号：{{list.orderId}}</p>
+               </li>
+           </ul>
+           <el-pagination
+               small
+               class="right"
+               style="margin-top: 20px;"
+               @size-change="handleSizeChange"
+               @current-change="handleCurrentChange"
+               :current-page="currentPage4"
+               :page-sizes="[10, 20, 30, 40]"
+               :page-size="pageSize"
+               layout="total, sizes, prev, pager, next, jumper"
+               :total="totalCount">
+           </el-pagination>
+       </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {apiCount, userCount, orderCount, apiAllCount, getUserCount, getOrderCount, adminDayCount, adminCount,queryNewestOrderLog} from '@/api/getData'
+    import {formatDate} from '../utils/date.js'
+
+    export default {
+        data(){
+            return {
+                //1为档口、2为卖家身份
+                identity:1,
+                listData:[],
+                currentPage:1,
+                pageSize:10,
+                orderLogList:[],
+                totalCount:0,
+                companyId:'',
+
+            }
+        },
+        mounted(){
+            this.companyId = this.$route.query.companyId;
+            let pa = {
+                "companyId":this.companyId,
+                "pageIndex":this.currentPage,
+                "pageSize":this.pageSize
+            };
+            this.loadOrderLogInfo(pa);
+        },
+        methods: {
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+                this.pageSize = val;
+                let pa = {
+                    "companyId":this.companyId,
+                    "pageIndex":this.currentPage,
+                    "pageSize":this.pageSize
+                };
+                this.loadOrderLogInfo(pa);
+
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+            },
+
+            async loadOrderLogInfo(param){
+                this.orderLogList = [];
+                this.listData = [];
+                const res = await queryNewestOrderLog(param);
+                if(res.isSuccess){
+                    this.orderLogList = res.result.results;
+                    for(let i = 0 ;i<this.orderLogList.length;i++){
+                        let pa = {
+                            "status":this.orderLogList[i].optType,
+                            "date":this.formatDate(this.orderLogList[i].createTime),
+                            "stallName":this.orderLogList[i].stallName,
+                            "orderId":this.orderLogList[i].orderId
+                        };
+                        this.listData.push(pa);
+
+                    }
+                    this.totalCount = res.result.totalCount;
+                }else{
+                    this.$message({
+                        type:'error',
+                        message:res.errorMsg
+                    });
+                }
+            },
+            //数据格式化
+            formatDate:function(date) {
+                if (date == undefined||date=='') {
+                    return "";
+                }
+                var date2 = new Date(date);
+                return formatDate(date2,'yyyy-MM-dd');
+            },
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import "../style/common";
+    @import "../style/moreDynamic";
+</style>

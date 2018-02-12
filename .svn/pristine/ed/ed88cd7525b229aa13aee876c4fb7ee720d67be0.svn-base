@@ -1,0 +1,163 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/fastShipping2"}'>快速出货</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/returnManagement2"}'>快速退货</router-link>
+            </li>
+            <li class="menuIndex">
+                <router-link :to='{path:"/orderPurchaseStall"}'>订单管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/sellerSettlement"}'>客户结算</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/customerManagement"}'>客户管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/statisticalStatement"}'>销售统计</router-link>
+            </li>
+        </ul>
+        <div class="returns-content" style="height:77%;">
+            <div class="returnsAll">
+                <div class="right">
+                    <router-link :to='{path:"/indentManagement"}' class="comeBack">返回</router-link>
+                </div>
+                <div class="orderDetails">
+                    <div class="flex detailsLeft">
+                        <img src="../image/111.png" alt="">
+                        <div>
+                            <p>订单编号：12544621324122</p>
+                            <p>我是档口名称名称</p>
+                            <p>2017-09-17 08：50：00</p>
+                        </div>
+                    </div>
+                    <div  class="detailsCenter">
+                        <p>总采购数：258</p>
+                        <p>总采购金额：<span class="title">￥25840</span></p>
+                    </div>
+                    <div class="flex detailsRight">
+                        <a href="javascript:void(0)" @click="dialog1 = true">
+                            <div>
+                                <p class="blue2">订单动态</p>
+                                <p>（已完成）</p>
+                            </div>
+                        </a>
+                        <router-link :to='{path:"/indentManagementCompleteAccount"}'>
+                            <div>
+                                <p class="blue2">财务结算</p>
+                                <!--(已结算)（未结算）两种状态-->
+                                <p>（未结算）</p>
+                            </div>
+                        </router-link>
+                    </div>
+                </div>
+                <div class="returnsRemark">
+                    备注：注信息备注信息备注信息备注信息备注信息备注信息备注信息备注信息备注信息备注信息备注信息备注信息备注信息备注信息备注信息备注信息备注信息备注信息备注信息备注信息备注信息备注信息
+                </div>
+                <div class="returnsTable">
+                    <el-table
+                        :data="tableData"
+                        style="width: 100%">
+                        <el-table-column
+                            label="主图/货号">
+                            <template scope="scope">
+                                <div class="flex2">
+                                    <img src="../image/111.png" alt=""  class="tableImg">
+                                    <p>MG110</p>
+                                </div>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            prop="productName"
+                            width="180"
+                            label="商品名称">
+                        </el-table-column>
+                        <el-table-column
+                            prop="color"
+                            label="颜色">
+                        </el-table-column>
+                        <el-table-column
+                            prop="size"
+                            label="尺码">
+                        </el-table-column>
+                        <el-table-column
+                            prop="amount"
+                            label="退货成功/退货失败">
+                            <template scope="scope">
+                                <p>25/<span class="blue2">30</span></p>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            prop="price"
+                            label="单价">
+                        </el-table-column>
+                    </el-table>
+                </div>
+                <el-pagination
+                    small
+                    class="right"
+                    style="margin-top: 20px;"
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :current-page="currentPage4"
+                    :page-sizes="[100, 200, 300, 400]"
+                    :page-size="100"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    :total="400">
+                </el-pagination>
+                <a href="javascript:void(0)" class="export_excle left">导出excel</a>
+            </div>
+        </div>
+    </div>
+</template>
+<script>
+    import headTop from '../components/headTop'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                currentPage4: 4,
+                tableData: [{
+                    productName:'名称名称名称名称名称',
+                    color:'红色',
+                    size:'L',
+                    price:100,
+                    amount:20,
+                },{
+                    productName:'名称名称名称名称名称',
+                    color:'红色',
+                    size:'L',
+                    price:100,
+                    amount:20,
+                    state:2,
+                },
+
+
+                ],
+            }
+        },
+        methods: {
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+            },
+            cancelRefund(){
+                this.dialog2 = false;
+                this.$router.push('/salesReturn');
+            }
+        }
+    }
+</script>
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/salesReturn';
+</style>

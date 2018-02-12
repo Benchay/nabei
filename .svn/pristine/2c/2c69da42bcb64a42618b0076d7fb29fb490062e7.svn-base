@@ -1,0 +1,118 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/webStoreOrderSalesBuy"}'>网店订单</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/purchaseRequireBuy"}'>采购需求</router-link>
+            </li>
+            <li class="menuIndex2">
+                <router-link :to='{path:"/orderPurchaseBuy"}'>采购订单</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/addShop"}'>绑定店铺</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/packageDetails"}'>包裹管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/salesForecast"}'>采购统计</router-link>
+            </li>
+        </ul>
+        <div class="orderFinancial">
+            <router-link :to='{path:"/indentManagementCompleteAccount"}' class="right comeBack2">返回</router-link>
+            <p class="financialTitle">付款详情</p>
+            <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                    <th>结算时间：{{formatDate(settlementOrderVO.createTime)}}</th>
+                    <th>本次结算金额：￥{{settlementOrderVO.actualPayFee + settlementOrderVO.fixFee}}</th>
+                    <th></th>
+                    <th></th>
+                </tr>
+                <tr>
+                    <td>付款金额：￥{{settlementOrderVO.actualPayFee}}</td>
+                    <td>抹平金额：￥{{settlementOrderVO.fixFee}}</td>
+                    <td>实际付款金额：￥{{settlementOrderVO.actualPayFee}}</td>
+                </tr>
+                <tr>
+                    <th>付款帐号：{{settlementOrderVO.payAcount}} ({{settlementOrderVO.reciveAcountType==1?'余额':settlementOrderVO.reciveAcountType==3?'支付宝':settlementOrderVO.reciveAcountType==4?'微信':settlementOrderVO.reciveAcountType==5?'银行卡':''}})</th>
+                    <th>收款方：{{settlementOrderVO.companyName}}</th>
+                    <th colspan="2">收款账户：{{settlementOrderVO.reciveAcount}}（{{settlementOrderVO.actualPayFeeType==1?'余额':settlementOrderVO.actualPayFeeType==3?'支付宝':settlementOrderVO.actualPayFeeType==4?'微信':settlementOrderVO.actualPayFeeType==5?'银行卡':''}}）</th>
+                </tr>
+                <tr>
+                    <td colspan="4">结算方式：{{settlementOrderVO.settlementType==1?'单订单结算':settlementOrderVO.settlementType==2?'多订单结算':''}}</td>
+                </tr>
+                <tr>
+                    <td colspan="4">付款说明：{{settlementOrderVO.payMemo}}</td>
+                </tr>
+                <tr>
+                    <!--限制最多三张截图-->
+                    <td colspan="4"  class="detailImage"><p>截图凭证：</p>
+                        <img src="../image/head11.jpg" alt=""><img src="../image/head11.jpg" alt="">
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</template>
+<script>
+    import headTop from '../components/headTop'
+    import {getSettlement} from '@/api/getData'
+    import {formatDate} from '../utils/date.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                settlementOrderId:'',
+                settlementOrderVO:''
+            }
+        },
+        watch:{
+            '$route':function (route){
+               this.$route.go(0);
+               this.settlementOrderId = this.$route.query.settlementOrderId;
+            }
+        },
+        mounted(){
+            this.settlementOrderId = this.$route.query.settlementOrderId;
+            this.querySettlementOrders();
+        },
+        methods: {
+            //根据结算单编号查询结算单
+            async querySettlementOrders(){
+                let param = {
+                    "id": this.settlementOrderId
+                };
+                const res = await  getSettlement(param);
+                if(res.isSuccess){
+                    this.settlementOrderVO = res.result;
+                }
+            },
+            formatData:function(val){
+                if(val==1){
+                    return "单订单结算";
+                }else if(val==2){
+                    return "多订单结算";
+                }else
+                    return "";
+            },
+            //数据格式化
+            formatDate:function(val) {
+                if (val == undefined||val=='') {
+                    return "";
+                }
+                var date = new Date(val);
+                return formatDate(date,'yyyy-MM-dd hh:mm:ss');
+            },
+        }
+    }
+</script>
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/orderFinancial';
+</style>

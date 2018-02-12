@@ -1,0 +1,252 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('currentInventory')">
+                <router-link :to='{path:"/currentInventory"}'>当前库存</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('inventoryDetail')">
+                <router-link :to='{path:"/inventoryDetail"}'>库存变动</router-link>
+            </li>
+            <li class="menuIndex" v-if="getMenuAuthFun('stocktaking')">
+                <router-link :to='{path:"/stocktaking"}'>库存盘点</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('stockTransshipment')">
+                <router-link :to='{path:"/stockTransshipment"}'>库存调拨</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('inventoryWarning')">
+                <router-link :to='{path:"/inventoryWarning"}'>库存预警</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('storeManagement')">
+                <router-link :to='{path:"/storeManagement"}'>多仓管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('inventoryInitialize')">
+                <router-link :to='{path:"/inventoryInitialize"}'>库存初始化</router-link>
+            </li>
+        </ul>
+        <div class="stocktaking">
+            <div class="stocktakingTop">
+                <div class="right">
+                    <router-link :to='{path:"/stocktaking"}' class="comeBack">返回</router-link>
+                </div>
+            </div>
+            <div class="stocktakingTable">
+                <div class="tableTop">
+                    <div class="flex left">
+                        <div>盘点编号：{{orderNo}}</div>
+                        <div>盘点时间：{{formatDate(tableData.createTime,'yyyy-MM-dd hh:mm')}}</div>
+                        <div>盘点人：{{tableData.createUserName}}</div>
+                    </div>
+                    <div class="right" v-bind:class="state ==0?'blue2':''">{{state==1?'完成盘点':state==0?'盘点未完成':''}}</div>
+                </div>
+                <el-table
+                    :data="tableData.details"
+                    style="width: 100%">
+                    <el-table-column
+                        label="主图/货号">
+                        <template scope="scope">
+                            <div class="flex" style="padding: 3px;">
+                            	<img v-if="scope.row.imgUrl_main != ''" :src="scope.row.imgUrl_main" alt="">
+                                <img v-else src="../image/product_default.png" alt="">
+                                <p>{{scope.row.productCode}}</p>
+                            </div>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="colour"
+                        label="颜色">
+                    </el-table-column>
+                    <el-table-column
+                        prop="size"
+                        label="尺码">
+                    </el-table-column>
+                    <el-table-column
+                        prop="stockNum"
+                        label="结存">
+                        <template scope="scope">
+                           {{scope.row.checkActualNum-scope.row.orderNum}}
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="checkActualNum"
+                        label="实盘数">
+                    </el-table-column>
+                    <el-table-column
+                        prop="orderNum"
+                        label="盈亏数">
+                    </el-table-column>
+                    <el-table-column
+                        label="盈亏金额">
+						<template scope="scope">
+                            {{scope.row.price?scope.row.price.toFixed(2):0.00.toFixed(2)}}
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="memo"
+                        width="220"
+                        label="备注">
+                    </el-table-column>
+                </el-table>
+            </div>
+            <!--状态已完成盘点 不显示-->
+
+            <div class="Continue" v-if="state==0">
+                <router-link :to='{path:"/startCounting",query:{param:param}}' class="buttonColor right">继续盘点</router-link>
+            </div>
+            <el-pagination
+                small
+                class="right"
+                style="margin-top: 20px;"
+                :page-sizes="[10, 20, 30, 40,50]"
+                :current-page="currentPage"
+                :page-size="pagesize"
+                layout="total, sizes,prev, pager, next, jumper"
+                :total="totalCount">
+            </el-pagination>
+            <a href="javascript:void(0)" @click="exportData" class="export_excle">导出excel</a>
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {loadStockOrder} from '@/api/getData'
+    import {userInfo,getStore,setStore} from  '../config/mUtils'
+	import {formatDate} from '../utils/date.js'
+	import {getMenuAuth,haveMenuAuth} from  '../utils/AuthMenu.js'
+	import {export_json_to_excel} from '../vendor/Export2Excel.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+            	userInfo:'',
+                state:'',
+                value6: '',
+                tableData: {},
+                param:'',
+                pagesize:10,
+                currentPage:1,
+                totalCount:0
+            }
+        },
+        mounted(){
+            this.param = this.$route.query.param;
+			this.orderNo = this.$route.query.orderNo;
+            this.loadData(this.param);
+        },
+		watch: {
+            '$route': function (route) {
+                if(route.path=='/stocktakingRecord'){
+                    this.param = this.$route.query.param;
+					this.orderNo = this.$route.query.orderNo;
+					this.loadData(this.param);
+                }
+
+            }
+        },
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            handleIconClick(ev) {
+                console.log(ev);
+            },
+            async loadData(param) {
+                //  /api/queryStockOrderDetail?companyId=1000&warehouseId=W001&orderType=2,3&pageIndex=1&pageSize=10
+                let  requestParam = {
+                    "stockOrderId":param,
+                    pageIndex:this.currentPage,
+                    pageSize:this.pagesize
+                };
+                const res = await loadStockOrder(requestParam);
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: '加载数据成功'
+                    });
+                    this.tableData = res.result;
+                    this.totalCount = res.result.totalCount;
+                    this.state= res.result.status;
+
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            //导出文档
+			async exportData() {
+			   let  requestParam = {
+                    "stockOrderId":this.param
+                };
+                const res = await loadStockOrder(requestParam);
+                if (res.isSuccess == true) {
+                	const list = [];
+                	res.result.details.forEach(obj => {
+                		let productCode = '';
+                		let colour = '';
+                		let size = '';
+                		let stockNum = '0';
+                		let checkActualNum = '0';
+                		let orderNum = '0';
+                		let price = "0.00";
+                		let memo = '';
+                		if(obj.productCode){
+                			productCode = obj.productCode;
+                		}
+                		if(obj.colour){
+                			colour = obj.colour;
+                		}
+                		if(obj.size){
+                			size = obj.size;
+                		}
+                		if(obj.checkActualNum){
+                			stockNum = obj.checkActualNum;
+                			checkActualNum = obj.checkActualNum;
+                		}
+                		if(obj.orderNum){
+                			stockNum -= obj.orderNum;
+                			orderNum = obj.orderNum;
+                		}
+                		if(obj.price){
+                			price = obj.price;
+                		}
+                		if(obj.memo){
+                			memo = obj.memo;
+                		}
+                		let row = {
+                			productCode : productCode,
+                			colour : colour,
+                			size : size,
+                			stockNum : stockNum+"",
+                			checkActualNum : checkActualNum+"",
+                			orderNum : orderNum+"",
+                			price : price+"",
+                			memo : memo
+                		}
+                		list.push(row);
+                	});
+                    const tHeader = ['商品货号', '颜色','尺码','库存数','盘点数','盈亏数','盈亏金额','备注'];
+			　　　　const filterVal = ['productCode', 'colour','size','stockNum','checkActualNum','orderNum','price','memo'];
+			　　　　const data = this.formatJson(filterVal, list);
+			　　　　export_json_to_excel(tHeader, data, '库存盘点详情列表');
+                }
+            },
+            
+            formatJson(filterVal, jsonData) {
+		　　　　　　return jsonData.map(v => filterVal.map(j => v[j]));
+		　　　},
+			formatDate
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/stocktaking';
+</style>

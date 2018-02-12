@@ -1,0 +1,141 @@
+.sellerSettlement{
+    color:#666;
+    margin:0 30px;
+    background: #fff;
+    padding: 20px 30px;
+    height:100%;
+    .sellerTop{
+        div{
+            width: 200px;
+        }
+    }
+    .sellerTable{
+        margin-top: 20px;
+        .sellerOperation{
+            a{
+                margin-right: 8px;
+                color:@blue2;
+            }
+        }
+        .stallOperation{
+            a{
+                margin-right: 8px;
+                color:@red;
+            }
+        }
+    }
+//   立即结算
+    .settlementContent{
+        font-size: 14px;
+        padding: 10px 20px 40px;
+        border:1px solid #d4d4d4;
+        border-radius: 10px;
+        .title{
+            color:#333;
+            font-weight: 600;
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+        .gathering,.payment{
+            padding: 10px 50px;
+            .tkList{
+                padding-left: 10px;
+            }
+            .tkList1{
+                p{
+                    margin-right: 10px;
+                }
+            }
+            .tkList2{
+                width: 250px;
+            }
+            .listTitle{
+                text-align: right;
+            }
+            i{
+                color:@red;
+            }
+            .input1{
+                width: 250px;
+            }
+        }
+        .gathering>div{
+            margin-bottom: 35px;
+            .buttonColor{
+                margin-right: 50px;
+            }
+        }
+        .payment>div{
+            margin-bottom: 25px;
+            .buttonColor{
+                margin-right: 50px;
+            }
+        }
+        .el-tabs__item.is-active {
+            color: @blue2;
+        }
+        .el-tabs__active-bar{
+        background-color: @blue2;
+        }
+    }
+    .stallContent{
+        .el-tabs__item.is-active {
+            color: @red;
+        }
+        .el-tabs__active-bar{
+            background-color: @red;
+        }
+    }
+//    查看详情
+    .details{
+        font-size: 14px;
+        height: 110px;
+        .colorText{
+            color:@orange;
+        }
+    }
+    .details>div>div{
+        margin-bottom: 20px;
+    }
+    .detailsTable{
+        .checked{
+            font-weight: 600;
+            padding-left: 18px;
+            margin-top: 30px;
+            p{
+                margin-left: 10px;
+            }
+        }
+        .buttonColor,.buttonColor3{
+            margin-top: 50px;
+            display: inline-block;
+        }
+    }
+    .style2{
+        color:#fff;
+        background: @blue2;
+        border-radius: 5px;
+        margin-right: 5px;
+        width: 40px;
+        text-align: center;
+        padding: 1px 0;
+    }
+    .style1{
+        color:#fff;
+        background: @orange;
+        border-radius: 5px;
+        margin-right: 5px;
+        width: 40px;
+        text-align: center;
+        padding: 1px 0;
+    }
+}
+//结算记录
+.tableTop{
+    margin-bottom:10px;
+    font-size: 14px;
+}
+.el-table__body-wrapper{
+    max-height: 600px;
+    overflow: auto;
+}

@@ -1,0 +1,458 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('returnManagement2')">
+                <router-link :to='{path:"/returnManagement2"}'>快速退货</router-link>
+            </li>
+            <li class="menuIndex" v-if="getMenuAuthFun('sellReturn')">
+                <router-link :to='{path:"/sellReturn"}'>销售退货</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('returnManagement2')">
+                <router-link :to='{path:"/returnManagement2"}'>退货统计</router-link>
+            </li>
+        </ul>
+        <div class="indentManagement">
+            <div style="height: 45px;" >
+                <div class="flex2 left" style="margin-right: 10px">
+                    <el-date-picker
+                        size="small"
+                        v-model="filters.date.startDate"
+                        type="date"
+                        placeholder="选择开始日期"
+                        :picker-options="startDateBefore"
+                        @change="handleIconClickDate"
+                    >
+                    </el-date-picker>
+                    -
+                    <el-date-picker
+                        size="small"
+                        v-model="filters.date.endDate"
+                        type="date"
+                        placeholder="选择截止日期"
+                        :picker-options="startDateAfter"
+                        @change="handleIconClickDate"
+                    >
+                    </el-date-picker>
+                </div>
+                <div class="left flex2">
+                    <el-input v-model="input1" size="small" icon="search" placeholder="订单编号搜索" style="margin-right: 10px" :on-icon-click="handleIconClickCode"></el-input>
+                    <el-select
+                        v-model="otherSideCompanyName"
+                        filterable
+                        clearable
+                        remote
+                        reserve-keyword
+                        size="small"
+                        style="width: 300px;"
+                        placeholder="请输入电商卖家名称"
+                        :remote-method="remoteMethod"
+                        :loading="loading"
+                        @change="handleIconClickName">
+                        <el-option
+                            v-for="item in options4"
+                            :key="item.sellId"
+                            :label="item.sellName"
+                            :value="item.sellId">
+                        </el-option>
+                    </el-select>
+                </div>
+                <el-col :span="24" class="indentList radioGreen">
+                    <el-radio-group v-model="radio" size="small" @change="loadInit">
+                        <el-radio-button label="0">全部</el-radio-button>
+                        <el-radio-button label="-1">待处理</el-radio-button>
+                        <el-radio-button label="99">已完成</el-radio-button>
+                    </el-radio-group>
+                </el-col>
+            </div>
+            <el-table
+                :data="tableData"
+                style="width: 100%">
+                <el-table-column
+                    prop="orderCode"
+                    width="210"
+                    label="订单编号">
+                </el-table-column>
+                <el-table-column
+                    prop="busiName"
+                    width="200"
+                    label="电商卖家">
+                    <template scope="scope">
+                        {{scope.row.customerName!=undefined&&scope.row.customerName!=''?scope.row.customerName:scope.row.busiName!=undefined&&scope.row.busiName!=''?scope.row.busiName:'匿名卖家'}}
+                    </template>
+                </el-table-column>
+                <el-table-column
+                    prop="totalNum"
+                    label="订单数量">
+                </el-table-column>
+                <el-table-column
+                    prop="totalFee"
+                    label="订单金额">
+                </el-table-column>
+                <el-table-column
+                    prop="createTime"
+                    width="180"
+                    label="创建时间"
+                    :formatter="mydateFormat">
+                </el-table-column>
+                <el-table-column
+                    prop="payType"
+                    label="结算方式"
+                    :formatter="checkPayType">
+                </el-table-column>
+                <el-table-column
+                    label="订单状态">
+                    <template scope="scope">
+                        <p>{{scope.row.status==7?'退货待签收':scope.row.status==8?'退货待确认':scope.row.status==9?'退货待卸货':scope.row.status==11?'退货待入库':scope.row.status==99?'已完成':''}}</p>
+                    </template>
+                </el-table-column>
+                <el-table-column
+                label="结算状态">
+                    <template scope="scope">{{scope.row.closeStutas==1?'已结算':scope.row.closeStutas==2?'部分结算':scope.row.closeStutas==0?'未结算':''}}</template>
+                </el-table-column>
+                <el-table-column
+                    label="操作">
+                    <template scope="scope">
+                        <a href="javascript:void(0);" class="color4" @click="Stateialog(scope.row.id,scope.row.status)">
+                            查看详情
+                        </a>
+                    </template>
+                </el-table-column>
+            </el-table>
+            <el-pagination
+                small
+                class="right"
+                style="margin-top: 20px;"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :page-sizes="[10, 20, 30, 40,50]"
+                :current-page="currentPage"
+                :page-size="pagesize"
+                layout="total, sizes,prev, pager, next, jumper"
+                :total="totalCount">
+            </el-pagination>
+            <a href="javascript:void(0)" class="export_excle" @click="exportData">导出excel</a>
+            <div style="height:160px;">
+                &nbsp;
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    import {formatDate} from '../utils/date.js'
+    import {export_json_to_excel} from '../vendor/Export2Excel.js'
+    import {queryOrder,queryStallCustomer} from '@/api/getData'
+    import {getStore} from  '../config/mUtils'
+    import {userInfo} from  '../config/mUtils'
+    import {getMenuAuth,haveMenuAuth} from  '../utils/AuthMenu.js'
+
+    export default {
+        components: {
+
+        },
+        filters1:{
+            formatDateInfo(time){
+                return formatDate(time,"yyyy-MM-dd hh:mm:ss");
+            }
+        },
+        data() {
+            return {
+                filters:{
+                    date:{
+                        startDate:'',
+                        endDate:''
+                    }
+                },
+                startDateBefore:{
+                    disabledDate: (time) => {
+                        let beginDateVal = this.filters.date.endDate;
+                        if (beginDateVal) {
+                            return time.getTime() > beginDateVal;
+                        }
+                    }
+                },
+                startDateAfter:{
+                    disabledDate: (time) => {
+                        let beginDateVal = this.filters.date.startDate;
+                        if (beginDateVal) {
+                            return time.getTime() < beginDateVal;
+                        }
+                    }
+                },
+                roleForm: {
+                    userId: '',
+                    roleId: '',
+                    compId:''
+                },
+                radio:0,
+                value6:'',
+                input1: '',
+                input3: '',
+                tableData:[],
+                pagesize: 10,
+                //当前页码
+                currentPage: 1,
+                //查询的页码
+                start: 1,
+                //默认数据总数
+                totalCount: 0,
+                options4:[],
+                otherSideCompanyName:'',
+                loading:false,
+            }
+        },
+        watch:{
+            '$route':function (route) {
+                this.loadInit();
+            }
+        },
+        mounted() {
+            this.roleForm.compId = userInfo().companyId;
+            this.roleForm.userId = userInfo().userId;
+            let  param = {
+                "companyId":this.roleForm.compId,
+                "pageSize": this.pagesize,
+                "pageIndex": this.currentPage,
+                "orderType":4
+            };
+            this.loadDataWithCondition(param);//订单信息加载
+        },
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            handleSizeChange(val) {
+                this.pagesize = val;
+                let  param = {
+                    "companyId":this.roleForm.compId,
+                    "pageSize": this.pagesize,
+                    "pageIndex": this.currentPage,
+                    "orderType":4
+                };
+                this.loadDataWithCondition(param);//订单信息加载
+            },
+            //页码变更
+            handleCurrentChange(val) {
+                this.currentPage = val;
+                let  param = {
+                    "companyId":this.roleForm.compId,
+                    "pageSize": this.pagesize,
+                    "pageIndex": this.currentPage,
+                    "orderType":4
+                };
+                this.loadDataWithCondition(param);//订单信息加载
+            },
+            //按日期搜索
+            handleIconClickDate(){
+        	    var startDate = '';
+                var endDate = '';
+        	    if(this.filters.date.startDate!=undefined&&this.filters.date.startDate!=''){
+                    startDate = formatDate(this.filters.date.startDate,'yyyy-MM-dd 00:00:00');
+                }
+                if(this.filters.date.endDate!=undefined&&this.filters.date.endDate!=''){
+                    endDate = formatDate(this.filters.date.endDate,'yyyy-MM-dd 23:59:59');
+                }
+                let  param = {
+                    "companyId":this.roleForm.compId,
+                    "pageSize": this.pagesize,
+                    "pageIndex": this.currentPage,
+                    "startDate": startDate,
+                    "endDate": endDate,
+                    "orderType":4
+                };
+                this.loadDataWithCondition(param);
+            },
+
+            //按订单编号搜索
+            handleIconClickCode(){
+                let  param = {
+                    "companyId":this.roleForm.compId,
+                    "pageSize": this.pagesize,
+                    "pageIndex": this.currentPage,
+                    "orderCode":this.input1,
+                    "orderType":4
+                };
+                this.loadDataWithCondition(param);
+            },
+
+            //远程搜索模糊查询电商卖家名称
+            async remoteMethod(query){
+                if(query!=''){
+                    this.loading = true;
+                    let param = {
+                        "companyId":userInfo().companyId,
+                        "sellName":query,
+                        "pageIndex":1,
+                        "pageSize":100
+                    };
+                    const res = await queryStallCustomer(param);
+                    setTimeout(() => {
+                        this.loading = false;
+                        this.options4 = res.result.results;
+                    }, 200);
+                } else {
+                    this.options4 = [];
+                }
+            },
+            //按电商卖家名称搜索
+            handleIconClickName(){
+                let  param = {
+                    "companyId":this.roleForm.compId,
+                    "pageSize": this.pagesize,
+                    "pageIndex": this.currentPage,
+                    "busiCompId":this.otherSideCompanyName,
+                    "orderType":4
+                };
+                this.loadDataWithCondition(param);
+            },
+
+            //按状态搜索订单
+            loadInit(){
+                let param = {
+                    "companyId":this.roleForm.compId,
+                    "pageSize": this.pagesize,
+                    "pageIndex": this.currentPage,
+                    "orderType":4,
+                    "status":this.radio
+                };
+                this.loadDataWithCondition(param);
+            },
+
+            //加载数据
+            async loadDataWithCondition(param) {
+                const res = await queryOrder(param);
+                if (res.isSuccess == true) {
+                    this.tableData = res.result.results;
+                    this.totalCount = res.result.totalCount;
+                }else{
+                    if(res.errorCode=='01'){
+                        this.tableData ='';
+                        this.totalCount = 0;
+                        return;
+                    }
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            //格式化时间输出
+            mydateFormat:function(row, column) {
+                var time = row[column.property];
+                if (time == undefined||time=='') {
+                    return "";
+                }
+                let date = new Date(time);
+                return formatDate(date,'yyyy-MM-dd hh:mm');
+            },
+            //点击操作
+            Stateialog(id,status){
+                if(status == 7){
+                    this.$router.push({path:'/sellReturnSignIn',query:{orderId:id}});
+                }else if(status == 8){
+                    this.$router.push({path:'/sellReturnAffirm',query:{orderId:id}});
+                }else if(status == 9){
+                    this.$router.push({path:'/sellReturnStorage',query:{orderId:id}});
+                }else{
+                    this.$router.push({path:'/sellReturnStorage',query:{orderId:id}});
+                }
+            },
+            checkPayType:function(row,column){
+                let data = row[column.property];
+                if(data==0){
+                    return '现结';
+                }else if(data==1){
+                    return '周结';
+                }else if(data==2){
+                    return '月结';
+                }
+            },
+            //导出文档
+			async exportData() {
+               let  param = {
+	                "companyId":this.roleForm.compId,
+	                "pageSize": this.totalCount,
+	                "pageIndex": 1,
+	                "orderType":4
+	            };
+                const res = await queryOrder(param);
+                const list = [];
+                if (res.isSuccess == true) {
+                	res.result.results.forEach(obj => {
+                		let orderCode = '';//订单编号
+                		let busiName = '';//电商卖家
+                		let totalNum = '';//订单数量
+                		let totalFee = '';//订单金额
+                		let createTime = '';//下单时间
+                		let payType = '';//结算方式
+                		let status = '';//状态
+
+                		if(obj.orderCode){
+                			orderCode = obj.orderCode;
+                		}
+                		if(obj.busiName){
+                			busiName = obj.busiName;
+                		}else{
+                			busiName = '匿名商家';
+                		}
+                		if(obj.totalNum){
+                			totalNum = obj.totalNum;
+                		}
+                		if(obj.totalFee){
+                			totalFee = obj.totalFee;
+                		}
+                		if(obj.createTime){
+                			createTime = formatDate(new Date(obj.createTime),'yyyy-MM-dd hh:mm');
+                		}
+                		if(obj.payType && obj.payType == 1){
+                			payType = '周结';
+                		}else if(obj.payType && obj.payType == 2){
+                			payType = '月结';
+                		}else{
+                			payType = '现结';
+                		}
+                		if(obj.status && obj.status == 7){
+                			status = '退货待签收';
+                		}else if(obj.status && obj.status == 8){
+                			status = '退货待确认';
+                		}else if(obj.status && obj.status == 9){
+                			status = '退货待入库';
+                		}else if(obj.status && obj.status == 99){
+                			status = '已完成';
+                		}
+
+                		let row = {
+                			orderCode : orderCode,
+                			busiName : busiName,
+                			totalNum : totalNum,
+                			totalFee : totalFee,
+                			createTime : createTime,
+                			payType : payType,
+                			status : status
+                		}
+                		list.push(row);
+                	})
+                    const tHeader = ['订单编号', '电商卖家','订单数量','订单金额','下单时间','结算方式','状态'];
+			　　　　   const filterVal = ['orderCode', 'busiName','totalNum','totalFee','createTime','payType','status'];
+			　　　　   const data = this.formatJson(filterVal, list);
+			　　　　   export_json_to_excel(tHeader, data, '销售退货列表');
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            formatJson(filterVal, jsonData) {
+		　　　　　　return jsonData.map(v => filterVal.map(j => v[j]));
+		　　　},
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/indentManagement';
+</style>

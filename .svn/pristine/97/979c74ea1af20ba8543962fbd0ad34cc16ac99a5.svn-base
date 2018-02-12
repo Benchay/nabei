@@ -1,0 +1,332 @@
+    	body,
+    	div,
+    	p {
+    	    margin: 0;
+    	    padding: 0;
+    	    font-family: "微软雅黑";
+    	    font-size: 1em;
+    	    /*background-color: #fff;*/
+    	}
+    	
+    	ul,
+    	li {
+    	    list-style: none;
+    	    margin: 0;
+    	    padding: 0;
+    	}
+    	
+    	.top_left img {
+    	    width: 50px;
+    	    margin: 8px 0 0 0;
+    	}
+    	
+    	.top_right {
+    	    line-height: 44px;
+    	    color: #46cfc5;
+    	}
+    	
+    	.name_box {
+    	    width: 100%;
+    	    margin: 0 auto;
+    	    overflow: hidden;
+    	}
+    	
+    	.photo {
+    	    float: left;
+    	    width: 70px;
+    	    height: 70px;
+    	    border-radius: 20px;
+    	    box-shadow: 0px -1px 6px #999;
+    	    margin: 10px 10px 10px 10px;
+    	}
+    	
+    	.name {
+    	    float: left;
+    	    margin: 20px 0 0 0;
+    	}
+    	
+    	.mz {
+    	    font-size: 16px;
+    	    font-weight: bold;
+    	    display: flex;
+    	    align-items: center;
+    	}
+    	
+    	.mz span {
+    	    background-color: #EC971F;
+    	    color: #fff;
+    	    border-radius: 10px;
+    	    font-size: 10px;
+    	    padding: 0 6px;
+    	    margin-left: 4px;
+    	}
+    	
+    	.wz {
+    	    color: #999;
+    	    display: flex;
+    	    align-items: center;
+    	    line-height: 40px;
+    	    font-size: 0.8em;
+    	    margin: 0 auto;
+    	}
+    	
+    	.wz img {
+    	    width: 16px;
+    	}
+    	
+    	.lxfs {
+    	    width: 100%;
+    	    margin: 0 auto;
+    	    line-height: 40px;
+    	    overflow: hidden;
+    	    font-size: 0.8em;
+    	    border-bottom: 10px solid #EFEFF4;
+    	    border-top: 1px solid #EFEFF4;
+    	}
+    	
+    	.lxfs img {
+    	    width: 20px;
+    	    margin-right: 4px;
+    	}
+    	
+    	.we {
+    	    width: 50%;
+    	    float: left;
+    	    display: flex;
+    	    align-items: center;
+    	    text-align: left;
+    	    padding-left: 10px;
+    	    border-right: 1px dashed #EFEFF4;
+    	}
+    	
+    	.we span {
+    	    width: 70%;
+    	    height: 40px;
+    	    overflow: hidden;
+    	    text-overflow: ellipsis;
+    	    white-space: nowrap;
+    	}
+    	
+    	.phone {
+    	    width: 50%;
+    	    height: 40px;
+    	    float: left;
+    	    display: flex;
+    	    align-items: center;
+    	    padding-left: 10px;
+    	    text-align: left;
+    	}
+    	
+    	.ico_box {
+    	    width: 100%;
+    	    margin: 0 auto;
+    	    border-bottom: 10px solid #EFEFF4;
+    	}
+    	
+    	.ico_box ul {
+    	    width: 100%;
+    	    overflow: hidden;
+    	    padding: 10px;
+    	}
+    	
+    	.ico_box li {
+    	    width: 20%;
+    	    float: left;
+    	    font-size: 0.8em;
+    	    text-align: center;
+    	}
+    	
+    	.ico_box li a {
+    	    color: #666;
+    	}
+    	
+    	.ico_box li img {
+    	    width: 60%;
+    	}
+    	
+    	.xp_box {
+    	    width: 100%;
+    	    margin: 0 auto 20px;
+    	    overflow: auto;
+    	}
+    	
+    	.xp_box a {
+    	    color: #666;
+    	}
+    	
+    	.xp_til {
+    	    font-size: 1em;
+    	    color: orangered;
+    	    text-align: center;
+    	    line-height: 30px;
+    	    margin-bottom: 0;
+    	}
+    	
+    	.xp_box ul {
+    	    width: 600px;
+    	    overflow: hidden;
+    	    padding: 10px;
+    	}
+    	
+    	.xp_box li {
+    	    width: 80px;
+    	    float: left;
+    	    font-size: 0.8em;
+    	    text-align: center;
+    	}
+    	
+    	.xp_box li img {
+    	    width: 70px;
+    	    height: 70px;
+    	}
+    	
+    	.bottom_box {
+    	    width: 100%;
+    	    height: 50px;
+    	    position: fixed;
+    	    bottom: 0;
+    	    background: rgba(0, 0, 0, 0.6);
+    	    font-size: 0.7em;
+    	    color: #46CFC5;
+    	    display: flex;
+    	    align-items: center;
+    	    padding-left: 15px;
+    	    overflow: hidden;
+    	}
+    	
+    	.bottom_box>p {}
+    	
+    	.bol {
+    	    color: #fff;
+    	    font-size: 11px;
+    	    width: 80%;
+    	}
+    	
+    	.down_ico {
+    	    width: 20%;
+    	}
+    	
+    	.down_ico a {
+    	    width: 100%;
+    	    background-color: #46CFC5;
+    	    color: #fff;
+    	    padding: 4px 8px;
+    	    border-radius: 4px;
+    	    font-size: 16px;
+    	    margin-left: 4px;
+    	}
+    	
+    	.backImg>img {
+    	    width: 20px;
+    	    height: 20px;
+    	}
+    	
+    	.logo_1 {
+    	    width: 80px;
+    	    height: 80px;
+    	    background-color: #1883e5;
+    	    padding: 7px;
+    	    border-radius: 20px;
+    	    margin: 20px auto;
+    	}
+    	
+    	.logo_1 img {
+    	    width: 66px;
+    	}
+    	
+    	.nb {
+    	    text-align: center;
+    	    font-size: 1.6em;
+    	}
+    	
+    	.xc {
+    	    text-align: center;
+    	}
+    	
+    	.down_box {
+    	    width: 100%;
+    	    margin: 10px auto;
+    	    border-top: 4px solid #EFEFF4;
+    	    padding: 0 40px;
+    	}
+    	
+    	.down_box p {
+    	    text-align: center;
+    	    font-size: 1em;
+    	    color: #333;
+    	    line-height: 40px;
+    	}
+    	
+    	.down_box img {
+    	    width: 20px;
+    	    margin: 0 4px -5px 0;
+    	}
+    	
+    	.down {
+    	    overflow: hidden;
+    	    line-height: 30px;
+    	    font-size: 0.8em;
+    	    padding-bottom: 30px;
+    	}
+    	
+    	.down_a {
+    	    float: left;
+    	    padding: 0 10px;
+    	    border-radius: 20px;
+    	    background-color: #78cd02;
+    	    color: #FFFFFF;
+    	}
+    	
+    	.down_i {
+    	    float: right;
+    	    padding: 0 24px;
+    	    border-radius: 20px;
+    	    background-color: #2e8cec;
+    	    color: #FFFFFF;
+    	}
+    	
+    	.shang {
+    	    width: 100%;
+    	    overflow: hidden;
+    	}
+    	
+    	.shang li {
+    	    width: 48%;
+    	    margin: 10px 1% 0 1%;
+    	    float: left;
+    	    padding: 2px 2px 0 2px;
+    	    border: 1px solid #EFEFF4;
+    	}
+    	
+    	.shang li img {
+    	    width: 100%;
+    	}
+    	
+    	.shang_m {
+    	    width: 100%;
+    	    line-height: 20px;
+    	    overflow: hidden;
+    	    text-overflow: ellipsis;
+    	    white-space: nowrap;
+    	}
+    	
+    	.jia_box {
+    	    width: 100%;
+    	    overflow: hidden;
+    	    align-items: center;
+    	}
+    	
+    	.jia {
+    	    float: left;
+    	    color: red;
+    	    font-size: 16px;
+    	}
+    	
+    	.tui {
+    	    float: right;
+    	    background-color: #46CFC5;
+    	    color: #fff;
+    	    border-radius: 8px;
+    	    padding: 0 10px;
+    	    font-size: 12px;
+    	}

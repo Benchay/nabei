@@ -1,0 +1,236 @@
+<template>
+    <div class="fillcontain">
+        <ul :class="[identity ==1 ?'stallShareMenu':identity ==2 ?'sellerShareMenu':'']">
+            <li>
+                <router-link :to='{path:"/financialManagement"}'>账户总览</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/financialManagement2"}'>财务交易记录</router-link>
+            </li>
+            <li class="ListMenu">
+                <router-link :to='{path:"/accountSetting"}'>账户设置</router-link>
+            </li>
+        </ul>
+        <div class="accountSetting">
+           <div class="bindingMobile">
+                <div>
+                    <el-form :model="changepwdForm" :rules="registerRule" ref="changepwdForm">
+                       <div class="box">
+                           <span>手机号码：</span>
+                           <el-form-item prop="mobileNo">
+                               <el-input type="mobileNo" v-model="changepwdForm.mobileNo" placeholder="手机号"></el-input>
+                           </el-form-item>
+                       </div>
+                        <div class="box">
+                            <span>验证码：</span>
+                            <el-form-item prop="mobileCode">
+                                <el-input v-model="changepwdForm.mobileCode" placeholder="请输入手机验证码" maxlength="6">
+                                    <el-button slot="append">
+                                        <timer-btn class="btn btn-default"  ref="timebtn"  v-on:refCheckmobile="toSendMsg" v-ref:btn :second="60" :mobilehpne=changepwdForm.mobileNo></timer-btn>
+                                    </el-button>
+                                </el-input>
+                            </el-form-item>
+                        </div>
+                        <div class="box">
+                            <span><span>*</span>支付密码:</span>
+                            <el-form-item prop="newPwd">
+                                <el-input v-model="changepwdForm.newPwd" placeholder="请输入6位数支付密码" type="password"></el-input>
+                            </el-form-item>
+                        </div>
+                        <div class="box">
+                            <span><span>*</span>再次输入：</span>
+                            <el-form-item prop="checkPwd">
+                                <el-input v-model="changepwdForm.checkPwd" placeholder="请再次输入密码" type="password"></el-input>
+                            </el-form-item>
+                        </div>
+
+                    </el-form>
+                </div>
+               <div class="bindingButton">
+                   <el-button type="info" @click="submitForm('changepwdForm',changepwdForm)">保存</el-button>
+                   <el-button @click="comeBack">取消</el-button>
+               </div>
+               <!--<div class="bindingFoot">
+                  <div class="flex"><img src="../image/tprompting.png" alt=""><span class="title">温馨提示!</span></div>
+                   <p>・请确保支付密码与登陆密码不同！</p>
+               </div>-->
+           </div>
+        </div>
+
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import timerBtn from '../components/timerBtn'
+    import {savePayPassword,queryFinanceRecord,queryRangeCondition,checkMobileCodeUnLogin} from '@/api/getData'
+    import {userInfo,getStore} from  '../config/mUtils'
+    import {isNullObject,getCompanyType} from  '../utils/common'
+
+    export default {
+        components: {
+            headTop,
+            timerBtn
+        },
+        data() {
+            var validateUser = (rule, value, cb) => {
+                value=value.trim();
+                var pattern = /^1(3|4|5|7|8)\d{9}$/
+                if (value === '') {
+                    cb(new Error('请输入手机号'))
+                } else if (!pattern.test(value)) {
+                    cb(new Error('请输入11位手机号'))
+                } else {
+                    cb()
+                }
+            }
+            var validatePwd = (rule, value, cb) => {
+                var pattern = /^\d{6}$/
+                if (value === '') {
+                    cb(new Error('请输入密码'))
+                } else if(value.length != 6){
+                	cb(new Error('请输入6位数支付密码'))
+                }else if (!pattern.test(value)) {
+                    cb(new Error('限于六位数的数字'))
+                } else {
+                    if (this.changepwdForm.checkPwd !== '') {
+                        this.$refs.changepwdForm.validateField('checkPwd')
+                    }
+                    cb()
+                }
+            }
+            var validateCheckPwd = (rule, value, cb) => {
+                if (value === '') {
+                    cb(new Error('请再次输入密码'))
+                } else if (value !== this.changepwdForm.newPwd) {
+                    cb(new Error('两次输入密码不一致!'))
+                } else {
+                    cb()
+                }
+            }
+            return {
+                //1为档口、2为卖家身份
+                identity:1,
+
+                input:'',
+                changepwdForm: {
+                    mobileNo: '',
+                    newPwd: '',
+                    checkPwd: '',
+                    mobileCode: ''
+                },
+                registerRule: {
+                    mobileNo: [
+                        { validator: validateUser, trigger: 'blur' }
+                    ],
+                    newPwd: [
+                        { validator: validatePwd, trigger: 'blur' }
+                    ],
+                    checkPwd: [
+                        { validator: validateCheckPwd, trigger: 'blur' }
+                    ],
+                    mobileCode: [
+                        { required: true, message: '请输入验证码', trigger: 'blur' }
+                    ]
+                }
+            }
+        },
+        watch:{
+        	'$route':function (route) {
+        		this.changepwdForm = {
+        			mobileNo: '',
+                    newPwd: '',
+                    checkPwd: '',
+                    mobileCode: ''
+        		}
+        		this.$refs.timebtn.time = 0;
+        	}
+        },
+        mounted(){
+            this.identity =getCompanyType(getStore("curCompany"));
+        },
+         methods: {
+            async sendValidateCode() {
+                let  param = {
+                    "mobile":this.changepwdForm.mobileNo
+                };
+
+                const res = await getMobileCode(param);
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: '短信验证码下发成功，请注意查收！'
+                    });
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+            async savePayPassword() {
+                const res = await savePayPassword(this.changepwdForm);
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: '支付密码设置成功！3S后跳转到账户设置...'
+                    });
+                    setTimeout(()=>{
+                        this.$router.push('accountSetting')
+                    },3000)
+
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+            submitForm:function(formName,form) {
+                this.$refs[formName].validate((valid) => {
+                    if(valid){
+                        this.changepwdForm.companyId = userInfo().companyId;
+                        this.checkIdentifyMobile();
+                    }
+                });
+            },
+            
+            async checkIdentifyMobile(){
+            	let param ={
+            		mobile:this.changepwdForm.mobileNo,
+            		code:this.changepwdForm.mobileCode
+            	}
+            	const res = await checkMobileCodeUnLogin(param);
+                if (res.isSuccess == true) {
+                	this.savePayPassword();
+                }else{
+                	this.$message({
+                        type: 'error',
+                        message: "验证码不正确"
+                    });
+                }
+            },
+
+
+             async toSendMsg(mobile){
+                 var reg = /^1[3|4|5|7|8][0-9]{9}$/; //验证规则
+                 var flag = reg.test(mobile);
+                 if(!flag)return false;
+                 this.$refs.timebtn.send();
+                 return true;
+             },
+             comeBack(){
+                 this.$router.push('/accountSetting');
+             }
+
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/accountSetting';
+</style>

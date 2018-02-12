@@ -1,0 +1,300 @@
+<template>
+    <div class="login_page fillcontain">
+        <el-col :span="24" class="loginTop flex">
+            <el-col :span="3"></el-col>
+            <el-col :span="3" class="logo flex3">
+                <p>LOGO</p>
+                <p>www.nabei.net</p>
+            </el-col>
+            <el-col :span="8"></el-col>
+            <el-col :span="4" class="loginTelphone">联系电话：123-456-789</el-col>
+            <el-col :span="6" class="flex">
+                <div class="loginAPP flex2">
+                    <div class="flex3">
+                        <p>电商卖家</p>
+                        <p>APP下载</p>
+                    </div>
+                    <img src="../image/erweima1.png" alt="">
+                </div>
+                <div class="loginAPP flex2">
+                    <div class="flex3">
+                        <p>档口</p>
+                        <p>APP下载</p>
+                    </div>
+                    <img src="../image/erweima1.png" alt="">
+                </div>
+            </el-col>
+        </el-col>
+        <el-col :span="24"  class="loginContent">
+            <el-col :span="3">&nbsp;</el-col>
+            <el-col :span="0">
+                <transition name="form-fade" mode="in-out">
+                    <section class="form_contianer3">
+                        <div class="manage_tip">
+                            <p>新用户注册</p>
+                        </div>
+                        <el-form :model="registerForm"
+                                 :rules="registerRule"
+                                 ref="registerForm">
+                            <el-form-item prop="userName">
+                                <el-input type="userName" v-model="registerForm.userName" placeholder="用户名" :rules="userNameRule"></el-input>
+                            </el-form-item>
+                            <el-form-item prop="mobile">
+                                <el-input type="mobile" v-model="registerForm.mobile" placeholder="手机号" :rules="userNameRule"></el-input>
+                            </el-form-item>
+                            <el-form-item prop="pwd">
+                                <el-input v-model="registerForm.pwd" placeholder="密码" type="password"></el-input>
+                            </el-form-item>
+                            <el-form-item prop="checkPwd">
+                                <el-input v-model="registerForm.checkPwd" placeholder="请再次输入密码" type="password"></el-input>
+                            </el-form-item>
+                            <el-form-item prop="type">
+                                <el-select v-model="value5" placeholder="请选择用户类型" style="width:100%;">
+                                    <el-option
+                                        v-for="item in options"
+                                        :key="item.value"
+                                        :label="item.label"
+                                        :value="item.value">
+                                    </el-option>
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item prop="captcha">
+                                <el-input v-model="registerForm.captcha" placeholder="请输入验证码">
+                                    <el-button slot="append">
+                                        <timer-btn class="btn btn-default" ref="timebtn" v-on:refCheckmobile="checkMobileForm"  v-ref:btn :second="60" :mobilehpne=this.registerForm.mobile></timer-btn>
+                                    </el-button>
+                                </el-input>
+                            </el-form-item>
+                            <el-form-item  class="protocol">
+                                <el-checkbox v-model="radio"><span style="font-size: 12px">阅读并接受<span class="protocolColor">《拿呗平台用户注册协议》</span></span></el-checkbox>
+                            </el-form-item>
+                            <el-form-item>
+                                <el-button type="primary" @click="submitForm('registerForm')" class="submitBtn">立即注册</el-button>
+                            </el-form-item>
+                        </el-form>
+                        <div class="refisterFoot">
+                            <router-link  :to='{path:"/"}' class="goLogin">已经有账号？<span>马上登录</span></router-link>
+                        </div>
+                    </section>
+                </transition>
+            </el-col>
+            <el-col :span="6">
+                <div>
+                    <img src="../image/bg02.png" alt="">
+                </div>
+            </el-col>
+        </el-col>
+        <el-col :span="24" class="flex">
+            <div class="Copyright">Copyright &copy; 2017 Nabei.bet 版权所有</div>
+        </el-col>
+    </div>
+</template>
+
+<script>
+	import {registeUser, getAdminInfo,findUserByMobile} from '@/api/getData'
+	import {mapActions, mapState} from 'vuex'
+    import {setStore} from  '../config/mUtils'
+    import timerBtn from '../components/timerBtn'
+
+    export default {
+		components: {
+            timerBtn,
+        },
+        name: 'register',
+        data () {
+            var validateUserName  = (rule, value, cb) => {
+                value=value.trim();
+                var pattern = /^\s*(\S+)\s*$/;
+                if (value === '') {
+                    cb(new Error('请输入用户名'))
+                } else if (!pattern.test(value)) {
+                    cb(new Error('用户名不能有空格'))
+                } else if(value.length>16){
+                    cb(new Error('用户名长度不能超过16个字符'))
+                }else {
+                    cb()
+                }
+            }
+            var validateMobile = (rule, value, cb) => {
+                var pattern = /^1(3|4|5|7|8)\d{9}$/
+                if (value === '') {
+                    cb(new Error('请输入手机号'))
+                } else if (!pattern.test(value)) {
+                    cb(new Error('请输入11位手机号'))
+                } else {
+                    cb()
+                }
+            }
+            var validatePwd = (rule, value, cb) => {
+                value=value.trim();
+                var pattern = /^(?![0-9]+$)(?![a-zA-Z]+$)[0-9A-Za-z]{6,16}$/
+                if (value === '') {
+                    cb(new Error('请输入密码'))
+                } else if(value.indexOf(' ') >0 ){
+                    cb(new Error('密码不能有空格'))
+                }
+                else if (!pattern.test(value)) {
+                    cb(new Error('请输入6-16位数字和字母的组合'))
+                } else {
+                    if (this.registerForm.checkPwd !== '') {
+                        this.$refs.registerForm.validateField('checkPwd')
+                    }
+                    cb()
+                }
+            }
+            var validateCheckPwd = (rule, value, cb) => {
+                value=value.trim();
+                var check=this.registerForm.pwd.trim();
+                if (value === '') {
+                    cb(new Error('请再次输入密码'))
+                } else if(value.indexOf(' ') >0 ){
+                    cb(new Error('密码不能有空格'))
+                }else if (value !== check) {
+                    cb(new Error('两次输入密码不一致!'))
+                } else {
+                    cb()
+                }
+            }
+            var validateCaptcha  = (rule, value, cb) => {
+                value=value.trim();
+                var pattern = /^\s*(\S+)\s*$/;
+                if (value === '') {
+                    cb(new Error('请输入验证码'))
+                } else if (!pattern.test(value)) {
+                    cb(new Error('验证码不能有空格'))
+                } else {
+                    cb()
+                }
+            }
+
+
+            return {
+                radio:false,
+                registerForm: {
+                    userName: '',
+                    mobile:'',
+                    pwd: '',
+                    checkPwd: '',
+                    email: '',
+                    captcha: '',
+                },
+                options: [{
+                    value: 1,
+                    label: '档口'
+                }, {
+                    value: 2,
+                    label: '卖家'
+                }],
+                value5:'',
+                registerRule: {
+                    userName:[
+                        {validator:validateUserName,trigger:'blur'}
+                    ],
+                    mobile: [
+                        { validator: validateMobile, trigger: 'blur' }
+                    ],
+                    pwd: [
+                        { validator: validatePwd, trigger: 'blur' }
+                    ],
+                    checkPwd: [
+                        { validator: validateCheckPwd, trigger: 'blur' }
+                    ],
+                    captcha: [
+                        { validator: validateCaptcha, trigger: 'blur' }
+                    ]
+                },
+                userNameRule: {
+                    mobile: [
+                        { validator: validateMobile, trigger: 'blur' }
+                    ]
+                },
+
+
+            }
+        },
+        computed: {
+            captchaMsg () {
+               // return this.$store.getters.getCaptchaMsg
+            }
+        },
+
+        methods: {
+           async checkMobileForm(mobile){
+               this.$refs['registerForm'].validateField('mobile', (vaild) => {
+
+                });
+               var reg = /^1[3|4|5|7|8][0-9]{9}$/; //验证规则
+               var flag = reg.test(mobile);
+               if(!flag)return false;
+               const res= await findUserByMobile({"mobile":mobile});
+               console.log(res)
+               if (res.isSuccess == true) {
+                   var checkmobile=res.result.user.mobile;
+                   if(checkmobile !=null || checkmobile !=''){
+                       this.$message.error({
+                           title: 'error',
+                           message: '该手机号已注册',
+                           offset: 100
+                       });
+                       return false;
+                   }
+               }
+               this.$refs.timebtn.send();
+                //return true;
+            },
+			async submitForm(formName) {
+
+				this.$refs[formName].validate(async (valid) => {
+					if (valid) {
+					if(!this.radio){
+                        this.$message.error({
+                            title: 'error',
+                            message: '请接受拿呗平台用户注册协议',
+                            offset: 100
+                        });
+						return false;
+                    }
+                        let param = {
+                            "regMode": 1,
+                            "userName": this.registerForm.userName,
+                            "mobile":this.registerForm.mobile,
+                            "password": this.registerForm.pwd,
+                            "mobileCode":this.registerForm.captcha,
+                            "randomCode":"123456"
+                        };
+						const res = await registeUser(param);
+						if (res.isSuccess == true) {
+							this.$message({
+		                        type: 'success',
+		                        message: '注册成功'
+		                    });
+							this.$router.push({path: '/',query:{}})
+                            //this.token=res.result.token;
+							//setStore("token",this.token)
+                        }else{
+							this.$message({
+		                        type: 'error',
+		                        message: res.errorMsg
+		                    });
+						}
+					} else {
+					    /*
+						this.$notify.error({
+							title: '错误',
+							message: '请输入正确的值',
+							offset: 100
+						});*/
+						return false;
+					}
+				});
+			},
+
+        }
+    }
+
+</script>
+
+<style lang="less" scoped>
+    @import '../style/mixin';
+    @import "../style/login";
+</style>

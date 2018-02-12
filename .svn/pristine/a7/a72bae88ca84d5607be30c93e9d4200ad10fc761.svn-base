@@ -1,0 +1,174 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/fastShipping2"}'>快速出货</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/indentManagement"}'>订单管理</router-link>
+            </li>
+            <li class="menuIndex">
+                <router-link :to='{path:"/sellerSettlement"}'>客户结算</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/customerManagement"}'>客户管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/statisticalStatement"}'>销售统计</router-link>
+            </li>
+        </ul>
+        <div class="sellerSettlement">
+            <div class="details" v-for="list in info">
+                <el-col :span="24">
+                    <el-col :span="24">电商卖家名称：{{customName}}</el-col>
+                    <el-col :span="6">当前总欠款：{{unClosedFee}}</el-col>
+                    <el-col :span="18">
+                        <div  class="flex">
+                            <p v-bind:class="[list.state ==1?'style1':list.state ==2?'style2':'']">{{list.state == 1?'周结':list.state == 2?'月结':''}}</p>
+                            <p>{{list.date}}</p>
+                        </div>
+                    </el-col>
+                    <el-col :span="6">已到期：{{toReviceFee}}</el-col>
+                    <el-col :span="18">未到期：{{unClosedFee-toReviceFee}}</el-col>
+                </el-col>
+            </div>
+            <div class="detailsTable">
+                <el-table
+                    :data="tableData6"
+                    @selection-change="handleSelectionChange"
+                    style="width: 100%">
+                    <el-table-column
+                        type="selection"
+                        width="55">
+                    </el-table-column>
+                    <el-table-column
+                        prop="orderNo"
+                        label="订单编号">
+                    </el-table-column>
+                    <el-table-column
+                        prop="closeFee"
+                        label="已结金额">
+                    </el-table-column>
+                    <el-table-column
+                        label="未结金额">
+                        <template scope="scope">
+                           <p>{{scope.row.totalFee-scope.row.closeFee}}</p>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="hasExpireDays"
+                        label="是否到期">
+                    </el-table-column>
+                    <el-table-column
+                        label="操作">
+                        <template scope="scope">
+                            <a href="javascript:void(0)" class="blue2">查看详情</a>
+                        </template>
+                    </el-table-column>
+                </el-table>
+                <a href="javascript:void(0)" class="buttonColor">立即结算</a>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {getDebtInfo} from '@/api/getData'
+    import {userInfo} from  '../config/mUtils'
+    import {formatDate} from '../utils/date.js'
+    import {mydateFormat} from '../utils/dataFormater.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                checked:false,
+                info:[{
+                    state:1,
+                    date:'1号',
+                }],
+                tableData6:[{
+                    id:1,
+                    orderNum:123,
+                    money:142,
+                    whether:'已到期'
+                },{
+                    id:2,
+                    orderNum:123,
+                    money:142,
+                    whether:'未到期'
+                },{
+                    id:3,
+                    orderNum:123,
+                    money:142,
+                    whether:'未到期'
+                },],
+                initData:{
+                    companyId:userInfo().companyId
+                },
+                //多选数组
+                multipleSelection: [],
+                sumTotalFee:0,
+
+                saleName:'',
+                unClosedFee:'',
+                toReviceFee:'',
+            }
+        },
+        watch: {
+            '$route': function (route) {
+                if(route.path=='/sellerSettlementDetailsl'){
+                    this.initData.saleCompanyId  =  this.$route.query.saleCompanyId;
+                    this.saleName  =  this.$route.query.saleCompanyId;
+                    this.unClosedFee  =  this.$route.query.unClosedFee
+                    this.toReviceFee  =  this.$route.query.toReviceFee
+                    this.customName = this.$route.query.customName
+                    this.loadData (this.initData)
+                }
+            }
+        },
+
+        mounted(){
+            this.initData.saleCompanyId  =  this.$route.query.saleCompanyId;
+            this.saleName  =  this.$route.query.saleCompanyId;
+            this.unClosedFee  =  this.$route.query.unClosedFee
+            this.toReviceFee  =  this.$route.query.toReviceFee
+            this.customName = this.$route.query.customName
+            this.loadData (this.initData)
+        },
+        methods: {
+            async loadData(params){
+                const res = await getDebtInfo(params)
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message:'数据加载成功!'
+                    });
+                    this.tableData6 = res.result;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+
+            },
+            //多选响应
+            handleSelectionChange: function(val) {
+                this.multipleSelection = val;
+                this.sumTotalFee=0;
+                //合计金额
+                val.forEach((obj) => this.sumTotalFee += obj.totalStockFee);
+            },
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/sellerSettlement';
+</style>

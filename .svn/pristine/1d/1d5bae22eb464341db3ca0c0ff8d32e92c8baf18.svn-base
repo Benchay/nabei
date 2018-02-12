@@ -1,0 +1,396 @@
+<template>
+	<div class="fillcontain">
+		<ul class="menu">
+			<li class="menuIndex">
+				<router-link :to='{path:"/currentInventory"}'>当前库存</router-link>
+			</li>
+			<li>
+				<router-link :to='{path:"/inventoryDetail"}'>库存变动</router-link>
+			</li>
+			<li>
+				<router-link :to='{path:"/stocktaking"}'>库存盘点</router-link>
+			</li>
+			<li>
+				<router-link :to='{path:"/stockTransshipment"}'>库存调拨</router-link>
+			</li>
+			<li>
+				<router-link :to='{path:"/inventoryWarning"}'>库存预警</router-link>
+			</li>
+			<li>
+				<router-link :to='{path:"/storeManagement"}'>多仓管理</router-link>
+			</li>
+			<li>
+				<router-link :to='{path:"/inventoryInitialize"}'>库存初始化</router-link>
+			</li>
+		</ul>
+		<div class="currentInventory">
+			<div class="inventoryTop">
+				<div class="left">
+					<el-input placeholder="商品名称搜索" size="small" icon="search" v-model="productName" :on-icon-click="handleIconClick">
+					</el-input>
+					<el-input placeholder="商品货号搜索" size="small" icon="search" v-model="productCode" :on-icon-click="handleIconClick">
+					</el-input>
+					<el-input placeholder="库存位置搜索" size="small" icon="search" v-model="name" :on-icon-click="handleIconClick">
+					</el-input>
+				</div>
+			</div>
+			<div class="fastTable">
+				<el-table :data="tableData" style="width: 100%">
+					<el-table-column prop="CommodityFigure" width="180" label="主图/货号">
+						<template scope="scope">
+							<div class="flex CommodityFigure">
+								<img src="../image/head11.jpg" alt="">
+								<p>{{scope.row.productCode}}</p>
+							</div>
+						</template>
+					</el-table-column>
+					<el-table-column prop="title" label="商品名称">
+					</el-table-column>
+					<el-table-column prop="stockNum" label="当前库存">
+					</el-table-column>
+					<el-table-column prop="stockPrice" label="当前库存金额">
+					</el-table-column>
+					<el-table-column width="200" label="库存位置">
+						<template scope="scope">
+							<div class="flex2">
+								<p>{{scope.row.name}}</p>
+								<img src="../image/kicon01.png" alt="" class="chooseDepot" @click="getWarehouseData(tableData[scope.$index])">
+							</div>
+						</template>
+					</el-table-column>
+					<el-table-column label="操作" width="220">
+						<template scope="scope">
+							<a href="javascript:void(0);" class="blue2" @click="showDialogDetail(tableData[scope.$index])">查看详情</a>
+						</template>
+					</el-table-column>
+				</el-table>
+			</div>
+
+			<el-pagination small class="right" style="margin-top: 20px;" @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page="currentPage" :page-sizes="[10, 20, 30, 40]" :page-size="pagesize" layout="total, sizes, prev, pager, next, jumper" :total="totalCount">
+			</el-pagination>
+
+			<a href="javascript:void(0)" class="export_excle" @click="exportDataForExcel">导出excel</a>
+		</div>
+		<el-dialog title="查看详情" :visible.sync="dialogDetails" size="tiny">
+			<div class="flex detailsContent">
+				<img src="../image/111.png" alt="">
+				<div class="detailsContent-1">
+					<p>商品货号：{{produceDetailCode}}</p>
+					<p>商品名称：{{produceDetailName}}</p>
+					<p>单价：{{purchasePrice}}</p>
+				</div>
+			</div>
+			<div style="margin-top: 20px;">
+				<template>
+					<el-table :data="tableData1" border style="width: 100%">
+						<el-table-column prop="colour" label="颜色">
+						</el-table-column>
+						<el-table-column prop="size" label="尺码">
+						</el-table-column>
+						<el-table-column prop="stockNum" label="数量">
+						</el-table-column>
+					</el-table>
+				</template>
+			</div>
+		</el-dialog>
+		<el-dialog title="选择仓位" :visible.sync="dialogChoose" size="tiny">
+			<div class="chooseRadio radioGreen">
+				<el-col :span="5" v-model="radioGreen" class="radioGreen">
+					<!-- <el-radio v-for="seat in stockSeats" class="radio" v-model="seatRadio" :label="seat.name"  :key="seat.id" :value="seat.id"></el-radio>-->
+					<el-radio v-for="list in stockSeats" class="radio" v-model="seatRadio" :label="list.name"><span>{{list.name}}</span></el-radio>
+				</el-col>
+			</div>
+			<div slot="footer" class="dialog-footer flex2">
+				<a href="javascript:void(0)" @click="updateWarehouseSeat(seatRadio)" class="buttonColor">确 定</a>
+				<a href="javascript:void(0)" @click="dialogChoose = false" class="buttonColor2">取 消</a>
+			</div>
+		</el-dialog>
+	</div>
+</template>
+
+<script>
+	import headTop from '../components/headTop'
+	import { getCompanyStocks, queryProductStock, queryProductInfo, queryWarehouseSeat, saveWarehouseSeat } from '@/api/getData'
+	import { export_json_to_excel } from '../vendor/Export2Excel.js'
+	import { userInfo, getStore, setStore } from '../config/mUtils'
+
+	export default {
+		components: {
+			headTop,
+		},
+		data() {
+			return {
+				radio: '',
+				input1: '',
+				radioGreen: '',
+				productCode: '',
+				productName: '',
+				name: '',
+				dialogChoose: false,
+				dialogDetails: false,
+				dialogLocation: false,
+				produceDetailName: '',
+				produceDetailCode: '',
+				tableData: [{
+					location: '【档口仓库】男装区域'
+				}],
+				tableData1: [],
+				datalist: [],
+				purchasePrice:'',
+				warehouseSeatId: '',
+				warehouseId: '',
+				seatRadio: '',
+				//默认每页数据量
+				pageSize: 5,
+				//默认高亮行数据id
+				highlightId: -1,
+				//当前页码
+				currentPage: 1,
+				//查询的页码
+				start: 1,
+				//默认数据总数
+				totalCount: 0,
+				stockSeats: [],
+				initData: {
+					companyId: userInfo().companyId,
+					warehouseId: userInfo().warehouseId,
+					pageIndex: 1,
+					pageSize: 8
+				},
+				param: {
+					"params": {
+						"companyId": userInfo().comanyId,
+						"warehouseId": userInfo().warehouseId,
+						"pageIndex": 1,
+						"pageSize": 3
+					}
+				}
+			}
+		},
+		mounted() {
+			this.initloadData(this.initData);
+			this.queryWarehouseSeat(this.param);
+		},
+		methods: {
+			handleSizeChange(val) {
+				console.log(`每页 ${val} 条`);
+			},
+			handleCurrentChange(val) {
+				console.log(`当前页: ${val}`);
+			},
+			//从服务器获取数据
+			async initloadData(initData) {
+				const res = await queryProductStock(initData);
+				if(res.isSuccess == true) {
+					this.$message({
+						type: 'success',
+						message: '数据加载成功！'
+					});
+					this.tableData = res.result.results;
+					console.info(this.tableData)
+					this.totalCount = res.result.totalCount;
+					//this.rechangeData();
+				} else {
+					this.$message({
+						type: 'error',
+						message: res.isSuccess
+					});
+				}
+			},
+			async queryWarehouseSeat(param) {
+				const res = await queryWarehouseSeat(param);
+				if(res.isSuccess == true) {
+                   let warehouseList = res.result.results;
+                   for(let i=0;i<warehouseList.length;i++){
+                   	    if(warehouseList[i].name != null){
+                   	    	this.stockSeats.push(warehouseList[i]);
+                   	    }
+                   }
+				} else {
+					this.$message({
+						type: 'error',
+						message: res.isSuccess
+					});
+				}
+			},
+			async updateWarehouseSeat(name) {
+				let WarehouseSeat = {
+					"companyId": userInfo().companyId,
+					"name": name,
+					"id": this.warehouseSeatId,
+					"warehouseId": this.warehouseId
+				}
+				const res = await saveWarehouseSeat(WarehouseSeat);
+				if(res.isSuccess == true) {
+					this.$message({
+						type: 'success',
+						message: res.result.msg
+					});
+					this.dialogChoose = false;
+					this.initloadData(this.initData);
+				} else {
+					this.$message({
+						type: 'error',
+						message: res.isSuccess
+					});
+				}
+			},
+
+			getWarehouseData(param) {
+				this.dialogChoose = true;
+				this.warehouseSeatId = param.warehouseSeatId;
+				this.warehouseId = param.warehouseId;
+				this.seatRadio = param.name;
+			},
+			handleIconClick(ev) {
+				let param = {
+					companyId: userInfo().companyId,
+					warehouseId: userInfo().warehouseId,
+					pageIndex: 1,
+					pageSize: 8
+				}
+				if(this.productCode != '') {
+					param.productCode = this.productCode
+				}
+				if(this.productName != '') {
+					param.productName = this.productName
+				}
+				if(this.name != '') {
+					param.wareHouseSeatName = this.name
+				}
+				this.initloadData(param);
+			},
+			//页码变更
+			handleCurrentChange: function(val) {
+				this.currentPage = val;
+				let param = {
+					"companyId": userInfo().companyId,
+					"warehouseId": userInfo().warehouseId,
+					"pageSize": this.pageSize,
+					"pageIndex": this.currentPage,
+				};
+				this.initloadData(param);
+
+			},
+
+			async showDialogDetail(rows) {
+				let param = {
+					companyId: userInfo().companyId,
+					warehouseId: userInfo().warehouseId,
+					productCode: rows.productCode
+				}
+				const res = await queryProductInfo(param);
+				if(res.isSuccess == true) {
+					this.tableData1 = res.result;
+					this.produceDetailName = rows.title;
+					this.produceDetailCode = rows.productCode;
+					this.purchasePrice = rows.purchasePrice;
+					this.dialogDetails = true;
+					//this.rechangeData();
+				} else {
+					this.$message({
+						type: 'error',
+						message: '数据加载出错，请联系管理员！'
+					});
+				}
+			},
+			rechangeData() {
+				this.tableData = [];
+				for(let i = 0; i < this.datalist.length; i++) {
+					let data = this.datalist[i];
+					let obj = [];
+					for(let j = 0; j < this.datalist[i].productVariants.length; j++) {
+						let o = this.datalist[i].productVariants[j];
+						let color = "";
+						let tempsize = "";
+						let stockNum = "";
+						if(o.colour) {
+							color = o.colour;
+						}
+						if(o.size) {
+							tempsize = o.size;
+						}
+						if(o.stockNum) {
+							stockNum = o.stockNum;
+						}
+						let variant = {
+							colour: color,
+							size: tempsize,
+							num: stockNum
+						};
+						obj.push(variant);
+					}
+					let element = {
+						numbers: data.productCode,
+						name: data.title,
+						money: '',
+						inventory: data.stockNum,
+						location: data.name,
+						variantValue: obj,
+						stockPrice: data.stockPrice
+					}
+					this.tableData.push(element);
+				}
+			},
+			exportDataForExcel() {
+				let exportData = [];
+				for(let i = 0; i < this.tableData.length; i++) {
+					let data1 = this.tableData[i];
+					if(data1.variantValue) {
+						for(let j = 0; j < data1.variantValue.length; j++) {
+							let data2 = data1.variantValue[j];
+							let produceName = "";
+							let produceCode = "";
+							let produceLocation = "";
+							let color = "";
+							let size = "";
+							let num = "";
+							if(data1.name) {
+								produceName = data1.name;
+							}
+							if(data1.numbers) {
+								produceCode = data1.numbers;
+							}
+							if(data1.location) {
+								produceLocation = data1.location;
+							}
+							if(data2.colour) {
+								color = data2.colour;
+							}
+							if(data2.size) {
+								size = data2.size;
+							}
+							if(data2.num) {
+								size = data2.num;
+							}
+							let tempRow = {
+								produceName: produceName,
+								produceCode: produceCode,
+								produceLocation: produceLocation,
+								color: color,
+								size: size,
+								num: num
+							}
+							exportData.push(tempRow);
+						}
+					}
+				}
+
+				const tHeader = ['商品名称', '商品货号', '库存位置', '颜色', '数量'];　　　　
+				const filterVal = ['produceName', 'produceCode', 'produceLocation', 'color', 'size', 'num'];　　　　
+				const list = exportData　　　　
+				const data = this.formatJson(filterVal, list);　　　　
+				export_json_to_excel(tHeader, data, '当前库存列表');
+			},
+			formatJson(filterVal, jsonData) {　　　　　　
+				return jsonData.map(v => filterVal.map(j => v[j]))　　　　
+			}
+		}
+	}
+</script>
+
+<style lang="less">
+	@import '../style/mixin';
+	@import '../style/common';
+	@import '../style/currentInventory';
+</style>

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+    <meta http-equiv="Access-Control-Allow-Origin" content="*">
+    <title>拿呗档口电子名片</title>
+    <script src="js/mui.js"></script>
+    <link href="js/mui.min.css" rel="stylesheet" />
+    <link href="appIndex.css" rel="stylesheet" />
+    <style>
+
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <header class="mui-bar mui-bar-nav" style="z-index: 100;">
+            <a href="down.html" class=" mui-pull-left top_left"><img src="images/logo.png"></a>
+            <h1 class="mui-title">档口电子名片</h1>
+            <a href="" class="mui-pull-right top_right"></a>
+        </header>
+        <div class="mui-content" style="background-color: #fff;">
+            <div class="name_box">
+                <img v-if="this.busiComanyLogo=='' || this.busiComanyLogo==null" src="images/mo_2.png" class="photo">
+                <img v-else :src="busiComanyLogo" class="photo">
+                <div class="name">
+                    <div class="mz">{{stallName}}<span>拿呗认证</span></div>
+                    <div class="wz"><img src="images/loc.png">{{location}}</div>
+                </div>
+            </div>
+            <div class="lxfs">
+                <div class="we"><img src="images/wx.png"><span>{{weixin==''?'（无）':'weixin'}}</span></div>
+                <div class="phone"><img src="images/dh.png">{{linkTel==''?'（无）':'linkTel'}}</div>
+                <div class="we" style="border-top: 1px dashed #EFEFF4;"><img src="images/ww.png"><span>{{wangwang==''?'（无）':'wangwang'}}</span></div>
+                <div class="phone" style="border-top: 1px dashed #EFEFF4;"><img src="images/qq.png">{{stallQQ==''?'（无）':'stallQQ'}}</div>
+            </div>
+            <div class="ico_box">
+                <ul>
+                    <li>
+                        <a href="javascript:void(0)" @click="productList1()"><img src=" images/g1.png"><br/>全部商品</a>
+                    </li>
+                    <li>
+                        <a href="down.html"><img src=" images/g2.png"><br/>立即下单</a>
+                    </li>
+                    <li>
+                        <a href="down.html"><img src=" images/g3.png"><br/>拿货</a>
+                    </li>
+                    <li>
+                        <a href="down.html"><img src=" images/g4.png"><br/>退货</a>
+                    </li>
+                    <li>
+                        <a href="down.html"><img src=" images/g5.png"><br/>结算</a>
+                    </li>
+                </ul>
+
+            </div>
+            <h1 class="xp_til" v-if="productData.length!=0"> 上 / 架 / 商 / 品 /</h1>
+            <div class="xp_box"  v-if="productData.length!=0">
+                <a href="javascript:void(0)" @click="productList1()">
+                    <ul>
+                        <li v-for="item in productData"><img :src="item.imgUrl_main"><br/>{{item.productCode}}</li>
+                    </ul>
+                </a>
+            </div >
+            <h1 class="xp_til" style="color: #666;border-top: 10px solid #EFEFF4;padding-top: 8px;"  v-if="productData2.length!=0"> 下 / 架 / 商 / 品 /</h1>
+
+            <div class="xp_box"  v-if="productData2.length!=0" style="margin-bottom: 50px;">
+                <a href="javascript:void(0)" @click="productList2()">
+                    <ul>
+                        <li v-for="item in productData2"><img :src="item.imgUrl_main"><br/>{{item.productCode}}</li>
+                    </ul>
+                </a>
+            </div>
+            <div class="bottom_box">
+                <p class="bol">用拿呗，货品提前备！了解更多！
+                </p>
+                <p class="down_ico"><a href="down.html">下载</a></p>
+            </div>
+        </div>
+    </div>
+
+
+</body>
+<script>
+    var slider = mui("#slider");
+    slider.slider({
+        interval: 5000
+    });
+</script>
+<script src="vue.min.js"></script>
+<script src="js/axios.min.js"></script>
+<script type="text/javascript">
+    new Vue({
+        el: '#app',
+        data: {
+            companyId: '',
+            id:'',
+            accessToken:'',
+            cid:'',
+            stallQQ: '',
+            weixin: '',
+            stallName: '',
+            wangwang: '',
+            linkTel: '',
+            busiComanyLogo:'',
+            location:'',
+            productData:[],
+            productData2:[],
+
+        },
+        mounted() {
+            this.init();
+            this.init2();
+            this.init3();
+        },
+        methods: {
+            init0(){
+                function GetQueryString(name) {
+                    var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+                    var r = window.location.search.substr(1).match(reg);
+                    if (r != null) return unescape(r[2]);
+                    return null;
+                }
+                this.companyId = GetQueryString("companyId");
+                this.id = GetQueryString("id");
+                this.accessToken = GetQueryString("accessToken");
+                this.cid = GetQueryString("cid")
+                axios.hangeOrigin = true;
+                axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
+            },
+            init() {
+                this.init0()
+                axios.defaults.baseURL = 'http://192.168.0.123:5080/cws/';
+                axios.get('/stall/getStallCard.do', {
+                        params: {
+                            accessToken: this.accessToken,
+                            id: this.id,
+                            companyId: this.companyId,
+                            cid: 'stallCard'
+                        }
+                    })
+                    .then(response => {
+                        console.log(response);
+                        let data = response.data.result;
+                        this.stallQQ = data.qq;
+                        this.weixin = data.weixin;
+                        this.stallName = data.name;
+                        this.wangwang = data.wangWangAccount;
+                        this.linkTel = data.linkTel;
+                        this.busiComanyLogo = data.busiComanyLogo;
+                        this.location = data.location;
+                        console.log(this.stallName)
+
+                    })
+                    .catch(function(error) {
+                        console.log(error);
+                    });
+            },
+            init2(){
+                this.init0()
+                axios.defaults.baseURL = 'http://192.168.0.123:5080/stock/';
+                axios.get('/api/queryProductByToken.do', {
+                    params: {
+                        companyId:this.companyId,
+                        accessToken:this.accessToken,
+                        pageIndex:1,
+                        pageSize:7,
+                        saleState:1
+                    }
+                })
+                    .then(response => {
+                        this.productData = response.data.result.results;
+                    })
+                    .catch(function(error) {
+                        console.log(error);
+                    });
+            },
+            init3(){
+                this.init0()
+                axios.defaults.baseURL = 'http://192.168.0.123:5080/stock/';
+                axios.get('/api/queryProductByToken.do', {
+                    params: {
+                        companyId:this.companyId,
+                        accessToken:this.accessToken,
+                        pageIndex:1,
+                        pageSize:7,
+                        saleState:0
+                    }
+                })
+                    .then(response => {
+                        this.productData2 = response.data.result.results;
+                    })
+                    .catch(function(error) {
+                        console.log(error);
+                    });
+            },
+            productList1(){
+                if(this.productData.length>0){
+                    let url = 'show.html?'+'accessToken='+this.accessToken+'&id='+this.id+'&companyId='+this.companyId+'&saleState=1';
+                    window.location=url;
+                }else{
+                    window.location='down.html';
+                }
+            },
+            productList2(){
+                let url = 'show.html?'+'accessToken='+this.accessToken+'&id='+this.id+'&companyId='+this.companyId+'&saleState=0';
+                window.location=url;
+            }
+        },
+    })
+</script>
+
+</html>

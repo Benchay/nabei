@@ -1,0 +1,48 @@
+.storeManagement{
+    margin:0 30px;
+    background: #fff;
+    padding: 20px 40px;
+    color:#333;
+    height:77%;
+    .store{
+        margin-top: 10px;
+        .storeList{
+            margin-right: 4%;
+            height:110px;
+            margin-top: 20px;
+            padding: 10px 30px;
+            border:1px solid #d4d4d4;
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items:flex-start;
+            box-shadow: 1px 1px 3px #ccc;
+            .list2{
+                height: 50px;
+                font-size: 12px;
+                margin-top: 10px;
+                width:100%;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                a{
+                    display: block;
+                    margin-bottom: 10px;
+                    color:#333;
+                }
+            }
+        }
+        .storeList:hover{
+            box-shadow: 2px 2px 3px #999;
+
+        }
+    }
+}
+.storeLocation{
+    margin-top: 10px;
+    .locationTag{
+        margin-right: 5px;
+        margin-bottom: 5px;
+    }
+}

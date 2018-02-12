@@ -1,0 +1,86 @@
+.stallManage{
+    margin:2px 30px;
+    background: #fff;
+    padding: 20px 40px;
+    color:#333;
+    height:100%;
+    overflow: auto;
+    .stallManageTop>div{
+        width: 200px;
+        margin-right: 10px;
+        margin-bottom: 20px;
+    }
+    .stallButton{
+        height: 40px;
+    }
+    .stallOperation{
+        a{
+            color:@red;
+            margin-right: 15px;
+        }
+    }
+}
+.dialogAddStall{
+    padding-right: 25px;
+}
+
+
+.dialogImport{
+    .importFirst{
+        display: flex;
+        align-items: flex-start;
+        .uploatName{
+            background: #e7f3fd;
+            margin-left: 10px;
+            margin-bottom: 5px;
+            p{
+                max-width: 189px;
+                white-space:nowrap;
+                overflow:hidden;
+                text-overflow:ellipsis;
+            }
+        }
+        .uploatButton{
+            position: relative;
+            #uploatfile{
+                background: pink;
+                width: 96px;
+                height: 30px;
+                position: absolute;
+                top:0;
+                left:0;
+                opacity: 0;
+            }
+            .importUploat{
+                background:#fff;
+                border:1px solid #ccc;
+                border-radius: 15px;
+                padding: 4px 9px;
+                font-size: 12px;
+                margin-left: 10px;
+                img{
+                    width: 18px;
+                    height: 18px;
+                }
+            }
+        }
+    }
+
+    .dialogImport,.importTips{
+        height: 40px;
+        line-height: 40px;
+    }
+    .importTips{
+     font-size: 12px;
+        color:#999;
+    }
+    .importDownload{
+        padding: 0 8%;
+        a{
+            border:1px solid #da444f;
+            height: 30px;
+            border-radius: 5px;
+            color:#333;
+        }
+    }
+}

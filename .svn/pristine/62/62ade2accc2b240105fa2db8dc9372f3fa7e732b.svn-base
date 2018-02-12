@@ -1,0 +1,215 @@
+<template>
+    <div class="fillcontain">
+        <ul :class="[identity ==1 ?'stallShareMenu':identity ==2 ?'sellerShareMenu':'']">
+            <li>
+                <router-link :to='{path:"/financialManagement"}'>账户总览</router-link>
+            </li>
+            <li class="ListMenu">
+                <router-link :to='{path:"/financialManagement2"}'>财务交易记录</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/accountSetting"}'>账户设置</router-link>
+            </li>
+        </ul>
+        <div class="managementDetail">
+            <p style="margin-bottom: 15px;"><el-button type="info">打印</el-button></p>
+            <div class="detail-top flex">
+                <div class="topLeft flex">
+                    <p>交易记录编号：{{dataResult.flowNo}}</p>
+                </div>
+                <div class="topRight">
+                    <!--<router-link :to='{path:"/financialManagement2"}'>返回</router-link>-->
+                    <router-link :to='{path:this.backPath}'>返回</router-link>
+                </div>
+            </div>
+            <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                    <th>账单 #1详情</th>
+                    <th>支出方：{{this.settlementOrder!=undefined&&this.settlementOrder!=''?this.settlementOrder.companyName:dataResult.payCompanyName}}</th>
+                    <th>帐号：{{this.settlementOrder!=undefined&&this.settlementOrder!=''?this.settlementOrder.payAcount:dataResult.payAccoutNumber}}</th>
+                    <th>账户类型：{{this.checkPayAccountType()}}</th>
+                </tr>
+                <tr>
+                   <td colspan="4">交易金额：{{this.settlementOrder!=undefined&&this.settlementOrder!=''?this.settlementOrder.actualPayFee + (this.settlementOrder.fixFee==undefined?0:this.settlementOrder.fixFee):this.dataResult.fee==undefined?0:''}}</td>
+                </tr>
+                <tr>
+                    <!--<td>抹平金额：{{dataResult.reduceFee}}</td>-->
+                    <td>抹平金额：{{this.settlementOrder!=undefined&&this.settlementOrder!=''?this.settlementOrder.fixFee:0}}</td>
+                    <td colspan="3">付款币种：人名币</td>
+                </tr>
+                <tr>
+                    <th>实际交易总额：￥{{this.settlementOrder!=undefined&&this.settlementOrder!=''?this.settlementOrder.actualPayFee:dataResult.fee}}</th>
+                    <th>收款方：{{dataResult.receiveCompanyName==undefined||dataResult.receiveCompanyName==''?this.settlementOrder.otherSideCompanyName:''}}</th>
+                    <th colspan="2">收款账户：{{this.settlementOrder!=undefined&&this.settlementOrder!=''?this.settlementOrder.reciveAcount:dataResult.receiveAccoutNumber}}({{this.checkAccountType()}}) <span></span></th>
+                </tr>
+                <tr>
+                    <td colspan="4">订单编号：{{dataResult.orderCode}}</td>
+                </tr>
+                <tr>
+                    <td colspan="4">交易时间：{{dataResult.createTime}}</td>
+                </tr>
+                <tr>
+                    <td colspan="4">交易状态：{{dataResult.status}}</td>
+                </tr>
+                <tr>
+                    <td colspan="4">交易流水：{{dataResult.flowNo}}</td>
+                </tr>
+                <tr>
+                    <td colspan="4">说明：{{dataResult.memo}}</td>
+                </tr>
+                <tr>
+                    <td colspan="4"  class="detailImage"><p>图片：</p>
+                        <!--<img src="../image/head11.jpg" alt=""><img src="../image/head11.jpg" alt="">-->
+                        <img class="uploadfile" v-for="item in uploadFile" :src="item" alt="">
+                    </td>
+                </tr>
+            </table>
+            <a href="javascript:void(0)" class="export_excle1">导出excel</a>
+        </div>
+    </div>
+</template>
+
+<script>
+    import {selectFinanceRecordCert,getSettlementOrder,getSettlement} from '@/api/getData'
+    import {userInfo,getStore} from  '../config/mUtils'
+    import {isNullObject,getCompanyType} from  '../utils/common'
+
+    export default {
+        data() {
+            return {
+                //              1为档口、2为卖家身份
+                identity:1,
+				financeRecordId:'',
+				orderId:'',
+				dataResult:{},
+                settlementOrder:'',
+                backPath:'',
+                uploadFile:[]
+            }
+        },
+        watch:{
+            '$route':function (route) {
+				if(route.path=='/financialManagementDetail'){
+                    this.financeRecordId = this.$route.query.financeRecordId;
+					this.orderId = this.$route.query.orderId;
+					this.backPath = this.$route.query.backPath;
+				    this.loadData();
+                }
+
+            }
+        },
+        mounted(){
+            this.identity =getCompanyType(getStore("curCompany"));
+        	this.financeRecordId = this.$route.query.financeRecordId;
+			this.orderId = this.$route.query.orderId;
+            this.backPath = this.$route.query.backPath;
+        	this.loadData();
+        },
+        methods: {
+			async loadData() {
+				let param ={
+                    financeRecordId:this.financeRecordId
+                }
+                const res = await selectFinanceRecordCert(param);
+                if (res.isSuccess == true) {
+                    this.dataResult = res.result;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: '数据加载失败'
+                    });
+                }
+				if(this.orderId==undefined||this.orderId==''){
+					return ;
+				}else{
+				    this.uploadFile = [];
+				    let queryorderParam = {
+				        "id":this.orderId
+                    };
+				    const orderres = await  getSettlement(queryorderParam);
+				    if(orderres.isSuccess){
+				        this.settlementOrder = orderres.result;
+                        if(this.settlementOrder.certificate){
+                            this.settlementOrder.certificate.split(",").forEach(obj => {
+                                this.uploadFile.push(obj);
+                            })
+                        }
+                    }
+
+                }
+			},
+
+            //账户类型
+            checkAccountType(){
+
+			    //this.settlementOrder!=undefined?this.settlementOrder.actualPayFeeType:dataResult.payAccType
+			    if(this.settlementOrder!=undefined){
+                    if(this.settlementOrder.reciveAcountType==1){
+                        return '余额';
+                    }else if(this.settlementOrder.reciveAcountType==3){
+                        return '支付宝';
+                    }else if(this.settlementOrder.reciveAcountType==4){
+                        return '微信';
+                    }else if(this.settlementOrder.reciveAcountType==5){
+                        return '银行卡';
+                    }
+                }else if(this.dataResult!=undefined){
+                    if(this.dataResult.receiveAccType=='1'){
+                        return '余额';
+                    }else if(this.dataResult.receiveAccType=='2'){
+                        return '金币';
+                    }else if(this.dataResult.receiveAccType=='3'){
+                        return '支付宝';
+                    }else if(this.dataResult.receiveAccType=='4'){
+                        return '微信';
+                    }else if(this.dataResult.receiveAccType=='5'){
+                        return '银行卡';
+                    }
+                }
+
+                return '';
+            },
+
+            checkPayAccountType(){
+                if(this.settlementOrder!=undefined){
+                    if(this.settlementOrder.actualPayFeeType==1){
+                        return '余额';
+                    }else if(this.settlementOrder.actualPayFeeType==3){
+                        return '支付宝';
+                    }else if(this.settlementOrder.actualPayFeeType==4){
+                        return '微信';
+                    }else if(this.settlementOrder.actualPayFeeType==5){
+                        return '银行卡';
+                    }
+                }else if(this.dataResult!=undefined){
+                    if(this.dataResult.payAccType=='1'){
+                        return '余额';
+                    }else if(this.dataResult.payAccType=='2'){
+                        return '金币';
+                    }else if(this.dataResult.payAccType=='3'){
+                        return '支付宝';
+                    }else if(this.dataResult.payAccType=='4'){
+                        return '微信';
+                    }else if(this.dataResult.payAccType=='5'){
+                        return '银行卡';
+                    }
+                }
+                return '';
+            },
+        }
+
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/financialManagement';
+    .managementDetail .detail-top button{
+        margin-left: 0;
+    }
+    .uploadfile{
+        width: 100px;
+        height: 100px;
+    }
+</style>

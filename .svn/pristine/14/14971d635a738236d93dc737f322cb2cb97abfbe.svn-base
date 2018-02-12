@@ -1,0 +1,285 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/fastShipping2"}'>快速出货</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/indentManagement"}'>订单管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/takeGoods"}'>取货码</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/sellerSettlement"}'>客户结算</router-link>
+            </li>
+            <li class="menuIndex">
+                <router-link :to='{path:"/SettlementRecordsStall"}'>结算单</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/customerManagement"}'>客户管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/statisticalStatement"}'>销售统计</router-link>
+            </li>
+        </ul>
+        <div class="sellerSettlement">
+            <div class="sellerTop">
+                <el-select
+                    v-model="otherSideCompanyName"
+                    filterable
+                    remote
+                    reserve-keyword
+                    placeholder="请输入客户名称"
+                    :remote-method="remoteMethod"
+                    :loading="loading"
+                    @change="handleIconClickName">
+                    <el-option
+                        v-for="item in options4"
+                        :key="item.sellId"
+                        :label="item.sellName"
+                        :value="item.sellId">
+                    </el-option>
+                </el-select>
+                <el-select v-model="value" placeholder="结算方式" @change="changeSettlementType">
+                    <el-option
+                        v-for="item in options"
+                        :key="item.value"
+                        :label="item.label"
+                        :value="item.value">
+                    </el-option>
+                </el-select>
+            </div>
+            <div style="margin-top: 20px;">
+                <el-radio-group v-model="radio" size="small" class="radioGreen" @change="changeStatus">
+                    <el-radio-button label="-1">全部</el-radio-button>
+                    <el-radio-button label="0">等待付款</el-radio-button>
+                    <el-radio-button label="1">付款成功</el-radio-button>
+                    <el-radio-button label="2">付款失败</el-radio-button>
+                    <el-radio-button label="3">已关闭</el-radio-button>
+                    <el-radio-button label="4">付款中</el-radio-button>
+                </el-radio-group>
+            </div>
+            <div class="sellerTable">
+                <el-table
+                    :data="tableData3"
+                    style="width: 100%">
+                    <el-table-column
+                        prop="otherSideCompanyName"
+                        label="客户名称"
+                        width="180">
+                    </el-table-column>
+                    <el-table-column
+                        prop="actualPayFee"
+                        label="结算金额">
+                    </el-table-column>
+                    <el-table-column
+                        prop="status"
+                        label="结算状态">
+                        <template scope="scope">
+                            <p>{{scope.row.status==0?'等待付款':scope.row.status==1?'付款成功':scope.row.status==2?'付款失败':scope.row.status==3?'已关闭':scope.row.status==4?'付款中':''}}</p>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="settlementType"
+                        label="结算方式">
+                        <template scope="scope">
+                            <p>{{scope.row.settlementType==1?'单订单结算':scope.row.settlementType==2?'多订单结算':''}}</p>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="actualPayFeeType"
+                        label="结算账户类型">
+                        <template scope="scope">
+                            <p>{{scope.row.actualPayFeeType==1?'余额':scope.row.actualPayFeeType==3?'支付宝':scope.row.actualPayFeeType==4?'微信':scope.row.actualPayFeeType==5?'银行卡':''}}</p>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="createTime"
+                        label="结算时间"
+                        :formatter="formatDate">
+                    </el-table-column>
+                    <el-table-column
+                        width="220"
+                        label="操作">
+                        <template scope="scope">
+                            <div class="flex stallOperation2">
+                                <router-link :to='{path:"/sellerSettlementImmediately",query:{saleCompanyId:scope.row.otherSideCompanyId,activeName:"second",settlementOrderId:scope.row.id}}' v-if="scope.row.type==2">立即结算</router-link>
+                                <router-link :to='{path:"/sellerSettlementDetailsl",query:{saleCompanyId:scope.row.otherSideCompanyId,unClosedFee:scope.row.actualPayFee,customName:scope.row.otherSideCompanyName,settlementOrderId:scope.row.id}}'>查看详情</router-link>
+                            </div>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+            <el-pagination
+                small
+                class="right"
+                style="margin-top: 20px;"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :current-page="currentPage"
+                :page-sizes="[10, 20, 30, 40]"
+                :page-size="pageSize"
+                layout="total, sizes, prev, pager, next, jumper"
+                :total="totalCount">
+            </el-pagination>
+            <a href="javascript:void(0)" class="export_excle" @click="exportTableData">导出excel</a>
+
+        </div>
+    </div>
+</template>
+
+<script>
+    import {querySettlementOrder,queryStallCustomer} from '@/api/getData'
+    import {userInfo,getStore,setStore} from  '../config/mUtils'
+    import {formatDate} from '../utils/date.js'
+
+    export default {
+        data() {
+            return {
+                input:'',
+                radio:-1,
+                options: [{
+                    value: '1',
+                    label: '单订单结算'
+                }, {
+                    value: '2',
+                    label: '多订单结算'
+                }],
+                value:'',
+                tableData3:[],
+                currentPage:1,
+                pageSize:10,
+                totalCount:0,
+                roleForm: {
+                    userId: '',
+                    roleId: '',
+                    compId:''
+                },
+                status:'',
+                otherSideCompanyName:'',
+                loading:false,
+                options4:[],
+            }
+        },
+        mounted(){
+            this.saleCompanyId = this.$route.query.saleCompanyId;
+            this.roleForm.userId = userInfo().userId;
+            this.roleForm.compId = userInfo().companyId;
+
+            let param = {
+                "status":this.getStatus(),
+                "companyId":userInfo().companyId,
+                "pageIndex":this.currentPage,
+                "pageSize":this.pageSize
+            };
+            this.initData(param);
+        },
+        methods: {
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+                this.pageSize = val;
+                let param = {
+                    "status":this.getStatus(),
+                    "companyId":userInfo().companyId,
+                    "pageIndex":this.currentPage,
+                    "pageSize":this.pageSize
+                };
+                this.initData(param);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+                this.currentPage = val;
+                let param = {
+                    "status":this.getStatus(),
+                    "companyId":userInfo().companyId,
+                    "pageIndex":this.currentPage,
+                    "pageSize":this.pageSize
+                };
+                this.initData(param);
+            },
+            //加载初始数据
+            async initData(param){
+                const res = await querySettlementOrder(param);
+                if(res.isSuccess){
+                    this.tableData3 = res.result.results;
+                    this.totalCount = res.result.totalCount;
+                }
+            },
+            //远程搜索模糊查询档口名称
+            async remoteMethod(query){
+                if(query!=''){
+                    this.loading = true;
+                    let param = {
+                        "companyId":userInfo().companyId,
+                        "sellName":query,
+                        "pageIndex":1,
+                        "pageSize":100
+                    };
+                    const res = await queryStallCustomer(param);
+                    setTimeout(() => {
+                        this.loading = false;
+                        this.options4 = res.result.results;
+                    }, 200);
+                } else {
+                    this.options4 = [];
+                }
+            },
+            //档口名称搜索
+            handleIconClickName(){
+                let param = {
+                    "companyId":userInfo().companyId,
+                    "otherSideCompanyId":this.otherSideCompanyName,
+                    "pageIndex":this.currentPage,
+                    "pageSize":this.pageSize
+                };
+                this.initData(param);
+            },
+            //按结算方式查找
+            changeSettlementType(){
+                let param = {
+                    "settlementType":this.value,
+                    "companyId":userInfo().companyId,
+                    "pageIndex":this.currentPage,
+                    "pageSize":this.pageSize
+                };
+                this.initData(param);
+            },
+
+            //获取状态
+            getStatus(){
+                if(this.radio=='-1'){
+                    this.status = '';
+                }else{
+                    this.status = this.radio;
+                }
+                return this.status;
+            },
+            //
+            changeStatus(){
+                let param = {
+                    "status":this.getStatus(),
+                    "companyId":userInfo().companyId,
+                    "otherSideCompanyId":this.saleCompanyId,
+                    "pageIndex":this.currentPage,
+                    "pageSize":this.pageSize
+                };
+                this.initData(param);
+            },
+            //格式化时间
+            formatDate:function(row,column){
+                let data = row[column.property];
+                if(data==undefined||data==''){
+                    return '';
+                }
+                return formatDate(data*1,'yyyy-MM-dd hh:mm:ss');
+            },
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/sellerSettlement';
+</style>

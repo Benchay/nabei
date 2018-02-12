@@ -1,0 +1,311 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('webStoreOrderSalesBuy')">
+                <router-link :to='{path:"/webStoreOrderSalesBuy"}'>网店订单</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('purchaseRequireBuy')">
+                <router-link :to='{path:"/purchaseRequireBuy"}'>采购需求</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('orderPurchaseBuy')">
+                <router-link :to='{path:"/orderPurchaseBuy"}'>采购订单</router-link>
+            </li>
+            <!-- <li v-if="getMenuAuthFun('addShop')">
+                <router-link :to='{path:"/addShop"}'>绑定店铺</router-link>
+            </li> -->
+            <li class="menuIndex2" v-if="getMenuAuthFun('packageDetails')">
+                <router-link :to='{path:"/packageDetails"}'>包裹管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('salesForecast')">
+                <router-link :to='{path:"/salesForecast"}'>采购统计</router-link>
+            </li>
+        </ul>
+        <div class="startProcurement">
+            <div>
+                <el-row>
+                    <el-col :span="22"><p>包裹详情</p></el-col>
+                    <el-col :span="2"><a href="javascript:;">返回</a></el-col>
+                </el-row>
+                <el-row style="margin: 30px 0 25px 0;">
+                    <el-col :span="24">
+                        <el-button style="padding: 10px;" class="buttonColor3" @click="putqrcode">打印二维码</el-button>
+                    </el-col>
+                </el-row>
+                <div class="emptymianwrap">
+                    <div class="detailwrap">
+                        <el-row>
+                            <el-col :span="8">档口名称：{{}}</el-col>
+                            <el-col :span="8">包裹总数：{{}}</el-col>
+                            <el-col :span="8">包裹状态：{{}}</el-col>
+                        </el-row>
+                        <el-row>
+                            <el-col :span="8">包裹类型：{{}}</el-col>
+                            <el-col :span="8">创建时间：{{}}</el-col>
+                            <el-col :span="8">创建人：{{}}</el-col>
+                        </el-row>
+                    </div>
+                    <div class="qrcodewrap" id="preview">
+                        <qrcode value='"hmj_p_info"+http://www.baidu.com' tag="img" :options="{ size: 110 }"></qrcode>
+                    </div>
+                </div>
+                 <el-row style="margin: 30px 0;">
+                    <el-col :span="24"><p>包裹详情</p></el-col>
+                </el-row>
+                    <div class="goodscontent">
+                        <div class="gooditem">
+                            <div class="mdimgwrap"  @click="needTake = !needTake">
+                                <img src="../image/packagec.png" alt="" v-if="needTake">
+                            </div>
+                            <span class="describetion">包裹拿货</span>
+                            <span class="line" :class="{'active':needTake}"></span>
+                        </div>   
+                        <div class="gooditem">
+                            <div class="mdimgwrap"  @click="needInCar =!needInCar">
+                                <img src="../image/packagec.png" alt="" v-if="needInCar">
+                            </div>
+                            <span class="describetion">包裹装车</span>
+                            <span class="line" :class="{'active':needInCar}"></span>
+                        </div>   
+                        <div class="gooditem">
+                            <div class="mdimgwrap"  @click="needOutCar =!needOutCar">
+                                <img src="../image/packagec.png" alt="" v-if="needOutCar">
+                            </div>
+                            <span class="describetion">包裹卸货</span>
+                            <span class="line" :class="{'active':needOutCar}"></span>
+                        </div>   
+                        <div class="lastitem">
+                            <div class="mdimgwrap" @click="needInStock = !needInStock">
+                                <img src="../image/packagec.png" alt="" v-if="needInStock">
+                            </div>
+                            <span class="describetion">包裹入库</span>
+                        </div>          
+                    </div>  
+            </div>
+        </div>
+
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {setStore,getStore} from  '../config/mUtils'
+    import {queryPackage,queryPackageLogInfo,savePackage,getPackageFlowConfig} from '@/api/getData'
+    import {formatDate,timeZoneCovertDay} from '../utils/date.js'
+    import {export_json_to_excel} from '../vendor/Export2Excel.js'
+    import {getMenuAuth,haveMenuAuth} from  '../utils/AuthMenu.js'
+    import qrcode from '@xkeshi/vue-qrcode'
+    import {printPreview} from '../utils/print.js'
+
+    export default {
+        components: {
+            headTop,
+            qrcode
+        },
+        filters:{
+        	formatDate(time){
+        		return formatDate(time,"yyyy-MM-dd hh:mm:ss");
+        	}
+        },
+        data() {
+            return {
+                  roleForm: {
+                    userId: '',
+                    roleId: '',
+                    compId:''
+                },
+                needInCar:true,
+                needInStock:true,
+                needOutCar:true,
+                needTake:true,
+                //默认每页数据量
+                pageSize: 10,
+
+                //默认高亮行数据id
+                highlightId: -1,
+
+                //当前页码
+                currentPage: 1,
+
+                //查询的页码
+                start: 1,
+
+                //默认数据总数
+                totalCount: 0,
+
+                //用户登录信息暂时写死
+                 currentComp: ""
+                // currentComp:{id:'1000'}
+            }
+        },
+        watch:{
+            '$route':function (route) {
+             
+            },
+        },
+        mounted(){
+            this.currentComp = getStore("curCompany");
+            var userInfo=getStore("userInfo");
+            var vjson = JSON.parse(userInfo);
+            this.roleForm.userId=vjson.id;
+            var currentComp=getStore("curCompany");
+            var vcom = JSON.parse(currentComp);
+            this.roleForm.compId=vcom.id;
+            this.getPackageFlowConfig()
+        },
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+                this.currentPage = 1;
+                this.pageSize = val;
+                this.initloadData();
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+                this.currentPage = val;
+                this.initloadData();
+            },
+            async initData(){
+                let param = {
+                    companyId:this.roleForm.compId,
+                    packageType:1
+                }
+                const res = await savePackage(param);
+            },
+            putqrcode(){
+                printPreview()
+            },
+            async getPackageFlowConfig(){
+                let param = {
+                    companyId:this.roleForm.compId
+                }
+                const res = await getPackageFlowConfig(param);
+                if(res.isSuccess){
+                    this.needInCar = res.result.needInCar;
+                 this.needInStock = res.result.needInStock;
+                 this.needOutCar = res.result.needOutCar;
+                 this.needTake = res.result.needTake;
+                 this.configid = res.result.id
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+	                });
+                }
+            },
+               
+          
+    
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/startProcurement';
+    .emptymianwrap{
+        display: flex;
+        justify-content: space-around;
+        box-sizing: border-box;
+        border: 1px solid #d8d8d8;
+        padding: 30px;
+        .detailwrap{
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+        }
+        .qrcodewrap{
+            width: 110px;
+            height: 110px;
+            background-color: red;
+            box-sizing: border-box;
+        }
+    }
+    .goodscontent{
+    display: flex;
+    padding: 0 50px;
+    margin: 50px 20px;
+    .gooditem{
+        flex: 1;
+        min-width: 296px;
+        font-size: 0;
+        margin-right: 10px;
+        text-align: center;
+        padding-top: 25px;
+        .mdimgwrap{
+            display: inline-block;
+            vertical-align: top;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            box-sizing: border-box;
+            border: 1px solid #dcdcdc;
+            margin-right: 10px;
+            cursor: pointer;
+            position: relative;
+            img{
+                position: absolute;
+                top: -1px;
+                left: -1px;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+            }
+        }
+        .describetion{
+            font-size: 14px;
+            display: inline-block;
+            vertical-align: top;
+            margin-top: 9px;
+        }
+        .line{
+            display: inline-block;
+            vertical-align: top;
+            margin-top: 16px;
+            width: 180px;
+            margin-left: 10px;
+            box-sizing: border-box;
+            border-bottom: 1px dashed #dcdddc;
+        }
+        .active{
+            border-color: #da444f;
+        }
+    }
+    .lastitem{
+        width: 113px;
+        padding-top: 25px;
+           .mdimgwrap{
+            display: inline-block;
+            vertical-align: top;
+            width: 40px;
+            height: 40px;
+            box-sizing: border-box;
+            border-radius: 50%;
+            border: 1px solid #dcdcdc;
+            margin-right: 10px;
+            cursor: pointer;
+            position: relative;
+            img{
+                position: absolute;
+                top: -1px;
+                left: -1px;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+            }
+        }
+        .describetion{
+            font-size: 14px;
+            display: inline-block;
+            vertical-align: top;
+            margin-top: 9px;
+        }
+    }
+}
+  
+</style>

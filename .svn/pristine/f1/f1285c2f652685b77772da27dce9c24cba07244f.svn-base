@@ -1,0 +1,620 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li class="menuIndex3" v-if="getMenuAuthFun('messageManagement')">
+               	<router-link :to='{path:"/messageManagement"}'>消息管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('bulletinManagement')">
+                <router-link :to='{path:"/bulletinManagement"}'>公告管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('msgManagement')">
+                <router-link :to='{path:"/msgManagement"}'>短信管理</router-link>
+            </li>
+            <!--<li>-->
+                <!--<router-link :to='{path:"/sessionManagement"}'>会话管理</router-link>-->
+            <!--</li>-->
+        </ul>
+        <div class="messageManagement">
+            <div class="messageTop">
+                <el-date-picker
+                    size="small"
+                    v-model="searchStartDate"
+                    type="date"
+                    @change="initloadData"
+                    placeholder="选择会话开始日期">
+                </el-date-picker>
+
+                <el-date-picker
+                    size="small"
+                    v-model="searchEndDate"
+                    type="date"
+                    @change="initloadData"
+                    placeholder="选择会话结束日期">
+                </el-date-picker>
+
+				<el-select v-model="sessionType" @change="initloadData" placeholder="选择消息类型" class="staff-status" size="small">
+                	<el-option label="全部" value="null"></el-option>
+                    <el-option label="会话" value="1"></el-option>
+                    <el-option label="系统消息" value="3"></el-option>
+                </el-select>
+
+                <el-select v-model="sessionStatus" @change="initloadData" placeholder="选择会话状态" class="staff-status" size="small">
+                	<el-option label="全部" value="null"></el-option>
+                    <el-option label="会话中" value="1"></el-option>
+                    <el-option label="已结束" value="3"></el-option>
+                </el-select>
+
+                <el-input style="width: 180px;"
+                          size="small"
+                      placeholder="消息对象过滤"
+                      icon="search"
+                      v-model="searchUserName"
+                      :on-icon-click="findUser">
+                  </el-input>
+            </div>
+            <!--<div class="messageButton">
+                <el-button type="info" @click="dialogSendForm = true">发送消息</el-button>
+            </div>-->
+            <div class="messageTable">
+                <el-table
+                    ref="multipleTable"
+                    :data="tableData3"
+                    tooltip-effect="dark"
+                    style="width: 100%"
+                    @selection-change="handleSelectionChange">
+                    <el-table-column
+                        type="selection"
+                        width="55">
+                    </el-table-column>
+                    <el-table-column
+                        prop="sessionType"
+                        label="消息类型"
+                        width="220"
+                        :formatter="formatSessionType">
+                    </el-table-column>
+                    <el-table-column
+                        prop="firUserName"
+                        label="会话对象1"
+                        width="120">
+                    </el-table-column>
+                    <el-table-column
+                        prop="secUserName"
+                        label="会话对象2"
+                        width="350"
+                        show-overflow-tooltip>
+                    </el-table-column>
+                    <el-table-column
+                        prop="sessionTime"
+                        label="最近会话时间"
+                        :formatter="mydateFormat">
+                    </el-table-column>
+                    <el-table-column
+                        prop="receivingObject"
+                        label="状态"
+                        width="120">
+                    </el-table-column>
+                    <el-table-column
+                        label="操作"
+                        show-overflow-tooltip>
+                        <template scope="scope">
+                            <el-button
+                                size="small"
+                                @click="showMessageDetails(tableData3[scope.$index].id,tableData3[scope.$index].firUserId,tableData3[scope.$index].firUserName,tableData3[scope.$index].secUserName)"
+                                >查看详情</el-button>
+                           <el-button
+                                size="small"
+                                type="danger"
+                                @click.native.prevent="configDelete(tableData3[scope.$index].id)">删除</el-button>
+                           </template>
+                    </el-table-column>
+                </el-table>
+                <el-pagination
+                    small
+                    class="right"
+                    style="margin-top: 20px;"
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :current-page="currentPage"
+                    :page-sizes="[10, 20, 30, 40]"
+                    :page-size="pagesize"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    :total="totalCount">
+                </el-pagination>
+                <a href="javascript:void(0)" class="export_excle" @click="exportloadData">导出excle</a>
+            </div>
+        </div>
+        <!--<el-dialog title="发送消息" :visible.sync="dialogSendForm" class="dialogSend">
+            <el-form :model="form">
+                <el-form-item label="消息标题：" :label-width="formLabelWidth">
+                    <el-input v-model="form.name" auto-complete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="发送对象：" :label-width="formLabelWidth">
+                    <el-select v-model="form.region" placeholder="全部">
+                        <el-option label="档口" value="shanghai"></el-option>
+                        <el-option label="电商卖家" value="beijing"></el-option>
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="发送时间：" :label-width="formLabelWidth">
+                    <el-input v-model="form.time" auto-complete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="跳转链接：" :label-width="formLabelWidth">
+                    <el-input v-model="form.name" auto-complete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="上传图片：" :label-width="formLabelWidth">
+                    <el-upload
+                        action="https://jsonplaceholder.typicode.com/posts/"
+                        list-type="picture-card"
+                        :on-preview="handlePictureCardPreview"
+                        :on-remove="handleRemove">
+                        <i class="el-icon-plus"></i>
+                    </el-upload>
+                    <el-dialog v-model="dialogVisible" size="tiny">
+                        <img width="100%" :src="dialogImageUrl" alt="">
+                    </el-dialog>
+                </el-form-item>
+                <el-form-item label="发送内容：" :label-width="formLabelWidth">
+                    <el-input
+                        type="textarea"
+                        :rows="2"
+                        placeholder="请输入内容"
+                        v-model="form.textarea">
+                    </el-input>
+                </el-form-item>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button type="primary" @click="dialogSendForm = false">发 送</el-button>
+                <el-button @click="dialogSendForm = false">取 消</el-button>
+            </div>
+        </el-dialog>-->
+        <el-dialog :title="dialogDetailTitle" :visible.sync="dialogDetails" class="dialogSend">
+        	<div class="message">
+        		<div class="message-item" v-for="message in messageData">
+        			<span class="message-item-user">{{message.sendUserName}}</span><span class="message-item-time">{{message.createTime}}</span>
+        			<div class="message-item-content">
+        				{{message.txtContent}}
+        			</div>
+        		</div>
+        	</div>
+            <div slot="footer" class="dialog-footer">
+                <el-button type="primary" @click="showMessageDetailsMore">更多历史消息</el-button>
+                <el-button @click="dialogDetails = false">取 消</el-button>
+            </div>
+        </el-dialog>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {selectSessionByParams,getMessageBySessionId,delSession,findUserByKeyword} from '@/api/getData'
+    import {mydateFormat} from '../utils/dataFormater.js'
+    import {formatDate} from '../utils/date.js'
+    import {export_json_to_excel} from '../vendor/Export2Excel.js'
+    import {getMenuAuth,haveMenuAuth} from  '../utils/AuthMenu.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return{
+            	searchStartDate:'',
+            	searchEndDate:'',
+            	sessionType:'',
+            	sessionStatus:'',
+            	searchUserName:'',
+            	dialogDetails:false,
+            	dialogDetailTitle:'',
+            	messageUserId:'',
+            	tempSessionId:'',
+
+            	messageData:[
+            		{
+            			sendUserId:'11111',
+            			sendUserName:'张三',
+            			receiveUserId:'22222',
+            			receiveUserName:'李四',
+            			createTime:'2017-10-15 11:11',
+            			txtContent:'今天来我家吃饭吧'
+            		},
+            		{
+            			sendUserId:'22222',
+            			sendUserName:'李四',
+            			receiveUserId:'11111',
+            			receiveUserName:'张三',
+            			createTime:'2017-10-15 11:11',
+            			txtContent:'今天来我家吃饭吧'
+            		},
+            		{
+            			sendUserId:'11111',
+            			sendUserName:'张三',
+            			receiveUserId:'22222',
+            			receiveUserName:'李四',
+            			createTime:'2017-10-15 11:11',
+            			txtContent:'今天来我家吃饭吧'
+            		},
+            	],
+
+            	//默认每页数据量
+                pagesize: 8,
+
+                //默认高亮行数据id
+                highlightId: -1,
+
+                //当前页码
+                currentPage: 1,
+
+                //查询的页码
+                start: 1,
+
+                //默认数据总数
+                totalCount: 0,
+
+                //默认每页数据量
+                messagepagesize: 3,
+
+                messageCurrentPage: 1,
+
+                userIds:[],
+
+                firUserName:'',
+
+                secUserName:'',
+
+
+                formLabelWidth: '120px',
+                /*pickerOptions2: {
+                    shortcuts: [{
+                        text: '最近一周',
+                        onClick(picker) {
+                            const end = new Date();
+                            const start = new Date();
+                            start.setTime(start.getTime() - 3600 * 1000 * 24 * 7);
+                            picker.$emit('pick', [start, end]);
+                        }
+                    }, {
+                        text: '最近一个月',
+                        onClick(picker) {
+                            const end = new Date();
+                            const start = new Date();
+                            start.setTime(start.getTime() - 3600 * 1000 * 24 * 30);
+                            picker.$emit('pick', [start, end]);
+                        }
+                    }, {
+                        text: '最近三个月',
+                        onClick(picker) {
+                            const end = new Date();
+                            const start = new Date();
+                            start.setTime(start.getTime() - 3600 * 1000 * 24 * 90);
+                            picker.$emit('pick', [start, end]);
+                        }
+                    }]
+                },
+                options: [{
+                    value: '1',
+                    label: '全部'
+                }, {
+                    value: '2',
+                    label: '档口'
+                }, {
+                    value: '3',
+                    label: '电商卖家'
+                }],
+                value: '1',*/
+                tableData3: [],
+                multipleSelection: []
+            }
+        },
+        mounted(){
+            this.initloadData();
+
+            const s = document.createElement('script');
+			s.type = 'text/javascript';
+			s.src = 'http://oss.sheetjs.com/js-xlsx/xlsx.full.min.js';
+			document.body.appendChild(s);
+        },
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+            },
+        	async initloadData() {
+        		let userStrs = "";
+        		this.userIds.forEach((obj) => {
+        			userStrs = userStrs+","+obj;
+        		});
+            	let param ={
+            		pageIndex:1,
+            		pageSize:this.pagesize,
+            		start:this.searchStartDate,
+            		end:this.searchEndDate,
+            		status:this.sessionStatus,
+            		sessionType:this.sessionType,
+            		userId:userStrs
+            	}
+            	this.tableData3 = [];
+                const res = await selectSessionByParams(param);
+                if (res.isSuccess == true) {
+                    this.tableData3 = res.result.results;
+                    this.totalCount = res.result.totalCount;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+            async initloadData2() {
+        		let userStrs = "";
+        		this.userIds.forEach((obj) => {
+        			userStrs = userStrs+","+obj;
+        		});
+            	let param ={
+            		pageIndex:this.currentPage,
+            		pageSize:this.pagesize,
+            		start:this.searchStartDate,
+            		end:this.searchEndDate,
+            		status:this.sessionStatus,
+            		sessionType:this.sessionType,
+            		userId:userStrs
+            	}
+            	this.tableData3 = [];
+                const res = await selectSessionByParams(param);
+                if (res.isSuccess == true) {
+                    this.tableData3 = res.result.results;
+
+                    this.tableData3.forEach((obj) => {
+                    	if(obj.userIdFlag){
+                    		obj.sendUserId = obj.userIdFlag.split('-')[0];
+                    		obj.receiveUserId = obj.userIdFlag.split('-')[1];
+                    	}
+                    });
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+            async findUser() {
+            	this.userIds = [];
+            	if(this.searchUserName != ''){
+	            		let param ={
+	            		pageIndex:1,
+	            		pageSize:10,
+	            		keyword:this.searchUserName
+	            	}
+	            	this.tableData3 = [];
+	                const res = await findUserByKeyword(param);
+	                if (res.isSuccess == true) {
+	                	res.result.userlist.forEach((obj) => {
+	                		this.userIds.push(obj.id);
+	                	});
+	                	if(this.userIds.length == 0){
+	                		this.userIds.push(this.searchUserName);
+	                	}
+	                	this.initloadData();
+	                }else{
+	                    this.$message({
+	                        type: 'error',
+	                        message: res.errorMsg
+	                    });
+	                }
+            	}else{
+            		this.initloadData();
+            	}
+
+            },
+
+            formatSessionType:function(row, column) {
+            	let data = row.sessionType;
+            	if(data == 1){
+            		return "会话";
+            	}else if(data == 2){
+            		return "系统消息";
+            	}else{
+            		return "";
+            	}
+            },
+
+            handleIconClick(ev) {
+
+            },
+            handleSelectionChange(val) {
+                this.multipleSelection = val;
+            },
+            handleRemove(file, fileList) {
+                console.log(file, fileList);
+            },
+            handlePictureCardPreview(file) {
+                this.dialogImageUrl = file.url;
+                this.dialogVisible = true;
+            },
+            mydateFormat,
+
+            async showMessageDetails(sessionId,userId,firUserName,secUserName){
+            	this.dialogDetailTitle = firUserName+"与"+secUserName+"的消息记录";
+            	this.firUserName = firUserName;
+            	this.secUserName = secUserName;
+            	this.messageCurrentPage = 1;
+            	let param ={
+            		pageIndex:1,
+            		pageSize:this.messagepagesize,
+            		sessionId:sessionId,
+            		userId:userId
+            	}
+            	this.tempSessionId = sessionId;
+            	this.messageUserId = userId;
+            	this.messageData = [];
+                const res = await getMessageBySessionId(param);
+                if (res.isSuccess == true) {
+                    res.result.results.forEach((obj) => {
+                    	if(obj.createTime){
+                    		let date2 = new Date(obj.createTime);
+		                	obj.createTime = formatDate(date2,'yyyy-MM-dd hh:mm:ss');
+                    	}
+	                	let userName1 = '';
+                		let userName2 = '';
+                		if(obj.sendUserName){
+                			userName1 = obj.sendUserName;
+                		}else{
+                			obj.sendUserName = obj.sendUserId;
+                			userName1 = obj.sendUserId;
+                		}
+                		if(obj.receiveUserName){
+                			userName2 = obj.receiveUserName;
+                		}else{
+                			obj.receiveUserName = obj.receiveUserId;
+                			userName2 = obj.receiveUserId;
+                		}
+                    	this.messageData.push(obj);
+                    });
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+                this.dialogDetails = true;
+            },
+
+            async showMessageDetailsMore(){
+            	this.messageCurrentPage = this.messageCurrentPage+1;
+            	let param ={
+            		pageIndex:this.messageCurrentPage,
+            		pageSize:this.messagepagesize,
+            		sessionId:this.tempSessionId,
+            		userId:this.messageUserId
+            	}
+                const res = await getMessageBySessionId(param);
+                if (res.isSuccess == true) {
+                    res.result.results.forEach((obj) => {
+                    	if(obj.createTime){
+                    		let date2 = new Date(obj.createTime);
+		                	obj.createTime = formatDate(date2,'yyyy-MM-dd hh:mm:ss');
+                    	}
+                    	if(!obj.sendUserName){
+	                			obj.sendUserName = obj.sendUserId;
+	                		}
+                		if(!obj.receiveUserName){
+                			obj.receiveUserName = obj.receiveUserId;
+                		}
+                    	this.messageData.push(obj);
+                    });
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+            async deleteRow(id) {
+            	let param ={
+            		sessionId:id
+            	}
+            	const res = await delSession(param);
+            	if (res.isSuccess == true) {
+                    this.initloadData();
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+            configDelete(id) {
+		        this.$confirm('是否确认删除该会话吗?', '提示', {
+		          confirmButtonText: '确定',
+		          cancelButtonText: '取消',
+		          type: 'warning'
+		        }).then(() => {
+		          this.deleteRow(id);
+		        }).catch(() => {
+
+		        });
+		    },
+
+		    //导出Excel数据
+            async exportloadData() {
+                let param ={
+            		pageIndex:1,
+            		pageSize:this.pagesize*this.totalCount,
+            		start:this.searchStartDate,
+            		end:this.searchEndDate,
+            		status:this.sessionStatus,
+            		sessionType:this.sessionType
+            	}
+                const res = await selectSessionByParams(param);
+                const list = [];
+                if (res.isSuccess == true) {
+
+                	res.result.data.results.forEach((obj) => {
+                		let messageType = "";
+                		let firObj = "";
+                		let secObj = "";
+                		let lastMsgTime = "";
+
+		            	if(obj.sessionType == 1){
+		            		messageType = "会话";
+		            	}else if(obj.sessionType == 2){
+		            		messageType = "系统消息";
+		            	}
+		            	if(obj.userIdFlag){
+                    		firObj = obj.userIdFlag.split('-')[0];
+                    		secObj = obj.userIdFlag.split('-')[1];
+                    	}
+
+
+		            	if(obj.updateTime){
+		            		var date2 = new Date(obj.updateTime);
+		                	lastMsgTime = formatDate(date2,'yyyy-MM-dd hh:mm');
+		            	}
+
+		            	let row = {
+		            		messageType : messageType,
+							firObj : firObj,
+							secObj : secObj,
+							lastMsgTime : lastMsgTime
+		            	}
+		            	list.push(row);
+
+                	});
+
+                	const tHeader = ['消息类型', '会话对象1','会话对象2','最近会话时间'];
+				　　　const filterVal = ['messageType', 'firObj','secObj','lastMsgTime'];
+				　　　const data = this.formatJson(filterVal, list);
+				　　　export_json_to_excel(tHeader, data, '消息管理表');
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+            handleCurrentChange:function(val) {
+                this.currentPage = val;
+                this.initloadData2();
+            },
+
+            formatJson(filterVal, jsonData) {
+		　　　　　　return jsonData.map(v => filterVal.map(j => v[j]))
+		　　　　},
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/messageManagement';
+</style>

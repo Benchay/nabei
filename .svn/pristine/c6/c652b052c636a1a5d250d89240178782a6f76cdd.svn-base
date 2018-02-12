@@ -1,0 +1,778 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('currentInventory')">
+                <router-link :to='{path:"/currentInventory"}'>当前库存</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('inventoryDetail')">
+                <router-link :to='{path:"/inventoryDetail"}'>库存变动</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('stocktaking')">
+                <router-link :to='{path:"/stocktaking"}'>库存盘点</router-link>
+            </li>
+            <li class="menuIndex" v-if="getMenuAuthFun('stockTransshipment')">
+                <router-link :to='{path:"/stockTransshipment"}'>库存调拨</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('inventoryWarning')">
+                <router-link :to='{path:"/inventoryWarning"}'>库存预警</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('storeManagement')">
+                <router-link :to='{path:"/storeManagement"}'>多仓管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('statisticalStatement')">
+                <router-link :to='{path:"/statisticalStatement"}'>库存初始化</router-link>
+            </li>
+        </ul>
+        <div class="fastShippingDetails">
+           <div class="detailsTop2">
+               <router-link class="comeBack right" :to='{path:"/stockTransshipment"}'>返回</router-link>
+               <el-col :span="11" class="flex2">
+                   <el-col :span="4">
+                       <p class="canghutitle">
+                       调出仓库：
+                       </p>
+                       </el-col>
+                   <el-col :span="20">
+                       <el-select v-model="outWarehouse" placeholder="请选择"  @change="validateSelect">
+                           <el-option
+                               v-for="item in stocks"
+                               :key="item.id"
+                               :label="item.name"
+                               :value="item.id">
+                           </el-option>
+                       </el-select>
+                   </el-col>
+               </el-col>
+               <el-col :span="11" class="flex2">
+                   <el-col :span="4">调入仓库：</el-col>
+                   <el-col :span="20">
+                       <el-select v-model="inWarehouse" placeholder="请选择">
+                           <el-option
+                               v-for="item in stocks"
+                               :key="item.id"
+                               :label="item.name"
+                               :value="item.id"
+                               :disabled="item.disabled">
+                           </el-option>
+                       </el-select>
+                   </el-col>
+               </el-col>
+           </div>
+            <div class="fastShipping2 radioGreen">
+                <el-col :span="10" class="isLeft" style="margin: 0">
+                    <el-col :span="24" class="leftList">
+                        <div class="flex huohao">
+                            <el-col :span="4" class="title">货号：</el-col>
+                            <el-col :span="19" class="content">
+                                <!--<div class="huohaoseach">
+                                    <el-input v-model="productCode" placeholder="请输入货号..."  icon="search" :on-icon-click="searchProduct"></el-input>
+                                </div>-->
+                                <el-select
+	                                v-model="productCode"
+	                                filterable
+	                                remote
+	                                reserve-keyword
+	                                placeholder="请输入货号..."
+	                                :remote-method="remoteMethod"
+	                                :loading="loading"
+	                                style="width: 300px;"
+	                                @change="searchProduct">
+	                                <el-option
+	                                    v-for="item in productData"
+	                                    :key="item.productCode"
+	                                    :label="item.productCode"
+	                                    :value="item.productCode">
+	                                </el-option>
+	                            </el-select>
+                            </el-col>
+                        </div>
+                        <div v-if="isHide">
+                            <el-col :span="4">&nbsp;</el-col>
+                            <el-col :span="19" class="content">
+                                <div class="contentInfo flex">
+                                	<img v-if="imgUrl_main != ''" style="width: 160px; height: 160px;" :src="imgUrl_main" alt="">
+                                    <img v-else style="width: 160px; height: 160px;" src="../image/product_default.png" alt="">
+                                </div>
+                            </el-col>
+                        </div>
+                    </el-col>
+                    <div v-if="isHide">
+                        <el-col :span="24" class="flex leftList">
+                            <el-col :span="4" class="title">颜色：</el-col>
+                            <el-col :span="18" class="content" v-show="colors.length > 0">
+                                <el-radio-group v-model="colour" @change="selectColor">
+                                	<el-radio-button :label="item.value" v-for="item in colors" >{{item.value}}</el-radio-button>
+                                </el-radio-group>
+                            </el-col>
+                        </el-col>
+                        <el-col :span="24" class="flex leftList">
+                            <el-col :span="4" class="title">尺码：</el-col>
+                            <el-col :span="18" class="content" v-show="sizes.length > 0">
+                                <el-radio-group v-model="size" @change="selectSize">
+                                    <el-radio-button :label="item.value" v-for="item in sizes" >{{item.value}}</el-radio-button>
+                                </el-radio-group>
+                            </el-col>
+                        </el-col>
+                        <el-col :span="24" class="flex leftList">
+                            <el-col :span="4" class="title">数量：</el-col>
+                            <el-col :span="18" class="content">
+                                <el-input-number v-model="num1" :min="1" :max="999999" onkeypress="return event.keyCode>=48&&event.keyCode<=57"></el-input-number>
+                            </el-col>
+                        </el-col>
+                        <el-col :span="24" class="flex2 leftButton">
+                            <a href="javascript:void(0)" class="buttonColor" @click="addToList">加入调拨清单</a>
+                        </el-col>
+                    </div>
+                </el-col>
+                <el-col :span="14" class="isRight">
+                    <div class="flex" style="justify-content: space-between">
+                        <div>调拨清单</div>
+                        <div>
+                            <a href="javascript:void(0)" class="buttonColor  right" @click="deleteFromList">删除</a>
+                            <a href="javascript:void(0)" class="buttonColor  right" @click="dialogImportStockVisible = true">导入调拨单</a>
+                        </div>
+                    </div>
+                    <el-table
+                        :data="tableData6"
+                        border
+                        class="rightTable"
+                        show-summary
+                        height="400"
+                        @selection-change="handleSelectionChange"
+                        style="width: 100%">
+                        <el-table-column
+                            type="selection"
+                            width="55">
+                        </el-table-column>
+                        <el-table-column
+                            label="主图/货号">
+                            <template scope="scope">
+                                <div class="flex tableFirst">
+                                    <img v-if="scope.row.imgUrl_main != ''" style="width: 40px; height: 40px;" :src="scope.row.imgUrl_main" alt=""  class="tableImg">
+                                    <img v-else style="width: 40px; height: 40px;" src="../image/product_default.png" alt=""  class="tableImg">
+                                    <p>{{scope.row.productCode}}</p>
+                                </div>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            prop="colour"
+                            label="颜色">
+                        </el-table-column>
+                        <el-table-column
+                            prop="size"
+                            label="尺码">
+                        </el-table-column>
+                        <el-table-column
+                            prop="orderNum"
+                            label="数量">
+                        </el-table-column>
+                        <el-table-column
+                            prop="price"
+                            label="金额">
+                        </el-table-column>
+                    </el-table>
+                    <el-col :span="24" class="flex2 payButton">
+                        <a href="javascript:void(0)" class="buttonColor" @click="dialogVisible = true">确认调拨</a>
+                    </el-col>
+                </el-col>
+            </div>
+        </div>
+        <el-dialog
+            title="确认调拨"
+            :visible.sync="dialogVisible"
+            size="tiny">
+            <span>确定此次调拨？</span>
+		            <span slot="footer" class="dialog-footer">
+		    <el-button @click="dialogVisible = false">取 消</el-button>
+		    <el-button type="primary" @click="submitTransed">确 定</el-button>
+		  </span>
+        </el-dialog>
+        
+        <el-dialog
+            title="导入采购单"
+            :visible.sync="dialogImportStockVisible"
+            size="tiny">
+            <div class="dialogImport">
+                <div class="importFirst">
+                    <div class="flex">
+                        <p>选择文件上传：</p>
+						<p>{{uploadFileName}}</p>
+                    </div>
+                    <div class="flex3" style="align-items: flex-start">
+                        <div class="uploatName flex">
+                        </div>
+                    </div>
+                    <div class="uploatButton">
+                        <input type="file" accept=".xls" id="uploatfile" @change="uploatFile" v-if="accomplish">
+                        <div class="flex2 importUploat">
+                            <img src="../image/Download01.png" alt="">
+                            <p>上传文件</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="importTips">
+                    支持扩展名：.xlsx,.xls
+                </div>
+                <div class="importDownload">
+                    <a href="http://cws.nabei.net:8103/stock/fileTemplate/stockTransshipment.xls" class="flex2">下载模版</a>
+                </div>
+            </div>
+            <span slot="footer" class="dialog-footer flex2">
+                <a href="javascript:void(0)" class="buttonColor" @click="importf">确 定</a>
+                <a href="javascript:void(0)" class="buttonColor2" @click="dialogImportStockVisible = false">取 消</a>
+              </span>
+        </el-dialog>
+    </div>
+
+
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {queryWarehouse,createStockOrder,queryProductInfo,queryProduct,checkImportStockTransProduct} from '@/api/getData'
+    import {userInfo,getStore,setStore} from  '../config/mUtils'
+    import {getMenuAuth,haveMenuAuth} from  '../utils/AuthMenu.js'
+    import {export_json_to_excel} from '../vendor/Export2Excel.js'
+    const _XLSX = require('xlsx')
+    const X = typeof XLSX !== 'undefined' ? XLSX : _XLSX;
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+            	imgUrl_main:'',
+                dialogVisible:false,
+                dialogImportStockVisible:false,
+                isHide:false,
+                num1:1,
+                colour:'',
+                size:'',
+                stocks:[],
+                tableData6:[],
+                selectedList:[],
+                inWarehouse:'',
+                outWarehouse:'',
+                productCode:'',
+
+                productData:[],//存储根据货号模糊匹配的端口数据。下拉显示
+                
+                loading:false,
+                
+                productVariantId:'',
+                
+                productVariantPrice:'',
+                
+                productInfoData:[],//存储商品规格信息
+                colors:[],
+                sizes:[],
+                
+                accomplish:true,
+                
+                importExcelData:'',
+                
+                importFaileData:[],//导入失败数据
+                
+                uploadFileName:'',//上传文件名称
+
+            }
+        },
+        watch: {
+            '$route': function (route) {
+                if(route.path=='/stockTransshipmentDetails'){
+                    this.initloadWarehouse();
+                }
+
+            }
+        },
+        mounted(){
+            this.initloadWarehouse();
+        },
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            searchProduct(){
+            	this.colour = '';
+            	this.size = '';
+            	this.imgUrl_main = '';
+                this.queryProductInfo();
+
+            },
+
+            async submitTransed(){
+                if(this.outWarehouse==''||this.inWarehouse==''){
+                    this.$message({
+                        type: 'error',
+                        message: '调拨失败,您需要同时设置调出和调入仓库!'
+
+                    });
+                    this.dialogVisible = false;
+                    return
+                }
+				if(this.outWarehouse==this.inWarehouse){
+                    this.$message({
+                        type: 'error',
+                        message: '调拨失败,调拨仓库不能相同!'
+
+                    });
+                    this.dialogVisible = false;
+                    return
+                }
+                
+                let totalStockFee = 0;
+                this.tableData6.forEach(obj => {
+                	totalStockFee += obj.price*1;
+                })
+                alert(totalStockFee);
+				let  param = {
+                    "type":'3',
+                    "companyId":userInfo().companyId,
+                    "warehouseId":userInfo().warehouseId,
+                    "details": this.tableData6,
+                    "warehouseId":this.outWarehouse,
+                    "allocateWarehouseId":this.inWarehouse,
+                    "totalStockFee":totalStockFee
+                };
+
+
+                const res = await createStockOrder(param);
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: '提交调拨单成功！3S后跳转到列表...'
+                    });
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+                this.dialogVisible = false;
+                setTimeout(() => {
+                    this.$router.push('/stockTransshipment')
+                }, 5000);
+            },
+
+            addToList(){
+				if(this.size==''||this.colour==''){
+				 this.$message({
+                        type: 'error',
+                        message: '颜色或尺码未选择，请选择对应规格!'
+                    });
+                    return ;
+				}
+				
+                if(this.productVariantId == '') {
+                    this.$message({
+                        type: 'error',
+                        message: '没有对应的库存了,请重新选择规格!'
+                    });
+                    return ;
+                }
+                let variantInfo ={
+                	productCode:this.productCode,
+                	productVariantId:this.productVariantId,
+                	colour:this.colour,
+                	size:this.size,
+                	orderNum:this.num1,
+                	price:this.productVariantPrice*this.num1,
+                	imgUrl_main:this.imgUrl_main
+                };
+				for(var i=0;i<this.tableData6.length;i++){
+					var tmp = this.tableData6[i];
+            		if(tmp.productCode == this.productCode && tmp.colour == this.colour && tmp.size == this.size){
+            			this.tableData6.splice(i,1);
+            			break;
+            		}
+            	}
+
+        		//this.tableData6.push(variantInfo);
+        		this.tableData6.splice(0,0,variantInfo);
+
+            },
+            handleSelectionChange(val){
+            	this.selectedList = val;
+            },
+            deleteFromList(){
+            	if(this.selectedList.length<1){
+            		this.$message({
+            			type:'error',
+            			message:'请选择需要删除的项'
+            		});
+            		return;
+            	}
+            	this.$confirm('确认删除选中的数据吗?', '提示', {
+		          confirmButtonText: '确定',
+		          cancelButtonText: '取消',
+		          type: 'warning'
+		        }).then(() => {
+		            for(var i=0;i<this.selectedList.length;i++){
+	            		this.tableData6.splice(this.tableData6.indexOf(this.selectedList[i]),1);
+	            	}
+		        }).catch(() => {
+
+		        });
+            },
+            async queryProductInfo(){
+                if(this.productCode==''){
+                    return
+                };
+                if(this.outWarehouse=='') {
+                    this.$message({
+                        type: 'error',
+                        message: '请选选择仓库！'
+                    });
+                    return ;
+                }
+                    let  param = {
+                    "companyId":userInfo().companyId,
+                    "warehouseId":this.outWarehouse,
+                    "productCode":this.productCode
+                };
+                const res = await queryProductInfo(param);
+                this.productInfoData = [];
+                if (res.isSuccess == true) {
+                    if(res.result.length>0){
+                    	this.productInfoData = res.result;
+                    	for(var a = 0;a<res.result.length;a++){
+                    		let color = {
+	                            value:res.result[a].colour,
+	                            label:a
+	                        }
+	
+	                        let size = {
+	                            value:res.result[a].size,
+	                            label:a
+	                        }
+	                        if(!this.distinctColor(res.result[a].colour)){
+	                            this.colors.push(color);
+	                        }
+	
+	                        if(!this.distinctSize(res.result[a].size)){
+	                            this.sizes.push(size);
+	                        }
+                    	}
+                    	var sizeTemplate = ["S","M","L","XL","2XL","XXL","36","37","38","39","40"];
+	                    let firstSize = [];
+	                    sizeTemplate.forEach(obj => {
+	                    	let flag = false;
+	                    	this.sizes.forEach((obj2,index) => {
+	                    		if(obj2.value == obj){
+	                    			flag = true;
+	                    			this.sizes.splice(index,1)
+	                    		}
+	                    	})
+	                    	if(flag){
+	                    		let size = {
+		                            value:obj,
+		                            label:firstSize.length
+		                       }
+	                    		firstSize.push(size)
+	                    	}
+	                    });
+	                    this.sizes.forEach(obj => {
+	                    	firstSize.push(obj);
+	                    });
+	                    this.sizes = firstSize;
+                    }else{
+                        this.$message({
+                            type: 'error',
+                            message: '没有查询到数据！'
+                        });
+                        return
+                    }
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+                this.isHide=true;
+            },
+            distinctColor(val) {
+                for (let i = 0; i < this.colors.length; i++) {
+                    let item = this.colors[i];
+                    if (item.value == val) {
+                        return true;
+                    }
+                }
+                return false;
+            },
+            distinctSize(val) {
+                for (let i = 0; i < this.sizes.length; i++) {
+                    let item = this.sizes[i];
+                    if (item.value == val) {
+                        return true;
+                    }
+                }
+                return false;
+            },
+            storeManagement(){
+                this.$router.push('/storeManagement');
+            },
+            validateSelect(){
+                 let _stocks = this.stocks;
+                for(let i=0;i<_stocks.length;i++){
+                    if(_stocks[i].id == this.outWarehouse){
+                        _stocks[i].disabled= true;
+                        this.$set(this.stocks,i,_stocks[i])
+                    }else{
+                        _stocks[i].disabled= false;
+                        this.$set(this.stocks,i,_stocks[i])
+                    }
+                }
+                this.tableData6 = [];
+                this.productInfoData = [];
+                this.colors = [];
+                this.sizes = [];
+                this.colour = '';
+                this.size = '';
+                this.productCode = '';
+                this.isHide = false;
+            },
+
+            async initloadWarehouse() {
+            	let param ={
+				    params: {
+				        companyId: userInfo().companyId
+				    },
+				    pageInex: 1,
+				    pageSize: 20
+				}
+                const res = await queryWarehouse(param);
+                this.stocks = [];
+                if (res.isSuccess == true) {
+                    let warehouseList = res.result.results;
+                    for(let i=0;i<warehouseList.length;i++){
+                    	this.stocks.push(warehouseList[i]);
+                    }
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+			async remoteMethod(query){
+                if(query!=''){
+                    this.loading = true;
+                    let param = {
+                        "productCode":query,
+                        "companyId":userInfo().companyId,
+                        "pageIndex":1,
+                        "pageSize":20
+                    };
+                    const res = await queryProduct(param);
+                    setTimeout(() => {
+                        this.loading = false;
+                        this.productData = res.result.results;
+                    }, 200);
+                } else {
+                    this.productData = [];
+                }
+            },
+            
+            selectColor() {
+                this.sizes = [];
+                this.size='';
+                for (var i = 0; i < this.productInfoData.length; i++) {
+                    if (this.productInfoData[i].colour.indexOf(this.colour) > -1) {
+                        let size = {label: i, value: this.productInfoData[i].size}
+                        if(!this.distinctSize(this.productInfoData[i].size)){
+                            this.sizes.push(size);
+                        }
+                    }
+                }
+            },
+            
+            selectSize() {
+            	this.productVariantId = '';
+            	this.productVariantPrice = '';
+                for (var i = 0; i < this.productInfoData.length; i++) {
+                    if (this.productInfoData[i].colour == this.colour && this.productInfoData[i].size == this.size) {
+                        this.productVariantId = this.productInfoData[i].productVariantId;
+                        this.productVariantPrice = this.productInfoData[i].sellPrice;
+                    }
+                }
+            },
+            
+            uploatFile(){
+				let obj = document.getElementById("uploatfile").value;
+				let array = obj.split("\\");
+				if(array.length>0){
+					this.uploadFileName = array[array.length-1];
+				}else{
+					this.uploadFileName = "";
+				}
+			},
+            
+            async importf(){
+            	if(this.uploadFileName == ""){
+            		this.$message({
+                        type: 'error',
+                        message: "请先选择上传的文件"
+                    });
+                    return;
+            	}
+                this.dialogImportStockVisible = false;
+				this.importExcelData = '';
+				this.importFaileData = [];
+				let obj = document.getElementById("uploatfile");
+				var wb;//读取完成的数据
+            	var rABS = false; //是否将文件读取为二进制字符串
+            	if(!obj.files) {
+                    return;
+                }
+                var f = obj.files[0];
+                var reader = new FileReader();
+                reader.onload =(e) =>{
+                    var data = e.target.result;
+                    if(rABS) {
+                        wb = X.read(btoa(fixdata(data)), {//手动转化
+                            type: 'base64'
+                        });
+                    } else {
+                        wb = X.read(data, {
+                            type: 'binary'
+                        });
+                    }
+
+                    //wb.SheetNames[0]是获取Sheets中第一个Sheet的名字
+                    //wb.Sheets[Sheet名]获取第一个Sheet的数据
+                    this.importExcelData = JSON.stringify( X.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]) );
+                    this.importFileData();
+                };
+                if(rABS) {
+                    reader.readAsArrayBuffer(f);
+                } else {
+                    reader.readAsBinaryString(f);
+                }
+			},
+			
+			async importFileData(){
+				let param = {
+	                	jsonStr:this.importExcelData,
+	                	companyId:userInfo().companyId,
+	                	outWarehouseId:this.outWarehouse
+	               }
+               const res = await checkImportStockTransProduct(param);
+               let obj = document.getElementById("uploatfile");
+               obj.value = '';
+            	if (res.isSuccess == true) {
+            		this.uploadFileName = "";
+                    res.result.forEach(row => {
+                    	let flag = false;
+		                this.tableData6.forEach((obj2) => {
+		                	if(obj2.productVariantId == row.id){
+		                		obj2.orderNum = row.stockNum;
+		                		let tempPrice = 0;
+			                	if(row.stockNum != '' && row.sellPrice != ''){
+			                		tempPrice = Number(row.stockNum * row.sellPrice);
+			                		tempPrice = tempPrice.toFixed(2);
+			                	}
+			                	obj2.price = tempPrice;
+		                		flag = true;
+		                	}
+		                });
+		                if(!flag){
+		                	let tempPrice = 0;
+		                	if(row.stockNum != '' && row.sellPrice != ''){
+		                		tempPrice = Number(row.stockNum * row.sellPrice);
+		                		tempPrice = tempPrice.toFixed(2);
+		                	}
+		                	let variantInfo ={productCode:row.productCode,productVariantId:row.id,colour:row.colour,size:row.size,orderNum:row.stockNum,price:tempPrice,imgUrl_main:row.imgUrl_main};
+			                this.tableData6.push(variantInfo);
+			                this.num1 = 1;
+		                }
+                    })
+                }else{
+                	this.uploadFileName = "";
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+			},
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/fastShipping2';
+    @import "../style/stocktaking";
+    .canghutitle{
+        text-align: right;
+        margin-right: 10px
+    }
+    .huohao{
+        transform: translateX(-55px);
+        .huohaoseach{
+            width: 300px;
+        }
+    }
+    
+    .dialogImport{
+	    .importFirst{
+	        display: flex;
+	        align-items: flex-start;
+	        .uploatName{
+	            background: #e7f3fd;
+	            margin-left: 10px;
+	            margin-bottom: 5px;
+	            p{
+	                max-width: 189px;
+	                white-space:nowrap;
+	                overflow:hidden;
+	                text-overflow:ellipsis;
+	            }
+	        }
+	        .uploatButton{
+	            position: relative;
+	            #uploatfile{
+	                background: pink;
+	                width: 96px;
+	                height: 30px;
+	                position: absolute;
+	                top:0;
+	                left:0;
+	                opacity: 0;
+	            }
+	            .importUploat{
+	                background:#fff;
+	                border:1px solid #ccc;
+	                border-radius: 15px;
+	                padding: 4px 9px;
+	                font-size: 12px;
+	                margin-left: 10px;
+	                img{
+	                    width: 18px;
+	                    height: 18px;
+	                }
+	            }
+	        }
+	    }
+	
+	    .dialogImport,.importTips{
+	        height: 40px;
+	        line-height: 40px;
+	    }
+	    .importTips{
+	     font-size: 12px;
+	        color:#999;
+	    }
+	    .importDownload{
+	        padding: 0 8%;
+	        a{
+	            border:1px solid @blue2;
+	            height: 30px;
+	            border-radius: 5px;
+	            color:#333;
+	        }
+	    }
+	}
+</style>

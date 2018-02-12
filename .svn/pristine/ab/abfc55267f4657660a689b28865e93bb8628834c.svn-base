@@ -1,0 +1,231 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/fastShipping2"}'>快速出货</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/returnManagement2"}'>快速退货</router-link>
+            </li>
+            <li class="menuIndex">
+                <router-link :to='{path:"/orderPurchaseStall"}'>订单管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/sellerSettlement"}'>客户结算</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/customerManagement"}'>客户管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/statisticalStatement"}'>销售统计</router-link>
+            </li>
+        </ul>
+        <div class="purchasing-content">
+            <div class="purchasingAll">
+                <div class="right">
+                    <router-link :to='{path:"/indentManagement"}'  class="comeBack">返回</router-link>
+                </div>
+                <!--状态9 所有按钮不显示-->
+
+                <!--状态2.待退货 显示内容-->
+                <div class="purPendingButton">
+                    <a href="javascript:void(0)" class="buttonColor">签收</a>
+                </div>
+
+                <div class="purPendingButton">
+                    <a href="javascript:void(0)" class="buttonColor"  @click="dialogConfirmedReturn = true">确认退货</a>
+                </div>
+                <!---->
+                <!--状态1.配货待确认  显示内容-->
+                <div class="purPendingButton">
+                    <a href="javascript:void(0)" class="buttonColor" @click="dialogVisible1 = true">确 认</a>
+                </div>
+                <!---->
+                <!--状态6.立即入库 显示内容-->
+                <div class="purPendingButton">
+                    <a href="javascript:void(0)" class="buttonColor">挂起中</a>
+                    <a href="javascript:void(0)" class="buttonColor" @click="dialogVisible2 = true">立即入库</a>
+                </div>
+                <!---->
+                <div class="stocktakingTable" v-for="item in tableDetails">
+                    <div class="sumTotal flex">
+                        <p>订单编号：{{item.numbers}}</p>
+                        <p>{{item.name}}</p>
+                        <p>下单时间：{{item.checkDate}}</p>
+                    </div>
+                    <el-table
+                        :data="tableData"
+                        style="width: 100%">
+                        <!--状态6.立即入库 、签收之后 确认收货 显示勾选框 -->
+                        <el-table-column
+                            v-if="signIn1"
+                            type="selection"
+                            width="55">
+                        </el-table-column>
+                        <!---->
+                        <el-table-column
+                            width="250"
+                            label="主图/货号">
+                            <template scope="scope">
+                                <div class="flex2">
+                                    <img src="../image/111.png" alt=""  class="tableImg">
+                                    <p>{{scope.row.productNumber}}</p>
+                                </div>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            prop="productName"
+                            width="250"
+                            label="商品名称">
+                        </el-table-column>
+                        <el-table-column
+                            prop="color"
+                            label="颜色">
+                        </el-table-column>
+                        <el-table-column
+                            prop="size"
+                            label="尺码">
+                        </el-table-column>
+                        <el-table-column
+                            prop="amount"
+                            label="数量">
+                        </el-table-column>
+                        <el-table-column
+                            prop="price"
+                            label="单价">
+                        </el-table-column>
+                    </el-table>
+                </div>
+                <el-pagination
+                    class="right"
+                    small
+                    layout="prev, pager, next"
+                    :total="50"
+                    style="margin-top: 20px;">
+                </el-pagination>
+                <a href="javascript:void(0)" class="export_excle" @click="exportTableData">导出excel</a>
+            </div>
+        </div>
+        <el-dialog
+            title="确认退货"
+            :visible.sync="dialogConfirmedReturn"
+            size="tiny">
+            <div class="confirmedReturn flex2">
+                <div>
+                    <p>确认接收已选中的<span>58</span>件商品？</p>
+                    <p>*未选中的商品默认退货失败</p>
+                </div>
+            </div>
+            <span slot="footer" class="dialog-footer flex2">
+                <el-button type="primary" @click="dialogConfirmedReturn = false">确 定</el-button>
+                 <el-button @click="dialogConfirmedReturn = false">取 消</el-button>
+              </span>
+        </el-dialog>
+        <el-dialog
+            title="立即人库"
+            :visible.sync="dialogVisible2"
+            size="tiny">
+            <div class="newPackage">
+                <div class="flex2">
+                    确认将选中的20件商品入库吗？
+                </div>
+            </div>
+            <span slot="footer" class="dialog-footer flex2">
+                <el-button type="primary" @click="dialogVisible = false">确 定</el-button>
+                 <el-button @click="dialogVisible = false">取 消</el-button>
+              </span>
+        </el-dialog>
+    </div>
+</template>
+<script>
+    import headTop from '../components/headTop'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                erweima:false,
+                dialogConfirmedReturn:false,
+                dialogRefusedReturn:false,
+                dialogVisible1:false,
+                dialogVisible2:false,
+                clickIndex:0,
+                input:'',
+                radio:1,
+                items:[
+                    {title:'全部'},
+                    {title:'配货'},
+                    {title:'退货'},
+                ],
+                warehouseList:[
+                    {
+                        label:1,
+                        list:'仓库1'
+                    },
+                    {
+                        label:2,
+                        list:'仓库2'},
+                    {
+                        label:3,
+                        list:'仓库3'},
+                ],
+                tableDetails:[
+                    {
+                        name:'电商买家名称名称',
+                        numbers: 'NG123',
+                        checkDate:'2017-05-11 12:21:11',
+                    }
+                ],
+                tableData: [{
+                    productName:'名称名称名称名称名称',
+                    productNumber:'134546546',
+                    color:'红色',
+                    size:'L',
+                    price:100,
+                    amount:20,
+                },{
+                    productName:'名称名称名称名称名称',
+                    productNumber:'134546546',
+                    color:'红色',
+                    size:'L',
+                    price:100,
+                    amount:20,
+                },{
+                    productName:'名称名称名称名称名称',
+                    productNumber:'134546546',
+                    color:'红色',
+                    size:'L',
+                    price:100,
+                    amount:20,
+                },{
+                    productName:'名称名称名称名称名称',
+                    productNumber:'134546546',
+                    color:'红色',
+                    size:'L',
+                    price:100,
+                    amount:20,
+                },{
+                    productName:'名称名称名称名称名称',
+                    productNumber:'134546546',
+                    color:'红色',
+                    size:'L',
+                    price:100,
+                    amount:20,
+                },
+
+
+                ],
+            }
+        },
+        methods: {
+        }
+    }
+</script>
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/purchasingManagement';
+    @import "../style/indentManagement";
+</style>

@@ -1,0 +1,139 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/fastShipping2"}'>快速出货</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/indentManagement"}'>订单管理</router-link>
+            </li>
+            <li class="menuIndex">
+                <router-link :to='{path:"/takeGoods"}'>取货码</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/sellerSettlement"}'>客户结算</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/customerManagement"}'>客户管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/statisticalStatement"}'>销售统计</router-link>
+            </li>
+        </ul>
+        <div class="takeGoods radioGreen">
+            <el-col :span="11" class="isLeft">
+                <el-col :span="24" class="flex2 leftTop">
+                    <el-input
+                    placeholder="请输入取件码"
+                    size="large"
+                    v-model="pickUpCode"
+                    style="width: 400px;">
+                </el-input>
+                </el-col>
+                <el-col :span="24" class="flex2">
+                    <a href="javascript:void(0)" class="buttonColor leftButton flex2" @click="packageInquire">查询</a>
+                </el-col>
+            </el-col>
+            <el-col :span="13" class="isRight">
+                <div class="rightContent" v-if="isSuccessShow" >
+                   <div class="first flex">
+                       <img src="../image/111.png" alt="">
+                       <p>卖家名称：{{companyName}}</p>
+                   </div>
+                    <div class="second">
+                        <p style="width:100%;">当前包裹编号：{{packagecode}} <a href="javascript:void(0)" class="blue2 right">查看详情</a></p>
+                        <p>当前商品总数：</p>
+                        <p>当前包裹总金额：</p>
+                        <p>当前包裹状态：{{currPackageLogState}}</p>
+                    </div>
+                    <div class="flex2">
+                        <a href="javascript:void(0)" size="large" class="buttonColor leftButton flex2" @click="affirmShipment">确认出货</a>
+                    </div>
+                    <p class="last">（还剩5个包裹未领取！）</p>
+                </div>
+            </el-col>
+        </div>
+    </div>
+</template>
+
+<script>
+    import {loadByPickupCode,updatePackgeStatus} from '@/api/getData'
+    import {userInfo,getStore,setStore} from  '../config/mUtils'
+    export default {
+        components: {
+        },
+        data() {
+            return{
+                pickUpCode:'',
+                isSuccessShow:false,
+                packagecode:'',
+                packageId:'',
+                companyName:'',
+                currPackageLogState:'',
+                roleForm: {
+                    userId: '',
+                    roleId: '',
+                    compId:''
+                },
+
+            }
+        },
+        mounted() {
+
+
+        },
+        methods:{
+            async packageInquire(){
+                var userInfo=getStore("userInfo");
+                var vjson = JSON.parse(userInfo);
+                this.roleForm.userId=vjson.id;
+                var currentComp=getStore("curCompany");
+                var vcom = JSON.parse(currentComp);
+                this.roleForm.compId=vcom.id;
+                this.companysValue=vcom.id;
+                let param ={
+                    "companyId":this.roleForm.compId,
+                    "pickUpCode":this.pickUpCode,
+                };
+                const res = await loadByPickupCode(param);
+                if (res.isSuccess == true) {
+                    this.isSuccessShow = true;
+                   let data = res.result;
+                   this.packagecode = data.packageCode;
+                   this.packageId=data.id;
+                   this.companyName =data.companyName;
+                   this.currPackageLogState = data.currPackageLogState;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.result
+                    });
+                }
+            },
+            async affirmShipment(){
+                let param={
+                    "status":1,
+                   "packageId":this.packageId
+                };
+                const res = await updatePackgeStatus(param);
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: res.result.msg
+                    });
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            }
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/fastShipping2';
+</style>

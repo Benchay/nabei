@@ -1,0 +1,43 @@
+/**
+ * Created by Administrator on 2017/9/2.
+ */
+export function isJson(obj) {
+	var isjson = typeof(obj) == "object" && Object.prototype.toString.call(obj).toLowerCase() == "[object object]" && !obj.length;
+	return isjson;
+};
+export function isArray(arr) {
+	return Object.prototype.toString.call(arr) === "[object Array]";
+};
+
+export function isNullObject(x) {
+	if(x == undefined) return true;
+	return false;
+}
+
+export function getCompanyType(currentComp) {
+	if(currentComp != null && currentComp !='') {
+		var vcom = JSON.parse(currentComp);
+		return vcom.type;
+	}
+	return 1;
+}
+/*
+*  将数组形式的转换为字符分隔
+*
+**/
+export function linkArrayFormatId(seleRoleIdData){
+    var linkstr='';
+    if(seleRoleIdData instanceof Array){
+        for(var i=0;i<seleRoleIdData.length;i++){
+            // var tt=seleRoleIdData + "";
+            if(i== seleRoleIdData.length-1){
+                linkstr+=seleRoleIdData[i];
+            }else{
+                linkstr+=seleRoleIdData[i] + ",";
+            }
+        }
+    }else{
+        return seleRoleIdData;
+    }
+    return linkstr;
+}

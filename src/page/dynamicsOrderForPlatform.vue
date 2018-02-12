@@ -1,0 +1,132 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('bindWebstoreForPlatform')">
+                <router-link :to='{path:"/bindWebstoreForPlatform"}'>绑定店铺管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('webStoreOrderForPlatform')">
+                <router-link :to='{path:"/webStoreOrderForPlatform"}'>网店订单</router-link>
+            </li>
+            <li class="menuIndex3" v-if="getMenuAuthFun('orderForPlatform')">
+                <router-link :to='{path:"/orderForPlatform"}'>采购订单</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('productManagement')">
+                <router-link :to='{path:"/productManagement"}'>商品管理</router-link>
+            </li>
+        </ul>
+        <div class="expressDynamic"  style="overflow: hidden;">
+            <div class="expressPlan">
+                <el-steps :space="200" :active="status" center>
+                    <el-step title="档口确认订单"><i class="step01" slot="icon"></i></el-step>
+                    <el-step title="档口确认配货"><i class="step02" slot="icon"></i></el-step>
+                    <el-step title="待揽件"><i class="step03" slot="icon"></i></el-step>
+                    <el-step title="运输中"><i class="step03" slot="icon"></i></el-step>
+                    <el-step title="已完成"><i class="step03" slot="icon"></i></el-step>
+                </el-steps>
+            </div>
+            <div class="orderTitle">
+            	订单状态
+            </div>
+            <div class="expressProgressBar" v-show="tableData.length>0">
+                <ul>
+                    <li v-for="item in tableData">
+                        <div><img src="../image/circle.png" alt=""></div>
+                        <div style="width: 220px;">{{item.createTime}}</div>
+                        <div>{{item.description}}</div>
+                    </li>
+
+                    <li>
+                        <div><img src="../image/circle.png" alt=""></div>
+                        <div></div>
+                        <div></div>
+                    </li>
+                </ul>
+            </div>
+            <div class="details">
+                <ul>
+                    <li>订单编号：{{orderCode}}</li>
+                    <li>电商卖家：{{companyName}}</li>
+                    <li>档口名称：{{stallName}}</li>
+                    <!--<li>发货地址：常青花园1栋28楼2801</li>
+                    <li>收货地址：洪山广场A区写字楼1栋28楼</li>-->
+                </ul>
+            </div>
+        </div>
+    </div>
+</template>
+<script>
+    import headTop from '../components/headTop'
+    import {findOrderLogDetail} from '@/api/getData'
+    import {getMenuAuth,haveMenuAuth} from  '../utils/AuthMenu.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+
+            	orderCode:'',//订单号
+
+                companyName:'',//电商卖家
+
+                stallName:'',
+
+                status:0,
+
+				tableData:[
+					{
+						createTime:'2017-12-12 23:23:23',
+						description:'你好'
+					},
+					{
+						createTime:'2017-12-12 23:23:23',
+						description:'你好'
+					},
+					{
+						createTime:'2017-12-12 23:23:23',
+						description:'你好'
+					}
+				]
+            }
+        },
+         mounted(){
+         	this.orderCode = this.$route.query.orderCode;
+         	this.companyName = this.$route.query.companyName;
+         	this.stallName = this.$route.query.stallName;
+         	this.status = this.$route.query.status;
+            this.initloadData();
+        },
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+			async initloadData() {
+            	let status = '';
+            	if(this.searchOrderStatus != '' && this.searchOrderStatus != 'null'){
+            		status = this.searchOrderStatus;
+            	}
+            	let param ={
+            		orderId:this.$route.query.orderId
+            	}
+            	this.tableData = [];
+                const res = await findOrderLogDetail(param);
+                if (res.isSuccess == true) {
+                    this.tableData = res.result.data;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/dynamicsOrderForPlatform';
+</style>

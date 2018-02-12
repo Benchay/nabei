@@ -1,0 +1,318 @@
+<template>
+  	<div class="login_page fillcontain" v-show="loginShow">
+        <el-col :span="24" class="loginTop flex">
+            <el-col :span="3"></el-col>
+            <el-col :span="3" class="logo flex3">
+                <img src="../image/logo1.png" alt="">
+            </el-col>
+            <el-col :span="8"></el-col>
+            <el-col :span="4" class="loginTelphone">联系电话：130-2394-6186</el-col>
+            <el-col :span="6" class="flex">
+                <div class="loginAPP flex2">
+                    <div class="flex3">
+                        <p>电商卖家</p>
+                        <p>APP下载</p>
+                    </div>
+                    <img src="../image/erweima1.png" alt="">
+                </div>
+                <div class="loginAPP flex2">
+                    <div class="flex3">
+                        <p>档口</p>
+                        <p>APP下载</p>
+                    </div>
+                    <img src="../image/erweima1.png" alt="">
+                </div>
+            </el-col>
+        </el-col>
+	  	<el-col :span="24" class="loginContent">
+            <el-col :span="3">&nbsp;</el-col>
+            <el-col :span="0">
+                <transition name="form-fade" mode="in-out">
+                <section class="form_contianer" v-show="showLogin">
+                    <div class="manage_tip1">
+                        <p>拿 呗</p>
+                    </div>
+                    <el-form :model="loginForm" :rules="rules" ref="loginForm">
+                        <el-form-item prop="username">
+                            <el-autocomplete v-model="loginForm.username"
+                            	:fetch-suggestions="getSuggestions"
+                            	@select="handleSelect"
+                            	style="width:300px;height:36px;"
+                            	placeholder="用户名/手机号"></el-autocomplete>
+                        </el-form-item>
+                        <!--<el-form-item prop="password">
+                            <el-input type="text" placeholder="密码" @change="inputFunc" v-model="value6"  @keyup.enter.native="submitForm('loginForm')"></el-input>
+                        </el-form-item>-->
+                        <el-form-item prop="password">
+                        	<el-tooltip :disabled="disabled" content="大写输入模式" placement="right" effect="light">
+							    <el-input type="password" placeholder="密码" v-model="loginForm.password"  @keyup.enter.native="submitForm('loginForm')" @keyup.native="checkCapsLockKeyUp($event)"></el-input>
+							</el-tooltip>
+                            <!--<sp class="tip_div" v-if="capsInput==1">(大写输入模式)</sp>-->
+                        </el-form-item>
+                        <!--<el-form-item prop="type">
+                            <el-select v-model="value5" placeholder="请选登录平台" style="width:100%;">
+                                <el-option
+                                    v-for="item in options"
+                                    :key="item.value"
+                                    :label="item.label"
+                                    :value="item.value">
+                                </el-option>
+                            </el-select>
+                        </el-form-item>-->
+                        <el-form-item>
+                            <div class="loginPwd">
+                                <el-checkbox v-model="checked" >记住密码</el-checkbox>
+                            </div>
+                        </el-form-item>
+                        <el-form-item class="loginSub">
+                            <el-button type="primary" @click="submitForm('loginForm')">登 录</el-button>
+                        </el-form-item>
+                        <el-form-item class="loginRegister">
+                            <router-link  :to='{path:"/register"}' class="findpwd">立即注册</router-link>
+                            <router-link  :to='{path:"/findpwd"}' class="findpwd">忘记密码？</router-link>
+                        </el-form-item>
+                    </el-form>
+                </section>
+            </transition>
+            </el-col>
+            <el-col :span="6">
+                <div>
+                    <img src="../image/bg01.png" alt="">
+                </div>
+            </el-col>
+        </el-col>
+        <el-col :span="24" class="flex">
+            <div class="Copyright">Copyright &copy; 2017 Nabei.net 版权所有</div>
+        </el-col>
+  	</div>
+</template>
+
+<script>
+	import {login, getAdminInfo} from '@/api/getData'
+	import {mapActions, mapState} from 'vuex'
+    import {setStore,getStore,setSessionStore,getSessionStore} from  '../config/mUtils'
+    import * as types from '../store/types'
+    import {isNullObject,isJson} from  '../utils/common'
+
+	export default {
+	    data(){
+            var validateUserName = (rule, value, cb)=>{
+                var mobilePattern = /^1[3|4|5|7|8][0-9]{9}$/;
+                var userNamePattern = /^[A-Za-z][A-Za-z0-9]{0,15}$/;
+                if(!mobilePattern.test(value.trim())&&!userNamePattern.test(value.trim())){
+                    cb(new Error('您输入的用户名/手机号格式不正确'))
+                }else{
+                    cb();
+                }
+            };
+            return {
+            	disabled:true,
+                capsInput:0,
+            	loginShow:false,
+                options: [{
+                    value: 1,
+                    label: '档口'
+                }, {
+                    value: 2,
+                    label: '卖家'
+                },
+                {
+                    value: 3,
+                    label: '管理平台'
+                }
+                ],
+                value5:'',
+                value6:'',
+                checked:false,
+				loginForm: {
+					username: '',
+					password: '',
+                    loginType:1,
+                    type:''
+				},
+				rules: {
+					username: [
+			            { required: true, message: '请输入用户名或手机号', trigger: 'blur' },
+                        { validator:validateUserName, trigger:'blur'}
+			        ],
+					password: [
+						{ required: true, message: '请输入密码', trigger: 'blur' }
+					],
+				},
+				showLogin: false,
+			}
+		},
+		beforeMount(){
+            var checksession = getSessionStore(types.SEESION_TOKEN);
+            if (checksession != '' || checksession!=null) {
+                this.loginForm.name='';
+                this.loginForm.password='';
+                this.loginShow = true;
+                return;
+            }
+			var curComp = getStore('curCompany');
+			if(!isNullObject(curComp)){
+				const currentComp = JSON.parse(curComp);
+				if(currentComp.type){
+					var userInfo = JSON.parse(getStore('userInfo'));
+					if(currentComp.type==1){
+	                    this.$router.push({path: '/homeStall',query:{'userId':userInfo.id}});
+	                }else if(currentComp.type==2){
+	                    this.$router.push({path: '/homeSeller',query:{'userId':userInfo.id}});
+	                }
+	                else if(currentComp.type==3){
+	                    this.$router.push({path: '/manage',query:{'userId':userInfo.id}});
+	                }
+				}
+			}else{
+				this.loginForm.name='';
+				this.loginForm.password='';
+				this.loginShow = true;
+			}
+		},
+		mounted(){
+			this.showLogin = true;
+    		var restatus=getStore("setRemeberStatus");
+		},
+		computed: {
+			...mapState(['adminInfo']),
+		},
+		methods: {
+			getSuggestions(queryString, cb){
+				var loginInfo = getStore('loginInfo');
+				if(loginInfo){
+					var arr = JSON.parse(loginInfo);
+					var idArr = [];
+					for(var i in arr){
+						idArr.push({'value':arr[i].username});
+					}
+					cb(idArr);
+				}else{
+					cb();
+				}
+			},
+			handleSelect(item){
+				var loginInfo = getStore('loginInfo');
+				var arr = JSON.parse(loginInfo);
+				var tempArr = arr.filter((obj)=>{ return obj.username==item.value;});
+				if(tempArr&&tempArr.length==1){
+					this.loginForm.password = tempArr[0].password;
+				}
+				this.checked = true;
+			},
+            checkCapsLockKeyUp(event){
+            	if(event.keyCode==20){
+                  	this.disabled = !this.disabled;
+                }else{
+	                var e = event||window.event;
+	                var keyvalue = e.keyCode ? e.keyCode : e.which;
+	                var shifKey = e.shiftKey ? e.shiftKey:((keyvalue == 16) ? true : false);
+	                var strlen = this.loginForm.password.length;
+	                if(strlen){
+	                    var uniCode =this.loginForm.password.charCodeAt(this.loginForm.password.length-1);
+	                    if(keyvalue>=65 && keyvalue<=90){     //如果是字母键
+	                        if(((uniCode >= 65 && uniCode <= 90) && !shifKey)||((uniCode >= 97 && uniCode <= 122) && shifKey)){
+	                            //this.capsInput=1;
+	                            this.disabled = false;
+	                        }else{
+	                            //this.capsInput=0;
+	                            this.disabled = true;
+	                        }
+	                    }
+	                }
+                }
+            },
+			async submitForm(formName) {
+				this.$refs[formName].validate(async (valid) => {
+				    if (valid) {
+					    this.loginForm.type=this.value5;
+					    this.loginForm.loginInfo={
+					    	"platform":0,
+					    	"device":""
+					    };
+						const res = await login(this.loginForm)
+						//alert(JSON.stringify(res))
+						if (res.isSuccess == true) {
+							this.$message({
+								duration:this.GLOBAL.MESSAGE_DISSMISS_TIME_MID,
+		                        type: 'success',
+		                        message: '登录成功'
+		                    });
+                            setStore("setRemeberStatus", this.checked);
+							this.token=res.result.token;
+							setStore(types.TOKEN,this.token);
+                            setSessionStore(types.SEESION_TOKEN,this.token);
+							let userInfo = res.result.user;
+							userInfo.curCompany = res.result.currentComp;
+							if(this.checked==true){
+								var loginInfo = getStore('loginInfo');
+								if(loginInfo){
+									var arr = JSON.parse(loginInfo);
+									var rec = arr.filter((obj)=>{return obj.username==this.loginForm.username;});
+									if(rec&&rec.length < 1){
+										arr.push(this.loginForm);
+									}
+									setStore('loginInfo',arr);
+								}else{
+									var arr = [];
+									arr.push(this.loginForm);
+									setStore('loginInfo',arr);
+								}
+							}else{
+								var loginInfo = getStore('loginInfo');
+								if(loginInfo){
+									var arr = JSON.parse(loginInfo);
+									for(var i in arr){
+										if(this.loginForm.username==arr[i].username){
+											arr.splice(i,1);
+											break;
+										}
+									}
+									setStore('loginInfo',arr);
+								}
+							}
+                            setStore("userInfo",JSON.stringify(userInfo));
+                            setStore("user_info_user",res.result.user);
+                            setStore("curCompany",res.result.currentComp);
+                            //console.log(res.result);return;
+							if( !res.result.currentComp){
+                                this.$router.push({path: '/guidance',query:{userId:res.result.userId}});
+                            }else{
+                                if(res.result.currentComp.type==1){
+                                    this.$router.push({path: '/homeStall',query:{userId:res.result.userId}});
+                                }else if(res.result.currentComp.type==2){
+                                    this.$router.push({path: '/homeSeller',query:{userId:res.result.userId}});
+                                }
+	                            else if(res.result.currentComp.type==3){
+	                                this.$router.push({path: '/manage',query:{userId:res.result.userId}});
+	                            }
+                            }
+                        }else{
+							this.$message({
+		                        type: 'error',
+		                        message: res.errorMsg
+		                    });
+						}
+					}
+				});
+			},
+		},
+		watch: {
+			adminInfo: function (newValue){
+				if (newValue.id) {
+					this.$message({
+                        type: 'success',
+                        message: '检测到您之前登录过，将自动登录'
+                    });
+					this.$router.push('manage')
+				}
+			}
+		}
+	}
+</script>
+
+<style lang="less" scoped>
+	@import '../style/mixin';
+    @import '../style/login';
+
+</style>

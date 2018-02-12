@@ -1,0 +1,167 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/warehouseManagement"}'>仓库管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/stockTakingManagement"}'>库存盘点单</router-link>
+            </li>
+            <li class="menuIndex3">
+                <router-link :to='{path:"/stockAllotManagement"}'>库存调拨单</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/checkDiffManagement"}'>库存差异单</router-link>
+            </li>
+        </ul>
+        <div class="stockAllotDetails">
+            <router-link class="back right" :to='{path:"/stockAllotManagement"}'>返回</router-link>
+            <div class="detailsTop">
+                <el-col :span="24" >
+                    <el-col :span="8" >档口名称：{{this.stallName}}</el-col>
+                    <el-col :span="8" >订单编号：{{this.orderId}}</el-col>
+                </el-col>
+                <el-col :span="24">
+                    <el-col :span="8">调拨时间：{{this.formatDateInfo(this.createTime)}}</el-col>
+                    <el-col :span="8">调拨人：{{this.operator}}</el-col>
+                </el-col>
+                <el-col :span="24">
+                    <el-col :span="8">状态：{{(this.status==0)?'未签收':'已签收'}}</el-col>
+                </el-col>
+            </div>
+
+            <div class="fastTable">
+                <el-table
+                    :data="tableData"
+                    style="width: 100%">
+                    <el-table-column
+                        prop="productCode"
+                        label="商品货号">
+                    </el-table-column>
+                    <el-table-column
+                        prop="colour"
+                        label="颜色">
+                    </el-table-column>
+                    <el-table-column
+                        prop="size"
+                        label="尺码">
+                    </el-table-column>
+                    <el-table-column
+                        prop="orderNum"
+                        label="调拨数量">
+                    </el-table-column>
+                    <el-table-column
+                        prop="price"
+                        label="调拨金额">
+                    </el-table-column>
+                </el-table>
+            </div>
+            <el-pagination
+            small
+            class="right"
+            style="margin-top: 20px;"
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+            :current-page="currentPage"
+            :page-sizes="[10, 20, 30, 40]"
+            :page-size="pagesize"
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="totalCount">
+        </el-pagination>
+            <a href="javascript:void(0)" class="export_excle">导出excle</a>
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {queryStockOrderDetailInfo,loadUserInfo} from '@/api/getData'
+    import {formatDate} from '../utils/date.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                state:1,
+                orderId:'',
+                createTime:'',
+                stallName:'',
+                status:'',
+                createUserId:'',
+                operator:'',
+                orderTable:[],
+                tableData: [],
+                //当前页码
+                currentPage: 1,
+
+                //查询的页码
+                start: 1,
+                //每页显示的总条数
+                pageSize:8,
+                //默认数据总数
+                totalCount: 0,
+            }
+        },
+        mounted(){
+            this.orderId = this.$route.query.param;
+            this.createTime = this.$route.query.createTime;
+            this.stallName = this.$route.query.stallName;
+            this.createUserId = this.$route.query.createUserId;
+            this.status = this.$route.query.status;
+            this.loadUser();
+            let param = {
+                "stockOrderId":this.orderId,
+                "pageIndex":this.currentPage,
+                "pageSize":this.pageSize
+            };
+            this.loadData(param);
+        },
+        methods: {
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+            },
+            async loadUser(){
+                const res = await loadUserInfo({"userId":this.createUserId});
+                if(res.isSuccess){
+                    this.operator = res.result.nickName;
+                }
+            },
+            formatDateInfo(time){
+                if(time==undefined||time==''){
+                 return '';
+                }
+                var date = new Date(time);
+                return formatDate(date, 'yyyy-MM-dd hh:mm');
+            },
+            async loadData(param){
+                const data = await queryStockOrderDetailInfo(param);
+                if(data.isSuccess){
+                    this.tableData = data.result.data;
+                    this.totalCount = data.result.totalCount;
+                }
+            },
+
+            handleCurrentChange:function(val) {
+                this.currentPage = val;
+                let param = {
+                    "stockOrderId":this.orderId,
+                    "pageIndex":this.currentPage,
+                    "pageSize":this.pageSize
+                };
+                this.loadData(param);
+            },
+
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/stockAllotDetails';
+</style>

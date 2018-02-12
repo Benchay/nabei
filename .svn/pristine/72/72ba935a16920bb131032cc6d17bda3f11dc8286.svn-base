@@ -1,0 +1,469 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('webStoreOrderSalesBuy')">
+                <router-link :to='{path:"/webStoreOrderSalesBuy"}'>网店订单</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('purchaseRequireBuy')">
+                <router-link :to='{path:"/purchaseRequireBuy"}'>采购需求</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('orderPurchaseBuy')">
+                <router-link :to='{path:"/orderPurchaseBuy"}'>采购订单</router-link>
+            </li>
+            <!-- <li v-if="getMenuAuthFun('addShop')">
+                <router-link :to='{path:"/addShop"}'>绑定店铺</router-link>
+            </li> -->
+            <li class="menuIndex2" v-if="getMenuAuthFun('packageDetails')">
+                <router-link :to='{path:"/packageDetails"}'>包裹管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('salesForecast')">
+                <router-link :to='{path:"/salesForecast"}'>采购统计</router-link>
+            </li>
+        </ul>
+        <div class="purchasing-content">
+            <div class="purchasingAll">
+                <router-link :to='{path:"/packageDetails"}' class="comeBack2 right">返回</router-link>
+                <div class="orderForm">
+                    <el-col :span="8">档口名称：{{stallName}}</el-col>
+                    <!--根据状态显示-->
+                    <el-col :span="8">包裹状态：{{currPackageLogState| formatState}}</el-col>
+                    <!--<el-col :span="8">拿货人/装车人/入库员：黄小儿</el-col>-->
+                    <el-col :span="8">{{changetype | formatChangetype(changetype)}}：{{createUserName
+}}</el-col>
+                    <el-col :span="8">包裹编号：{{packageCode}}</el-col>
+                    <el-col :span="8">订单编号：{{orderCode}}</el-col>
+                    <!--<el-col :span="8">配货完成/拿货/装车/入库 时间：{{createTime}}</el-col>-->
+                    <el-col :span="8">操作时间：{{createTime| mydateFormat}}</el-col>
+                    <!-- <el-col :span="8">共计金额：{{totalFee}}</el-col> -->
+                    <el-col :span="8">商品数量：{{orderNum}}</el-col>
+                    <el-col :span="8">提货码：{{pickUpCode}}</el-col>
+                </div>
+                <div class="stocktakingTable">
+                    <el-table
+                        :data="tableData"
+                        style="width: 100%">
+                        <el-table-column
+                            label="主图/货号">
+                            <template scope="scope">
+                                <div class="flex2" style="justify-content: start;">
+                                	<img v-if="scope.row.imgUrl_main != ''" :src="scope.row.imgUrl_main" alt=""  class="tableImg">
+                                    <img v-else src="../image/product_default.png" alt=""  class="tableImg">
+                                    <p>{{scope.row.productCode}}</p>
+                                </div>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            prop="productName"
+                            width="180"
+                            label="商品名称">
+                        </el-table-column>
+                        <el-table-column
+                            prop="color"
+                            label="颜色">
+                        </el-table-column>
+                        <el-table-column
+                            prop="size"
+                            label="尺码">
+                        </el-table-column>
+                        <el-table-column
+                            prop="containProductNum"
+                            label="配货数量">
+                        </el-table-column>
+                        <el-table-column
+                            prop="price"
+                            label="单价">
+                        </el-table-column>
+                    </el-table>
+                </div>
+                <div class="right"style="margin-top: 20px">
+                    <div class="purPendingButton">
+                        <a href="javascript:void(0)" class="buttonColor3" type="info" size="small" v-if="currPackageLogState == 21" @click="dialogStorage = true">入库</a>
+                        <a href="javascript:void(0)" class="buttonColor3" type="info" size="small"  @click="dialog = true">包裹动态</a>
+                    </div>
+                </div>
+                <el-col :span="24">
+                    <a href="javascript:void(0)" class="export_excle1">导出excel</a>
+                    <el-pagination
+                        small
+                        class="right"
+                        style="margin-top: 20px;"
+                        @size-change="handleSizeChange"
+                        @current-change="handleCurrentChange"
+                        :current-page="currentPage"
+                        :page-sizes="[10, 20, 30, 40]"
+                        :page-size="pagesize"
+                        layout="total, sizes, prev, pager, next, jumper"
+                        :total="totalCount">
+                    </el-pagination>
+                </el-col>
+            </div>
+            <div style="height:160px;">
+                &nbsp;
+            </div>
+        </div>
+        <el-dialog
+            title="确认入库"
+            :visible.sync="dialogStorage"
+            size="tiny">
+            <div class="flex2 dialogStorageNum">
+                确认将已选中的<span>{{orderNum}}</span>件商品入库吗？
+            </div>
+            <span slot="footer" class="dialog-footer flex2">
+                <a href="javascript:void(0)" @click="stockIn" class="buttonColor3">确 定</a>
+                <a href="javascript:void(0)" @click="dialogStorage = false" class="buttonColor2">取 消</a>
+              </span>
+        </el-dialog>
+        <el-dialog
+            title="包裹动态"
+            :visible.sync="dialog"
+            size="small">
+            <div class="dynamic">
+                <el-col :span="12">档口名称：{{stallName}}</el-col>
+                <el-col :span="12">{{currPackageLogState| formatState}}</el-col>
+                <el-col :span="12">订单编号：{{orderCode}}</el-col>
+            </div>
+            <el-col class="dynamicList2">
+                <div class="track-rcol">
+                    <div class="track-list">
+                        <ul>
+                            <li v-for="authitem in orderLog">
+                                <i class="node-icon"></i>
+                                <span class="time">{{authitem.createTime | mydateFormat}}</span>
+                                <div class="txt">
+                                    <span>{{authitem.changeType | formatChangeuser}}</span>
+                                    <span>操作人：{{authitem.createUserName}}</span>
+                                    <span>联系电话：{{authitem.mobile}}</span>
+                                </div>
+                            </li>
+                            <!--
+                            <li>
+                                <i class="node-icon"></i>
+                                <span class="time">2016-03-10 18:07:15</span>
+                                <div class="txt">
+                                    <p>待装车</p>
+                                    <p>装车人：张晓梅</p>
+                                    <p>联系电话：13465211349</p>
+                                </div>
+                            </li>
+                            <li>
+                                <i class="node-icon"></i>
+                                <span class="time">2016-03-10 18:07:15</span>
+                                <div class="txt">
+                                    <p>待装车</p>
+                                    <p>装车人：张晓梅</p>
+                                    <p>联系电话：13465211349</p>
+                                </div>
+                            </li>-->
+                        </ul>
+                    </div>
+                </div>
+            </el-col>
+        </el-dialog>
+    </div>
+</template>
+<script>
+    import headTop from '../components/headTop'
+    import {setStore,getStore} from  '../config/mUtils'
+    import {formatDate,timeZoneCovertDay} from '../utils/date.js'
+    import {queryPackageList,batchStockIn,queryPackageLogInfo,loadPackage,updatePackgeStatus,getPackageFlowConfig} from '@/api/getData'
+    import {getMenuAuth,haveMenuAuth} from  '../utils/AuthMenu.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                roleForm: {
+                    loginname: '',
+                    userId: '',
+                    roleId: '',
+                    compId: '',
+                    userName: '',
+                    registerTime: '',
+                    nickName: '',
+                    currentComUid:'',
+                },
+                img:'',
+                currPackageLogState:'',
+                loadInUsrName:'',
+                packageCode:'',
+                productCode:'',
+                status:'',
+                pickUpCode:'',
+                stallName:'',
+                packId:'',
+                totalFee:'',
+                orderNum:0,
+                orderCode:'',
+                changetype:'',
+                createTime:'',
+                createUserName:'',
+                dialogStorage:false,
+                orderLog:[],
+                dialog:false,
+                num6:1,
+                needInStock: false,
+                clickIndex2:0,
+                //默认每页数据量
+                pagesize: 12,
+                //默认高亮行数据id
+                highlightId: -1,
+                //当前页码
+                currentPage: 1,
+                //查询的页码
+                start: 1,
+                //默认数据总数
+                totalCount: 0,
+                //用户登录信息暂时写死
+                 currentComp: getStore("curCompany"),
+                // currentComp:{id:'1000'},
+                packageList:[
+                    {
+                        list:2,
+                        name:'包裹1'
+                    },
+                    {
+                        list:3,
+                        name:'包裹2'},
+                ],
+                items:[
+                    {title:'全部'},
+                    {title:'配货'},
+                    {title:'退货'},
+                ],
+                tableDetails:[
+                    {
+                        name:'电商买家名称名称',
+                        numbers: 'NG123',
+                        checkDate:'2017-05-11 12:21:11',
+                    }
+                ],
+                tableData: [
+                    ],
+            }
+        },
+        watch:{
+            '$route':function (route) {
+                this.packId=this.$route.query.packId;
+                if(route.path=='/packageStatus'){
+                    this.initloadData();
+                    this.queryPackageList();
+                }
+            }
+        },
+        mounted(){
+            var userInfo = getStore("user_info_user");
+            var vjson = JSON.parse(userInfo);
+            this.roleForm.userId = vjson.id;
+            this.roleForm.userName = vjson.userName;
+            var vcom = JSON.parse(this.currentComp);
+            this.roleForm.compId = vcom.id;
+            this.packId=this.$route.query.packId;
+            this.initloadData();
+            this.queryPackageList();
+            console.log(this.orderLog)
+        },
+        filters: {
+            mydateFormat(time) {
+                   if (time == undefined||time=='') {
+                       return "";
+                   }
+                   let date = new Date(time);
+                   return formatDate(date,'yyyy-MM-dd hh:mm');
+               },
+             formatState(status) {
+                 if(status==-1){
+                     return "空包裹";
+                }
+                else if(status==0){
+                    return "待拿货";
+                  // 0:待拿货（已打包）      1:已拿货 (待装车) 2:装车 (待入库)  3:入库 (完成 )
+               }else if(status== 1){
+                   return "待装车";
+               }else if(status== 2){
+                   return "待卸货";
+               }else if(status== 3){
+                   return "已完成";     
+               }else if(status== 21){
+                   return "卸货待入库";     
+               }
+            },
+            formatChangetype(changetype){
+                if(changetype == -1){
+                    return "创建人"
+                }else if(changetype == 0){
+                    return "打包人"
+                }else if(changetype == 1){
+                    return "拿货人"
+                }else if(changetype == 2){
+                    return "装车人"
+                }else if(changetype == 3){
+                    return "入库人"
+                }else if(changetype == 4){
+                    return "退货人"
+                }
+            }, 
+            formatChangeuser(changetype){
+                if(changetype == -1){
+                    return "创建"
+                }else if(changetype == 0){
+                    return "打包"
+                }else if(changetype == 1){
+                    return "拿货"
+                }else if(changetype == 2){
+                    return "装车"
+                }else if(changetype == 3){
+                    return "入库"
+                }else if(changetype == 4){
+                    return "退货"
+                }
+            }
+            },
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            handleSizeChange(val) {
+                 this.initloadData();
+                console.log(`每页 ${val} 条`);
+            },
+            handleCurrentChange(val) {
+                 this.initloadData();
+                console.log(`当前页: ${val}`);
+            },
+            async initloadData() {
+                let param ={
+                    pageIndex:this.currentPage,
+                    pageSize:this.pagesize,
+                    packageId:this.packId,
+                    withLogs: true
+                }
+                const res = await loadPackage(param);
+                if (res.isSuccess == true) {
+                    let data = res.result;
+                    let num = 0;
+                    this.currPackageLogState = data.currPackageLogState
+                    this.stallName = data.companyName
+                    this.createTime = data.createTime
+                    this.packageCode = data.packageCode
+                    this.loadInUsrName = data.loadInUsrName
+                    this.orderCode = data.orderCode
+                    this.orderLog = data.packageLog
+                    this.changetype = data.packageLog[0].changeType
+                    this.createUserName = data.packageLog[0].createUserName
+                    this.pickUpCode =   data.pickUpCode
+                    data.packagelist.forEach(obj=>{
+                         num += obj.containProductNum
+                    })
+                    this.orderNum = num
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            //查询配置
+            async getPackageFlowConfig(){
+                let param = {
+                    companyId:this.roleForm.compId
+                }
+                const res = await getPackageFlowConfig(param);
+                if(res.isSuccess){
+                 this.needInStock = res.result.needInStock;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+	                });
+                }
+            },
+            //入库呢
+            async stockIn(){
+                this.getPackageFlowConfig();
+                let param;
+                if(this.needInStock == true){
+                    param = {
+                        "packageId":this.packId,
+                        "status":3
+                                }
+                }else{
+                    param = {
+                       "packageId":this.packId, 
+                    }
+                }
+                const res = await updatePackgeStatus(param);
+                if (res.isSuccess == true) {
+                    this.initloadData();
+                    this.$message({
+                        type: 'success',
+                        message: "入库成功"
+                    });
+                }else{
+                     this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+                // if(this.currPackageLogState == 2){
+                // }else if(this.currPackageLogState == 3){
+                //     this.$message({
+                //         type: 'error',
+                //         message: "已经入库"
+                //     });
+                // }else if(this.currPackageLogState == 0||this.currPackageLogState==1){
+                //       this.$message({
+                //         type: 'error',
+                //         message: "入库失败"
+                //     });
+                // }
+                        this.dialogStorage = false
+            },
+            //显示包裹信息
+            // async showPackLog(){
+            //     this.dialog = true;
+            //     let param = {
+            //         "packgeType":"0",
+            //         "pageIndex": this.currentPage,
+            //         "pageSize":this.pagesize,
+            //         }
+            //     const res = await queryPackageLogInfo(param);
+            //     if (res.isSuccess == true) {
+            //         this.orderLog = res.result.data.results;
+                    
+            //     }else{
+            //         this.$message({
+            //             type: 'error',
+            //             message: res.errorMsg
+            //         });
+            //     }
+            // },
+            //查询包裹详情
+             async queryPackageList(){
+                 let param ={
+                    // companyId:this.roleForm.compId,     
+                     packageId:this.packId
+                }
+                 const res = await queryPackageList(param);
+                 if(res.isSuccess == true){
+                     this.tableData = res.result.data.results;
+                    this.totalCount = res.result.data.totalCount
+                 }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                 }
+
+             }
+        }
+    }
+</script>
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/purchasingManagement';
+    @import "../style/indentManagement";
+</style>

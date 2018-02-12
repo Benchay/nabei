@@ -1,0 +1,91 @@
+<template>
+    <div class="fillcontain">
+        <div class="createCompany">
+            <div class="createHead flex2">
+                <img src="../image/create.png" alt="">
+                <p>创建公司</p>
+            </div>
+            <div class="createForm flex2">
+                <el-form :model="form" :rules="createCompanyRule" ref="refCreateForm">
+                    <div class="form">
+                        <el-form-item prop="name" label="公司名称：" :label-width="formLabelWidth" style="width: 400px;" >
+                            <el-input v-model="form.name" auto-complete="off" class="formInput"></el-input>
+                        </el-form-item>
+                        <!--<el-form-item prop="compCode" label="公司代码：" :label-width="formLabelWidth">
+                            <el-input v-model="form.compCode" auto-complete="off"></el-input>
+                        </el-form-item>-->
+                        <el-form-item prop="companyBindingId" label=" 公司类型：" :label-width="formLabelWidth" >
+                            <el-select v-model="form.companyBindingId"  class="formInput" placeholder="请选择公司类型" @change="myCompanyBindingIdBlur">
+                                <el-option label="档口" value="1"></el-option>
+                                <el-option label="卖家" value="2"></el-option>
+                                <el-option label="管理后台" value="3"></el-option>
+                            </el-select>
+                        </el-form-item>
+                        <el-form-item label="公司LOGO：" :label-width="formLabelWidth">
+                            <el-upload
+                                class="upload-demo"
+                                action="https://jsonplaceholder.typicode.com/posts/"
+                                :on-preview="handlePreview"
+                                :on-remove="handleRemove"
+                                :file-list="fileList">
+                                <el-button size="small" type="primary">上传LOGO</el-button>
+                            </el-upload>
+                        </el-form-item>
+                        <el-form-item label="公司位置：" :label-width="formLabelWidth" style="width: 400px;" >
+                            <el-input v-model="form.location" auto-complete="off"  class="formInput"></el-input>
+                        </el-form-item>
+                        <el-form-item prop="compScale" label="公司规模：" :label-width="formLabelWidth">
+                            <el-select v-model="form.compScale" placeholder="请选择公司规模"  @change="myCompScaleBlur"  class="formInput">
+                                <el-option label="20人以下" value="1"></el-option>
+                                <el-option label="20-50人" value="2"></el-option>
+                                <el-option label="50-200人" value="3"></el-option>
+                                <el-option label="200-500人" value="4"></el-option>
+                                <el-option label="500-100人" value="5"></el-option>
+                                <el-option label="1000人以上" value="6"></el-option>
+                            </el-select>
+                        </el-form-item>
+                    </div>
+                    <div class="createFoot flex2">
+                        <a href="javascript:void(0)" class="confirm flex2">提 交</a>
+                    </div>
+                    <div class="createFoot1 flex2">
+                        <router-link :to='{path:"/guidance"}' class="back flex2">返回上一页</router-link>
+                    </div>
+                </el-form>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                form:[{
+                    name:'',
+                    companyBindingId:'',
+                    location:'',
+                    compScale:''
+                }],
+                formLabelWidth:110,
+            }
+        },
+        methods: {
+            cancel(){
+                this.$router.push('/guidance');
+            }
+        },
+
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/createCompany';
+</style>

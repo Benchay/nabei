@@ -1,0 +1,227 @@
+<template>
+    <div class="fillcontain">
+		<ul class="menu">
+		    <li  class="menuIndex">
+		        <a href="javascript:void(0);">订单管理</a>
+		    </li>
+		</ul>
+        <div class="startProcurement">
+            <div>
+                <div class="salesOrderTop">
+                    <div class="block left">
+                        <el-date-picker
+                            v-model="value1"
+                            type="date"
+                            placeholder="选择日期"
+                            :picker-options="pickerOptions0">
+                        </el-date-picker>
+                    </div>
+                    <div class="right">
+                        <el-input
+                            placeholder="搜索关键词"
+                            icon="search"
+                            v-model="input2"
+                            :on-icon-click="handleIconClick">
+                        </el-input>
+                    </div>
+                </div>
+                <div class="salesOrderTable">
+                    <el-table
+                        ref="multipleTable"
+                        :data="tableData"
+                        tooltip-effect="dark"
+                        style="width: 100%"
+                        >
+                        <el-table-column
+                            type="selection"
+                            width="55">
+                        </el-table-column>
+                    	<el-table-column
+	                        prop="orderCode"
+	                        label="订单编号">
+                        </el-table-column>
+                        <el-table-column
+                            prop="buyerNick"
+                            label="买家昵称">
+                        </el-table-column>
+                        <el-table-column
+                            prop="status"
+                            label="订单状态"
+                            width="220">
+                        </el-table-column>
+                        <el-table-column
+                         	prop="orderTime"
+                            label="下单时间"
+                            width="250"
+                            :formatter="formatOrderTime"
+                            show-overflow-tooltip>
+                        </el-table-column>
+                        <el-table-column
+                        	prop="payTime"
+                            label="付款时间"
+                            width="250"
+                            :formatter="formatPayTime"
+                            show-overflow-tooltip>
+                        </el-table-column>
+                    </el-table>
+                </div>
+                <el-pagination
+                    small
+                    class="right"
+                    style="margin-top: 20px;"
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :current-page="currentPage"
+                    :page-sizes="[10, 20, 30, 40]"
+                    :page-size="pagesize"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    :total="totalCount">
+                </el-pagination>
+                <el-button class="export_excle" @click="exportTableData">导出excle</el-button>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+	import headTop from '../components/headTop'
+    import {queryWebStoreOrder} from '@/api/getData'
+    import {formatDate} from '../utils/date.js'
+    import {export_json_to_excel} from '../vendor/Export2Excel.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+		computed: {
+            classObject: function () {
+                return {
+                    active: this.isActive && !this.error,
+                    'text-danger': this.error && this.error.type === 'fatal',
+                }
+            }
+        },
+        data() {
+            return {
+                tableData: [],
+                //默认每页数据量
+                pagesize: 8,
+
+                //默认高亮行数据id
+                highlightId: -1,
+
+                //当前页码
+                currentPage: 1,
+
+                //查询的页码
+                start: 1,
+
+                //默认数据总数
+                totalCount: 0
+            }
+        },
+        async mounted(){
+            this.initloadData();
+        },
+        methods: {
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+            },
+
+            //从服务器获取数据
+            async initloadData() {
+            	let param ={
+            		pageIndex:this.currentPage,
+            		pageSize:this.pagesize
+            	}
+                const res = await queryWebStoreOrder(param);
+                if (res.isSuccess == true) {
+                    this.tableData = res.result.data.results;
+                    this.totalCount = res.result.data.totalCount;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.isSuccess
+                    });
+                }
+            },
+            handleCurrentChange:function(val) {
+                this.currentPage = val;
+                this.initloadData();
+            },
+            formatOrderTime(row) {
+                return formatDate(row.orderTime, 'yyyy-MM-dd hh:mm');
+            },
+            formatPayTime(row) {
+                return formatDate(row.payTime, 'yyyy-MM-dd hh:mm');
+            },
+            async exportTableData() {
+            	let param ={
+            		pageIndex:1,
+            		pageSize:this.pagesize*this.totalCount
+            	}
+                const res = await queryWebStoreOrder(param);
+                const list = [];
+                if (res.isSuccess == true) {
+                	for(let i=0;i<res.result.data.results.length;i++){
+						let data1 = res.result.data.results[i];
+						let orderCode = '';
+						let buyerNick = '';
+						let orderTime = '';
+						let status = '';
+						let payTime = '';
+
+						if(data1.orderCode){
+							orderCode = data1.orderCode;
+						}
+						if(data1.buyerNick){
+							buyerNick = data1.buyerNick;
+						}
+
+						if(data1.status){
+					        status = data1.status;
+					    }
+
+					    if(data1.orderTime){
+					        orderTime = formatDate(data1.orderTime, 'yyyy-MM-dd hh:mm');
+					    }
+
+					    if(data1.payTime){
+					        payTime = formatDate(data1.payTime, 'yyyy-MM-dd hh:mm');
+					    }
+
+						let row = {
+		            		orderCode : orderCode,
+							buyerNick : buyerNick,
+							status : status,
+							orderTime : orderTime,
+							payTime : payTime
+		            	}
+		            	list.push(row);
+                	}
+                	const tHeader = ['订单编号', '买家昵称','订单状态','下单时间','付款时间'];
+			　　　　const filterVal = ['orderCode', 'buyerNick','status','orderTime','payTime'];
+			　　　　const data = this.formatJson(filterVal, list);
+			　　　　export_json_to_excel(tHeader, data, '订单管理表');
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.isSuccess
+                    });
+                }
+            },
+            formatJson(filterVal, jsonData) {
+		　　　　　　return jsonData.map(v => filterVal.map(j => v[j]))
+		　　　　},
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/startProcurement';
+</style>

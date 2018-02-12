@@ -1,0 +1,524 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/fastShipping2"}'>快速出货</router-link>
+            </li>
+            <li class="menuIndex">
+                <router-link :to='{path:"/indentManagement"}'>订单管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/sellerSettlement"}'>客户结算</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/customerManagement"}'>客户管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/statisticalStatement"}'>销售统计</router-link>
+            </li>
+        </ul>
+       <div class="Picking">
+            <div style="height: 20px;">
+                <router-link :to='{path:"/indentManagement"}' class="comeBack right">返回</router-link>
+            </div>
+           <el-col :span="12" class="isLeft">
+               <p class="title">待配货清单</p>
+               <el-table
+                   ref="multipleTable"
+                   :data="tableData3"
+                   @selection-change="handleSelectionChange"
+                   height="400"
+                   style="width: 100%">
+                   <el-table-column
+                       type="selection"
+                       width="55">
+                   </el-table-column>
+                   <el-table-column
+                       label="主图/货号">
+                       <template scope="scope">
+                           <div class="flex2">
+                               <img src="../image/111.png" alt=""  class="tableImg">
+                               <p>MD110</p>
+                           </div>
+                       </template>
+                   </el-table-column>
+                   <el-table-column
+                       prop="color"
+                       label="颜色">
+                   </el-table-column>
+                   <el-table-column
+                       prop="size"
+                       label="尺码">
+                   </el-table-column>
+                   <el-table-column
+                       prop="unitPrice"
+                       label="单价">
+                   </el-table-column>
+                   <el-table-column
+                       prop="unPackedNum"
+                       label="待配货数">
+                   </el-table-column>
+                   <el-table-column
+                       prop=""
+                       label="配货数量">
+                       <template scope="scope">
+                           <el-input></el-input>
+                       </template>
+                   </el-table-column>
+               </el-table>
+               <div class="flex2 leftButton">
+                   <el-button class="buttonColor" @click="batchAddPackageList">加入包裹清单</el-button>
+                   <el-button @click="packedFinished"  class="buttonColor">完成打包</el-button >
+               </div>
+           </el-col>
+           <el-col :span="12" class="isLeft">
+               <div class="title flex">
+               <ul>
+                   <li>
+                       <img src="../image/parcel03.png" alt="" class="change3">
+                       <a href="javascript:void(0);" v-for="(obj,index) in packageList" @click="tabs(index)"  :class="{'change2':index === clickIndex}" >{{obj.name}}</a>
+                   </li>
+               </ul>
+
+               </div>
+               <el-table
+                   ref="multipleTable"
+                   :data="tableData4"
+                   height="400"
+                   @selection-change="handleSelectionChange2"
+                   style="width: 100%">
+                   <el-table-column
+                       type="selection"
+                       width="55">
+                   </el-table-column>
+                   <el-table-column
+                       label="主图/货号">
+                       <template scope="scope">
+                           <div class="flex2">
+                               <img src="../image/111.png" alt=""  class="tableImg">
+                               <p>MG110</p>
+                           </div>
+                       </template>
+                   </el-table-column>
+                   <el-table-column
+                       prop="color"
+                       label="颜色">
+                   </el-table-column>
+                   <el-table-column
+                       prop="size"
+                       label="尺码">
+                   </el-table-column>
+                   <el-table-column
+                       prop="unitPrice"
+                       label="单价">
+                   </el-table-column>
+                   <el-table-column
+                       prop="orderNum"
+                       label="配货数量">
+                   </el-table-column>
+                   <el-table-column
+                       prop="orderNum"
+                       label="移除数量">
+                       <template scope="scope">
+                           <el-input></el-input>
+                       </template>
+                   </el-table-column>
+               </el-table>
+               <div class="flex2 leftButton">
+                   <el-button class="buttonColor" @click="batchMoveOutOfPackage" :disabled="true">移出包裹</el-button>
+                   <el-button class="buttonColor" @click="delPackage" :disabled="true">删除包裹</el-button>
+                   <el-button class="buttonColor" @click="dialogErweuma = true">打印二维码</el-button>
+               </div>
+           </el-col>
+       </div>
+        <el-dialog
+            title="选择包裹"
+            :visible.sync="dialogVisible"
+            size="tiny">
+            <div class="chosePackage radioGreen">
+                <el-radio class="radio" v-model="radio" :label="list.list" v-for="list in packageList2">{{list.name}}</el-radio>
+            </div>
+            <span slot="footer" class="dialog-footer flex2">
+                <a href="javascript:void(0)" class="buttonColor" @click="batchAddToList">确 定</a>
+                <a href="javascript:void(0)" class="buttonColor2" @click="dialogVisible = false">取 消</a>
+            </span>
+        </el-dialog>
+        <el-dialog
+            title="打印二维码"
+            :visible.sync="dialogErweuma"
+            size="tiny">
+            <div class="flex2" style="margin-bottom: 20px">
+                <div>
+                    <img src="../image/erweima1.png" alt="">
+                </div>
+                <div style="margin-left: 15px">
+                    打印数量：<el-input v-model="num6" style="width: 60px;" :min="1"></el-input>
+                </div>
+            </div>
+            <span slot="footer" class="dialog-footer flex2">
+                        <a href="javascript:void(0)" @click="printQRcode" class="buttonColor">确 定</a>
+                        <a href="javascript:void(0)" @click="dialogErweuma = false" class="buttonColor2">取 消</a>
+                      </span>
+        </el-dialog>
+    </div>
+</template>
+<script>
+    import headTop from '../components/headTop'
+    import {queryStallOrderDetail,batchAddToPackageList,queryPackageInfo,deletePackageAndPackedProduct,moveOutPackage,endOfPacked} from '@/api/getData'
+    import {getStore} from  '../config/mUtils'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                dialogErweuma:false,
+                roleForm: {
+                    userId: '',
+                    roleId: '',
+                    compId:''
+                },
+                clickIndex:0,
+                tableData4:[],
+                orderId:'',
+                status:0,
+                orderType:0,
+                multipleSelection:[],
+                multipleSelection2:[],
+                packageId:'',
+                busiCompId:'',
+                dialogVisible:false,
+                packageList:[],
+                packageList2:[],
+                radio:1,
+                tableData3:[],
+                busiName:'',
+                orderTime:'',
+                radio:'',
+            }
+        },
+        mounted(){
+            var userInfo=getStore("user_info_user");
+            var vjson = JSON.parse(userInfo);
+            this.roleForm.userId=vjson.id;
+            this.roleForm.compId=vjson.curCompany.id;
+
+            this.orderId = this.$route.query.orderId;
+            this.busiCompId = this.$route.query.busiCompId;
+            this.status = this.$route.query.status;
+            this.orderType = this.$route.query.orderType;
+            this.busiName = this.$route.query.busiName;
+            this.orderTime = this.$route.query.orderTime;
+            this.initListData();//查询未配货清单
+            this.queryPackage();//查询该订单包裹
+        },
+        methods: {
+            //查询该订单包裹
+            async queryPackage(){
+                this.packageList = [];
+                this.packageList2 = [];
+                let param = {
+                    "orderId":this.orderId,
+                    "isFinished":false
+                };
+                const res = await queryPackageInfo(param);
+                if(res.isSuccess){
+                    let para = {
+                        list:'-1',
+                        name:'新建包裹'
+                    };
+                    this.packageList2.push(para);
+
+                    let table = res.result.data;
+                    if(this.containNPacked(table)){
+                        for(var i = 0 ;i<table.length;i++){
+                            if(table[i]=='-1'){
+                                continue;
+                            }
+                            let pa = {
+                                list:table[i],
+                                name:'包裹'+i
+                            };
+                            this.packageList.push(pa);
+                            this.packageList2.push(pa);
+                        }
+                    }else{
+                        for(var i = 0 ;i<table.length;i++){
+                            let pa = {
+                                list:table[i],
+                                name:'包裹'+(i+1)
+                            };
+                            this.packageList.push(pa);
+                            this.packageList2.push(pa);
+                        }
+                    }
+                }
+            },
+            containNPacked(table){
+                for(var i = 0 ;i<table.length;i++){
+                    if(table[i]=='-1'){
+                        return true;
+                    }
+                }
+                return false;
+            },
+            //多选响应
+            handleSelectionChange: function(val){
+                this.multipleSelection = val;
+            },
+            handleSelectionChange2:function(val){
+                this.multipleSelection2 = val;
+            },
+            //添加到包裹清单
+            batchAddToList(){
+                var array = [];
+                this.multipleSelection.forEach((item) => {
+                    array.push(item.orderDetailId);
+                })
+                if(array.length <1){
+                    this.$message({
+                        type: 'error',
+                        message: '请先勾选要添加的行！'
+                    });
+                    return;
+                }
+                //
+                this.batchAdd(array);
+            },
+
+            //添加包裹清单
+            batchAddPackageList(){
+                if(this.multipleSelection.length==0){
+                    this.$message({
+                        duration:this.GLOBAL.MESSAGE_DISSMISS_TIME_MID,
+                        type:'error',
+                        message:'当前没有选中要打包的商品'
+                    });
+                    return;
+                }
+              this.dialogVisible = true;
+            },
+
+            async batchAdd(array){
+                if(this.radio==undefined||this.radio==''){
+                    this.$message({
+                        duration:this.GLOBAL.MESSAGE_DISSMISS_TIME_MID,
+                        type:'error',
+                        message:'当前没有选中包裹或者新建包裹'
+                    });
+                    return;
+                }
+                let param = {
+                    "orderId":this.orderId,
+                    "packageId":this.radio,
+                    "otherSideCompId":this.busiCompId,
+                    "companyId":this.roleForm.compId,
+                    "orderDetailIds":array
+                };
+                const res = await batchAddToPackageList(param);
+                if(res.isSuccess){
+                    this.$message({
+                        duration:this.GLOBAL.MESSAGE_DISSMISS_TIME_MID,
+                        type:'info',
+                        message:res.result.msg
+                    });
+                    this.dialogVisible = false;
+                }else{
+                    this.$message({
+                        duration:this.GLOBAL.MESSAGE_DISSMISS_TIME_MID,
+                        type:'error',
+                        message:res.errorMsg
+                    });
+                    this.packageId = '';
+                    return ;
+                }
+                this.packageId = '';
+                this.queryPackage();
+                this.initListData();//查询未配货清单
+            },
+
+            //加载未配货清单
+            initListData(){
+                this.tableData3 = [];
+                let param = {
+                    "companyId":this.roleForm.compId,
+                    "orderId":this.orderId,
+                    "status":this.status,
+                    "orderType":this.orderType,
+                    "packageId":"-1",
+                    "pageIndex":1,
+                    "pageSize":1000
+                };
+                this.loadData(param);
+            },
+            //加载数据
+            async loadData(param){
+                const res = await queryStallOrderDetail(param);
+                if(res.isSuccess){
+                    let table = res.result.data.results;
+                    for(let i = 0 ;i < table.length;i++){
+                        let details = table[i].details;
+                        for(let j = 0 ;j < details.length;j++){
+                            this.tableData3.push(details[j]);
+                        }
+                    }
+                }else{
+                    this.$message({
+                        duration:this.GLOBAL.MESSAGE_DISSMISS_TIME_MID,
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            batchMoveOutOfPackage(){
+                var array = [];
+                this.multipleSelection2.forEach((item) => {
+                    array.push(item.orderDetailId);
+                })
+                if(array.length <1){
+                    this.$message({
+                        type: 'error',
+                        message: '请先勾选要添加的行！'
+                    });
+                    return;
+                }
+                //移除包裹
+                this.$confirm('是否确定将当前选择的商品移除出包裹？', '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+                        this.moveOutOfPackage(array);
+                    }).catch(() => {
+                    });
+            },
+            async moveOutOfPackage(array){
+                let param = {
+                    "companyId":this.roleForm.compId,
+                    "orderId":this.orderId,
+                    "packageId":this.packageId,
+                    "orderDetailIds":array
+                };
+                const res = await moveOutPackage(param);
+                if(res.isSuccess){
+                    this.$message({
+                        duration:this.GLOBAL.MESSAGE_DISSMISS_TIME_MID,
+                        type: 'info',
+                        message: res.result.msg
+                    });
+                    this.queryPackage();//刷新包裹
+                    this.tableData4 = [];
+                    this.initListData();//查询未配货清单
+
+                }
+            },
+            //删除包裹
+            async delPackage(){
+                if(this.packageId==undefined||this.packageId==''){
+                    this.$message({
+                        duration:this.GLOBAL.MESSAGE_DISSMISS_TIME_MID,
+                        type: 'error',
+                        message: '当前没有选中任何包裹，请先选择要删除的包裹'
+                    });
+                }else{
+                    this.$confirm('是否确定删除该包裹？', '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+                        this.delete();
+                    }).catch(() => {
+                    });
+                }
+
+            },
+            async delete(){
+                let param = {
+                    "companyId":this.roleForm.compId,
+                    "packageId":this.packageId,
+                    "orderId":this.orderId
+                };
+                const res = await deletePackageAndPackedProduct(param);
+                if(res.isSuccess){
+                    this.$message({
+                        duration:this.GLOBAL.MESSAGE_DISSMISS_TIME_MID,
+                        type: 'info',
+                        message: res.result.msg
+                    });
+                }else{
+                    this.$message({
+                        duration:this.GLOBAL.MESSAGE_DISSMISS_TIME_MID,
+                        type: 'info',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            //完成打包
+            async packedFinished(){
+                if(this.packageList.length==0){
+                    this.$message({
+                        duration:this.GLOBAL.MESSAGE_DISSMISS_TIME_MID,
+                        type:'info',
+                        message:'当前没有可打包的包裹'
+                    });
+                    return;
+                }
+                this.endPacked();
+            },
+            //结束本次打包
+            async endPacked(){
+                let param = {
+                    "orderId":this.orderId
+                };
+                const res = await  endOfPacked(param);
+                if(res.isSuccess){
+                    this.status = res.result.status;
+                    this.$router.push({path:"/indentManagementPortionPicking",query:{orderId:this.orderId,busiCompId:this.busiCompId,status:this.status,busiName:this.busiName,orderType:this.orderType,orderTime:this.orderTime}});
+                }else{
+                    this.$message({
+                        duration:this.GLOBAL.MESSAGE_DISSMISS_TIME_MID,
+                        type:'error',
+                        message:res.errorMsg
+                    });
+                }
+            },
+            async tabs(index){
+                this.tableData4 = [];
+                this.clickIndex = index;
+                this.packageId = this.packageList[index].list;
+
+                let param = {
+                    "companyId":this.roleForm.compId,
+                    "orderId":this.orderId,
+                    "status":this.status,
+                    "orderType":this.orderType,
+                    "packageId":this.packageId,
+                    "pageIndex":1,
+                    "pageSize":1000
+                };
+                const res = await queryStallOrderDetail(param);
+                if(res.isSuccess){
+                    let table = res.result.data.results;
+                    for(let i = 0 ;i < table.length;i++){
+                        let details = table[i].details;
+                        for(let j = 0 ;j < details.length;j++){
+                            this.tableData4.push(details[j]);
+                        }
+                    }
+                }else{
+                    this.$message({
+                        duration:this.GLOBAL.MESSAGE_DISSMISS_TIME_MID,
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+        }
+    }
+</script>
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import "../style/indentManagement";
+</style>

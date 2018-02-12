@@ -1,0 +1,199 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('bindWebstoreForPlatform')">
+                <router-link :to='{path:"/bindWebstoreForPlatform"}'>绑定店铺管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('webStoreOrderForPlatform')">
+                <router-link :to='{path:"/webStoreOrderForPlatform"}'>网店订单</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('orderForPlatform')">
+                <router-link :to='{path:"/orderForPlatform"}'>采购订单</router-link>
+            </li>
+            <li class="menuIndex3" v-if="getMenuAuthFun('productManagement')">
+                <router-link :to='{path:"/productManagement"}'>商品管理</router-link>
+            </li>
+        </ul>
+        <div class="productManagement">
+            <div>
+                <div class="left productManagementTop">
+                    <el-input
+                        size="small"
+                        placeholder="公司名称搜索"
+                        icon="search"
+                        v-model="compSearch"
+                        :on-icon-click="handleIconClickStall">
+                    </el-input>
+                </div>
+                <div class="productInfoTable">
+                    <el-table
+                        ref="multipleTable"
+                        :data="productDetailVO"
+                        tooltip-effect="dark"
+                        style="width: 100%"
+                        >
+                        <el-table-column
+                            type="selection"
+                            width="55">
+                        </el-table-column>
+                        <el-table-column
+                            prop="imgUrl_main"
+                            label="商品主图">
+                        </el-table-column>
+                        <el-table-column
+                            prop="compName"
+                            label="公司名称"
+                        >
+                        </el-table-column>
+                        <el-table-column
+                            prop="productCode"
+                            label="货号"
+                            >
+                        </el-table-column>
+                        <el-table-column
+                            prop="productName"
+                            label="商品名称"
+                            show-overflow-tooltip>
+                        </el-table-column>
+                        <el-table-column
+                            prop="color"
+                            label="颜色"
+                            show-overflow-tooltip>
+                        </el-table-column>
+                        <el-table-column
+                            prop="size"
+                            label="尺寸"
+                            show-overflow-tooltip>
+                        </el-table-column>
+                        <el-table-column
+                            prop="supplier"
+                            label="供货商"
+                        >
+                        </el-table-column>
+                        <el-table-column
+                            prop="stockNum"
+                            label="库存数"
+                            show-overflow-tooltip>
+                        </el-table-column>
+                        <el-table-column
+                            prop="warehouseSeat"
+                            label="仓位"
+                            show-overflow-tooltip>
+                        </el-table-column>
+                    </el-table>
+                </div>
+
+                <el-pagination
+                    small
+                    class="right"
+                    style="margin-top: 20px;"
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :current-page="currentPage"
+                    :page-sizes="[100, 200, 300, 400]"
+                    :page-size="100"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    :total="400">
+                </el-pagination>
+                <a href="javascript:void(0)" class="export_excle">导出excel</a>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {queryProductDetailInfo,querySalesNum} from '@/api/getData'
+    import {mapActions, mapState} from 'vuex'
+    import {formatDate} from '../utils/date.js'
+    import {getMenuAuth} from  '../utils/AuthMenu.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                productDetailVO:[],
+                radio:'1',
+                //档口名称搜索
+                compSearch:'',
+                //列表数据
+                tableData3:[],
+                pageSize:8,
+                //默认高亮行数据id
+                highlightId: -1,
+
+                //当前页码
+                currentPage: 1,
+
+                //查询的页码
+                start: 1,
+
+                //默认数据总数
+                totalCount: 0,
+            }
+        },
+        mounted(){
+            let param = {
+                "stallName":'',
+                "pageIndex":this.currentPage,
+                "pageSize":this.pageSize
+            };
+            this.loadData(param);
+        },
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            handleIconClickStall(){
+                let param = {
+                    "stallName":this.compSearch,
+                    "pageIndex":this.currentPage,
+                    "pageSize":this.pageSize
+                };
+                this.loadData(param);
+            },
+            async loadData(param){
+                const res = await queryProductDetailInfo(param);
+                let array=[];
+                if(res.isSuccess){
+                    this.totalCount = res.result.totalCount;
+//                    for(let i = 0 ; i < res.result.data.length;i++){
+//                        let orderDetailVO = {
+//                            "companyId":res.result.data[i].compId,
+//                            "productId":res.result.data[i].productId,
+//                            "productVariantId":res.result.data[i].productVariantId
+//                        };
+//                        array.push(orderDetailVO);
+//                    }
+//                    const result = await querySalesNum({orderDetailVO:array});
+//                    if(result.isSuccess){
+//                        let sales = result.result.data;
+//                        for(let j = 0 ; j < res.result.data.length;j++){
+//                            res.result.data[j].salesNum = sales[j];
+//                        }
+//                        this.productDetailVO = res.result.data;
+//                    }
+                    this.productDetailVO = res.result.data;
+               }
+            },
+            handleCurrentChange:function(val){
+                this.currentPage = val;
+                let param = {
+                    "stallName":this.compSearch,
+                    "pageIndex":this.currentPage,
+                    "pageSize":this.pageSize
+                };
+                this.loadData(param);
+            }
+        },
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/productManagement';
+</style>

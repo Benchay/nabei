@@ -1,0 +1,44 @@
+.rechangeConfig{
+    margin:0 30px;
+    background: #fff;
+    padding: 20px 40px 0 40px;
+    height:100%;
+    .shopList{
+        margin-top: 20px;
+        img{
+            width: 40px;
+            height: 40px;
+        }
+        .trefresh>img {
+            width: 25px;
+            height: 25px;
+        }
+        .delete{
+            margin-top: 20px;
+            font-size: 12px;
+        }
+    }
+}
+.avatar-uploader .el-upload {
+    border: 1px dashed #d9d9d9;
+    border-radius: 6px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+  .avatar-uploader .el-upload:hover {
+    border-color: #20a0ff;
+  }
+  .avatar-uploader-icon {
+    font-size: 28px;
+    color: #8c939d;
+    width: 120px;
+    height: 120px;
+    line-height: 120px;
+    text-align: center;
+  }
+  .avatar {
+    width: 120px;
+    height: 120px;
+    display: block;
+  }

@@ -1,0 +1,435 @@
+<template>
+    <div class="fillcontain">
+        <div class="createCompany">
+            <div class="createHead flex2">
+                <img src="../image/create.png" alt="">
+                <p>创建公司</p>
+            </div>
+            <div class="createForm flex2">
+                <el-form :model="form" :rules="createCompanyRule" ref="refCreateForm">
+                    <div class="form">
+                        <el-form-item prop="name" label="公司名称：" :label-width="formLabelWidth" style="width: 400px;" >
+                            <el-input v-model="form.name" auto-complete="off" class="formInput"></el-input>
+                            <!--<div style="color: gray;width: 350px;">(公司名称应不超过30个英文字符或15个中文字符)</div>-->
+                        </el-form-item>
+                        <el-form-item prop="serialNub" label="档口编码：" :label-width="formLabelWidth" style="width: 400px;" v-if="form.companyBindingId== GLOBAL.COMPANY_TYPE_STALL">
+                            <el-input v-model="form.serialNub" auto-complete="off"></el-input>
+                        </el-form-item>
+                        <!--<el-form-item prop="compCode" label="公司代码：" :label-width="formLabelWidth">
+                            <el-input v-model="form.compCode" auto-complete="off"></el-input>
+                        </el-form-item>-->
+                        <!--<el-form-item prop="companyBindingId" label=" 公司类型：" :label-width="formLabelWidth" >-->
+                            <!--<el-select v-model="form.companyBindingId"  class="formInput" placeholder="请选择公司类型" @change="myCompanyBindingIdBlur">-->
+                                <!--<el-option label="档口" value="1"></el-option>-->
+                                <!--<el-option label="卖家" value="2"></el-option>-->
+                                <!--<el-option label="管理后台" value="3"></el-option>-->
+                            <!--</el-select>-->
+                        <!--</el-form-item>-->
+                        <el-form-item label="公司LOGO：" :label-width="formLabelWidth">
+                            <!--<el-upload
+                                class="upload-demo"
+                                action="https://jsonplaceholder.typicode.com/posts/"
+                                :on-preview="handlePreview"
+                                :on-remove="handleRemove"
+                                :file-list="fileList">
+                                <el-button size="small" type="primary">上传LOGO</el-button>
+                            </el-upload>-->
+                            <el-upload
+                        	name="uploadFile"
+                            class="upload-demo"
+                            action="/cws/uploadFile"
+                            :on-success="handleAvatarSuccess"
+							:before-upload="beforeAvatarUpload"
+                            :show-file-list="false">
+                            <img v-if="dialogImgVisible" :src="imgUrl_main" class="avatar" width="100" height="100">
+							  <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+                            <el-button size="small" type="primary">上传LOGO</el-button>
+                        </el-upload>
+                        </el-form-item>
+                        <el-form-item label="公司位置：" :label-width="formLabelWidth" style="max-width: 650px;" >
+                            <!--<el-input v-model="form.location" auto-complete="off"  class="formInput"></el-input>-->
+                            <template>
+	                        	<v-distpicker :placeholders="addressInfo" :province="address.province" :city="address.city" :area="address.district" @selected="onAddressSelected"></v-distpicker>
+	                        	<el-input v-model="address.addition" style="width:350px;margin-top: 10px;" auto-complete="off" placeholder="请输入详细地址"></el-input>
+	                        </template>
+                        </el-form-item>
+                        <el-form-item prop="compScale" label="公司规模：" :label-width="formLabelWidth">
+                            <el-select v-model="form.compScale" placeholder="请选择公司规模"  @change="myCompScaleBlur"  class="formInput">
+                                <el-option label="20人以下" value="1"></el-option>
+                                <el-option label="20-50人" value="2"></el-option>
+                                <el-option label="50-200人" value="3"></el-option>
+                                <el-option label="200-500人" value="4"></el-option>
+                                <el-option label="500-1000人" value="5"></el-option>
+                                <el-option label="1000人以上" value="6"></el-option>
+                            </el-select>
+                        </el-form-item>
+                    </div>
+                    <div class="createFoot flex2">
+                        <a href="javascript:void(0)" class="confirm flex2" @click="createCompany('refCreateForm')">提 交</a>
+                    </div>
+                    <div class="createFoot1 flex2">
+                        <router-link :to='{path:"/guidance"}' class="back flex2">返回上一页</router-link>
+                    </div>
+                </el-form>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+	import VDistpicker from 'v-distpicker'
+    import {updateLoginInfo,queryCompany,createCompanyFun,requestUserCompany,initDefaultWareHouse,initStall,validateStallCode} from '@/api/getData'
+    import {mapActions, mapState} from 'vuex'
+    import {setStore, getStore} from  '../config/mUtils'
+    import {baseImgPath} from '../config/env'
+    import {isJSON,isNullObject,getCompanyType} from  '../utils/common'
+
+    export default {
+        components: {
+        	VDistpicker,
+        },
+        filters: {
+            formatScaleValue: function (value) {
+                //return value;
+                var scale = value;
+                if (scale == '1') {
+                    return "20人以下";
+                } else if (scale == '2') {
+                    return "20-50人";
+                } else if (scale == '3') {
+                    return "50-200人";
+                } else if (scale == '4') {
+                    return "200-500人";
+                } else if (scale == '5') {
+                    return "500-1000人";
+                } else if (scale == '6') {
+                    return "1000人以上";
+                }
+            },
+        },
+
+        data() {
+            var validateCompName = (rule, value, cb) => {
+                var pattern = /^\w+$/
+                var pattern1 = /^[\u4e00-\u9fa5]+$/
+                if (value === '') {
+                    cb(new Error('公司名称不能为空'))
+                } else if (pattern.test(value)&&value.length > 30) {
+                    cb(new Error('公司名称不能超过30个英文字符'))
+                } else if (pattern1.test(value)&&value.length > 15) {
+                    cb(new Error('公司名称不能超过15个中文字符'))
+                } else {
+                    cb()
+                }
+            }
+			var validateSerialNub = async (rule, value, cb) => {
+        		let param = {
+            		stallCode:value,
+            		pageIndex:1,
+            		pageSize:10
+            	}
+        		var res = await validateStallCode(param);
+        		console.log(res)
+        		if(res.isSuccess){
+            		this.isStallCodeAvailable = res.result.isAvailable;
+                }
+                var pattern = /^[A-Za-z0-9]{3,20}/;
+                if (!pattern.test(value)) {
+                    cb(new Error('3到20位数据或者字母'))
+                } else if(this.isStallCodeAvailable == false){
+                	cb(new Error('该档口编码已被创建，请使用其他的档口编码'))
+                }else{
+                    cb()
+                }
+            }
+            var validateCompCode = (rule, value, cb) => {
+                var pattern = /^[A-Za-z0-9]{3,20}/;
+                if (value === '') {
+                    cb(new Error('公司代码不能为空'))
+                } else if (!pattern.test(value)) {
+                    cb(new Error('3到20位数据或者字母'))
+                } else {
+                    cb()
+                }
+            }
+            var validateCompScale = (rule, value, cb) => {
+                if (value === '') {
+                    cb(new Error('请选择公司规模'))
+                } else {
+                    cb()
+                }
+            }
+            var validateCompanyBindingId = (rule, value, cb) => {
+
+                if (value == '') {
+                    cb(new Error('请选择公司类型'))
+                } else {
+                    console.log(value);
+                    cb()
+                }
+            }
+            return {
+            	addressInfo: {
+	                province: '--- 请选择省 ---',
+	                city: '--- 请选择市 ---',
+	                area: '--- 请选择区 ---'
+	            },
+                createCompanyRule: {
+                    name: [
+                        {validator: validateCompName, trigger: 'blur'}
+                    ],
+                    serialNub: [
+                    	{required:true, message:'档口编码不能为空', trigger:'blur'},
+                        {validator: validateSerialNub, trigger: 'blur'}
+                    ],
+                    compScale: [
+                        {validator: validateCompScale, trigger: 'blur'}
+                    ],
+                    companyBindingId:[
+                        {validator:validateCompanyBindingId,trigger: 'blur'}
+                    ],
+                },
+                searchCompany: '',
+                radio: '1',
+                selectCompanyCount: 0,
+                searchBlock: false,
+                searchTableData: [],
+                roleForm: {
+                    loginname: '',
+                    userId: '',
+                    roleId: '',
+                    compId: '',
+                    userName: '',
+                    registerTime: '',
+                    nickName: ''
+                },
+                address:{
+                	province:'',
+                	city:'',
+                	district:'',
+                	addition:''
+                },
+                form: {
+                    name: '',
+                    region: '',
+                    location: '',
+                    compCode: '',
+                    compScale: '',
+                    delivery: false,
+                    logoUrl: '',
+                    companyBindingId:'',
+                    serialNub:''
+                },
+                formLabelWidth: '120px',
+                fileList: [],
+                identity:'',
+                imgUrl_main:'',
+                dialogImgVisible:'',
+                timeout:''
+            }
+        },
+        mounted(){
+            this.identity = getCompanyType(getStore("curCompany"));
+            var userInfo = getStore("user_info_user");
+            var vjson = JSON.parse(userInfo);
+            if(this.identity == -1){
+            	this.identity = vjson.type;
+            }
+            this.roleForm.userId = vjson.id;
+            this.roleForm.userName = vjson.userName;
+            this.form.companyBindingId=vjson.type;
+            var currentComp = getStore("curCompany");
+            if (isJSON(currentComp)) {
+                var vcom = JSON.parse(currentComp);
+                this.roleForm.compId = vcom.id;
+            }
+            this.roleForm.registerTime = vjson.createTime;
+
+        },
+        destroyed(){
+        	window.clearTimeout(this.timeout);
+        },
+        methods: {
+            cancel(){
+                this.$router.push('/guidance');
+            },
+            myCompanyBindingIdBlur(){
+                this.$refs.refCreateForm.validateField('companyBindingId');
+            },
+            myCompScaleBlur(){
+
+                this.$refs.refCreateForm.validateField('compScale');
+            },
+            formatScale: function (row, column) {
+                var scale = row.compScale;
+                if (scale == '1') {
+                    return "20人以下";
+                } else if (scale == '2') {
+                    return "20-50人";
+                } else if (scale == '3') {
+                    return "50-200人";
+                } else if (scale == '4') {
+                    return "200-500人";
+                } else if (scale == '5') {
+                    return "500-1000人";
+                } else if (scale == '6') {
+                    return "1000人以上";
+                }
+            },
+            handleRemove(file, fileList) {
+                console.log(file, fileList);
+            },
+            handlePreview(file) {
+                console.log(file);
+            },
+            tableRowClassName(row, index) {
+                /*
+                 if (index === 1) {
+                 return 'info-row';
+                 } else if (index === 3) {
+                 return 'positive-row';
+                 }
+                 return '';*/
+                if (row.operation) {
+                    return 'info-row'
+                } else {
+                    return ''
+                }
+            },
+			handleAvatarSuccess(res, file) {
+            	this.dialogImgVisible = true;
+            	this.imgUrl_main = baseImgPath+res.result;
+            	
+		    },
+		    beforeAvatarUpload(file) {
+		        const isJPG = file.type === 'image/jpeg';
+		        const isPNG = file.type === 'image/png';
+		        const isLt2M = file.size / 1024 / 1024 < 2;
+
+		        if (!isJPG && !isPNG) {
+		          this.$message.error('上传头像图片只能是 JPG或PNG 格式!');
+		        }
+		        if (!isLt2M) {
+		          this.$message.error('上传头像图片大小不能超过 2MB!');
+		        }
+		        return (isJPG||isPNG) && isLt2M;
+		    },
+		    //地址选择事件
+            onAddressSelected(data){
+        		this.form.location = data.province.value + '/' + data.city.value + '/' + data.area.value;
+        		//alert(data.province.value + ' | ' + data.city.value + ' | ' + data.area.value)
+        		//console.log(data)
+        	},
+            //
+            async createCompany(formName) {
+
+                this.$refs[formName].validate(async (valid) => {
+                    if (valid) {
+                    	if(this.form.location==undefined){
+                    		this.$message({
+                    			type:'error',
+                    			message:'请选择省市(区)'
+                    		})
+                    		return;
+                    	}
+                    	if(this.address.addition==undefined||/^\s*$/.test(this.address.addition)){
+                    		this.$message({
+                    			type:'error',
+                    			message:'请填写详细地址'
+                    		})
+                    		return;
+                    	}
+                        this.userId = this.roleForm.userId;
+                        let dataCompany = {
+                            'name': this.form.name,
+                            'ownerId': this.userId,
+                            'createUserId': this.userId,
+                            'location': this.form.location,
+                            'compCode': this.form.compCode,
+                            'compScale': this.form.compScale,
+                            'companyBindingId':this.form.companyBindingId,
+                            'type':this.form.companyBindingId
+                        }
+                        if(this.form.companyBindingId== this.GLOBAL.COMPANY_TYPE_STALL ){
+                            if(this.form.serialNub==''){
+                                this.$message({
+                                    type: 'error',
+                                    message: '请输入档口编码'
+                                });
+                                return;
+                            }
+                        }
+                        const res = await createCompanyFun(dataCompany);
+                        if (res.isSuccess == true) {
+                            var msgtitle='创建成功';
+                            if(this.form.companyBindingId== this.GLOBAL.COMPANY_TYPE_STALL ){
+                                this.identity=1;
+                                const res2= await initDefaultWareHouse({"companyId":res.result.id,"name":"默认仓库","memo":"默认仓库"});
+                                if(res2.isSuccess == true){
+                                    msgtitle='创建成功';
+                                }
+                                let stallpara = {
+                                    "companyId":res.result.id,
+                                    'name': this.form.name,
+                                    'serialNub': this.form.serialNub,
+                                    'createUserId': this.userId,
+                                }
+                                const res3=await initStall(stallpara);
+                                if(res3.isSuccess == true){
+                                    msgtitle='创建成功';
+                                }
+                            }else{
+                                this.identity=2;
+                                msgtitle='创建成功';
+                            }
+                            let  param = {
+                                "userId":this.roleForm.userId,
+                                "userName": this.roleForm.userName,
+                                "compId": res.result.id,
+                                "compName":this.form.name
+                            };
+                            const res4=await updateLoginInfo(param);
+                            if (res4.isSuccess == true) {
+                                var currentCompt={"id":res.result.id,"ownerId":this.roleForm.userId};
+                                setStore("curCompany",currentCompt);
+                                //this.UserInfoData();
+                            }
+                            this.$message({
+                                duration:this.GLOBAL.MESSAGE_DISSMISS_TIME_MID,
+                                type: 'success',
+                                message: msgtitle,
+                                showClose:true
+                            });
+                            this.dialogFormVisible = false;
+                            if(this.identity==1){
+                                this.$router.push({path: '/homeStall',query:{userId:res.result.userId}});
+                            }else if(this.identity==2){
+                                this.$router.push({path: '/homeSeller',query:{userId:res.result.userId}});
+                            }
+	                        else if(this.identity==3){
+	                            this.$router.push({path: '/manage',query:{userId:this.roleForm.userId}})
+	                        }
+	                        this.timeout = setTimeout(()=>{
+	                        	location.reload()
+	                        },300);
+                        } else {
+                            this.$message({
+                                type: 'error',
+                                message: res.errorMsg
+                            });
+                        }
+                    } else {
+                        console.log("error=====")
+                    }
+                });
+            },
+        }
+
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/createCompany';
+</style>

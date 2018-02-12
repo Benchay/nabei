@@ -1,0 +1,627 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('fastShipping2')">
+                <router-link :to='{path:"/fastShipping2"}'>快速出货</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('indentManagement')">
+                <router-link :to='{path:"/indentManagement"}'>订单管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('takeGoods')">
+                <router-link :to='{path:"/takeGoods"}'>取货码</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('sellerSettlement')">
+                <router-link :to='{path:"/sellerSettlement"}'>客户结算</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('SettlementRecordsStall')">
+                <router-link :to='{path:"/SettlementRecordsStall"}'>结算单</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('customerManagement')">
+                <router-link :to='{path:"/customerManagement"}'>客户管理</router-link>
+            </li>
+            <li class="menuIndex" v-if="getMenuAuthFun('statisticalStatement')">
+                <router-link :to='{path:"/statisticalStatement"}'>销售统计</router-link>
+            </li>
+        </ul>
+        <div class="commodityStatistics">
+            <!--1225-修改-->
+            <div class="firstRadio">
+                <el-radio-group v-model="radio3" class="radioGreen" size="small" @change="choseLabel">
+                    <el-radio-button label="1">每日统计（按商品）</el-radio-button>
+                    <el-radio-button label="2">每日统计（按客户）</el-radio-button>
+                </el-radio-group>
+                <!--@change="handleIconClickDate"-->
+            </div>
+            <div v-show="radio3 == '1'">
+              <div class="marketTop">
+                  <!--<el-date-picker-->
+                      <!--size="small"-->
+                      <!--v-model="startDate"-->
+                      <!--type="date"-->
+                      <!--@change="handleIconClickDate"-->
+                      <!--format="yyyy-MM-dd"-->
+                      <!--placeholder="选择日期"-->
+                  <!--&gt;-->
+                  <!--</el-date-picker>-->
+                      <el-date-picker
+                          size="small"
+                          v-model="filters.date.startDate"
+                          type="datetime"
+                          placeholder="选择开始日期"
+                          :picker-options="startDateBefore"
+                          @change="handleIconClick"
+                      >
+                      </el-date-picker>
+                      -
+                      <el-date-picker
+                          size="small"
+                          v-model="filters.date.endDate"
+                          type="datetime"
+                          placeholder="选择截止日期"
+                          :picker-options="startDateAfter"
+                          @change="handleIconClick"
+                      >
+                      </el-date-picker>
+                  <el-input  v-model="itemNo" size="small" style="width: 200px;"  placeholder="货号搜索"  @change="remoteMethod"></el-input>
+              </div>
+              <div class="marketContent">
+                  <div>
+                      <span>商品总销量：{{orderNub}}</span>
+                  </div>
+                  <div>
+                      <span>已出货总数量：{{allocateProductNum}}</span>
+                  </div>
+                  <div>
+                      <span>待出货总数量：{{orderNub-allocateProductNum}}</span>
+                  </div>
+              </div>
+              <div class="marketTable">
+                  <p class="title">当日商品销售榜</p>
+                  <el-table
+                      :data="tableData"
+                      style="width: 100%">
+                      <el-table-column
+                          width="80"
+                          label="排名">
+                          <template scope="scope">
+                              <p>{{(scope.$index+1)+(currentPage-1)*pagesize}}</p>
+                          </template>
+                      </el-table-column>
+                      <el-table-column
+                          label="主图+商品名称"
+                          width="280">
+                          <template scope="scope">
+                             <div class="flex">
+                                 <img :src="scope.row.imgUrl_main" alt="">
+                                 <p>{{ scope.row.productName }}</p>
+                             </div>
+                          </template>
+                      </el-table-column>
+                      <el-table-column
+                          prop="productCode"
+                          label="货号">
+                      </el-table-column>
+                      <el-table-column
+                          label="颜色/尺码">
+                          <template scope="scope">
+                              <div v-for="item in scope.row.details">
+                                  <p>{{item.color}}/{{item.size}}</p>
+                              </div>
+                          </template>
+                      </el-table-column>
+                      <el-table-column
+                          prop=""
+                          label="已出货量">
+                          <template scope="scope">
+                              <div v-for="item in scope.row.details">
+                                  <p>{{item.allocateProductNum}}</p>
+                              </div>
+                          </template>
+                      </el-table-column>
+                      <el-table-column
+                          prop=""
+                          label="待出货数量">
+                          <template scope="scope">
+                              <div v-for="item in scope.row.details">
+                                  <p>{{item.orderNum-item.allocateProductNum }}</p>
+                              </div>
+                          </template>
+                      </el-table-column>
+                      <el-table-column
+                          prop="allocateProductNum"
+                          label="商品总销量">
+                          <template scope="scope">
+                             <p>{{scope.row.orderNub}}</p>
+                          </template>
+                      </el-table-column>
+                  </el-table>
+              </div>
+          </div>
+            <div v-show="radio3 == '2'">
+                <div class="marketTop">
+                    <!--<el-date-picker-->
+                        <!--size="small"-->
+                        <!--v-model="startDate"-->
+                        <!--type="date"-->
+                        <!--placeholder="选择日期"-->
+                    <!--&gt;-->
+                    <!--</el-date-picker>-->
+                    <el-date-picker
+                        size="small"
+                        v-model="filters.date.startDate"
+                        type="datetime"
+                        placeholder="选择开始日期"
+                        :picker-options="startDateBefore"
+                        @change="handleIconClick"
+                    >
+                    </el-date-picker>
+                    -
+                    <el-date-picker
+                        size="small"
+                        v-model="filters.date.endDate"
+                        type="datetime"
+                        placeholder="选择截止日期"
+                        :picker-options="startDateAfter"
+                        @change="handleIconClick"
+                    >
+                    </el-date-picker>
+                    <el-select
+                        size="small"
+                        v-model="otherSideCompanyName"
+                        filterable
+                        remote
+                        reserve-keyword
+                        style="width:260px"
+                        placeholder="请输入电商名称"
+                        :remote-method="remoteMethod2"
+                        :loading="loading"
+                        @change="handleIconClick">
+                        <el-option
+                            v-for="item in options4"
+                            :key="item.sellId"
+                            :label="item.sellName"
+                            :value="item.sellId">
+                        </el-option>
+                    </el-select>
+                    <!--<el-input v-model="itemNo" size="small" icon="search" placeholder="请输入客户名称" style="margin:0 10px;width: 200px;" :on-icon-click="handleIconClickCode"></el-input>-->
+                </div>
+                <div class="marketContent">
+                    <div>
+                        <span>采购总数量：{{orderNub2}}</span>
+                    </div>
+                    <div>
+                        <span>出货总数量：{{allocateProductNum2}}</span>
+                    </div>
+                    <div>
+                        <span>待出货总数量：{{orderNub2-allocateProductNum2}}</span>
+                    </div>
+                </div>
+                <div class="marketTable">
+                    <p class="title">每日客户进货榜</p>
+                    <el-table
+                        :data="tableData2"
+                        style="width: 100%">
+                        <el-table-column
+                            width="80"
+                            label="排名">
+                            <template scope="scope">
+                                <p>{{(scope.$index+1)+(currentPage2-1)*pagesize2}}</p>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            prop="companyName"
+                            label="客户信息"
+                            width="180">
+                        </el-table-column>
+                        <el-table-column
+                            prop="orderNub"
+                            label="总采购数">
+                        </el-table-column>
+                        <el-table-column
+                            prop="allocateProductNum"
+                            label="已配货数">
+                        </el-table-column>
+                        <el-table-column
+                            prop=""
+                            label="未配货数">
+                            <template scope="scope">
+                                <p>{{scope.row.orderNub - scope.row.allocateProductNum }}</p>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </div>
+            </div>
+            <el-pagination
+                small
+                class="right"
+                style="margin-top: 20px;"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :page-sizes="[10, 20, 30, 40,50]"
+                :current-page="currentPage2"
+                :page-size="pagesize"
+                layout="total, sizes,prev, pager, next, jumper"
+                :total="totalCount2">
+            </el-pagination>
+             <a href="javascript:void(0)" class="export_excle" @click="exportExcel">导出excel</a>
+            <div style="height: 210px;">
+                &nbsp;
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    import {getMenuAuth,haveMenuAuth} from  '../utils/AuthMenu.js'
+    import {queryOrderDetailSales,queryStallCustomer} from '@/api/getData'
+    import {userInfo} from  '../config/mUtils'
+    import {formatDate,timeZoneCovertDay} from '../utils/date.js'
+    import {export_json_to_excel} from '../vendor/Export2Excel.js'
+    const _XLSX = require('xlsx')
+    const X = typeof XLSX !== 'undefined' ? XLSX : _XLSX;
+
+    export default {
+        components: {
+        },
+        data() {
+            return {
+                filters:{
+                    date:{
+                        startDate:'',
+                        endDate:''
+                    }
+                },
+                startDateBefore:{
+                    disabledDate: (time) => {
+                        let beginDateVal = this.filters.date.endDate;
+                        if (beginDateVal) {
+                            return time.getTime() > beginDateVal;
+                        }
+                    }
+                },
+                startDateAfter:{
+                    disabledDate: (time) => {
+                        let beginDateVal = this.filters.date.startDate;
+                        if (beginDateVal) {
+                            return time.getTime() < beginDateVal;
+                        }
+                    }
+                },
+//                startDate: new Date(),
+                itemNo: '',
+                roleForm: {
+                    userId: '',
+                    roleId: '',
+                    compId: ''
+                },
+                radio3: '1',
+                value6: '',
+                tableData: [],
+                tableData2:[],
+                pagesize: 10,
+                pagesize2: 10,
+                //默认高亮行数据id
+                highlightId: -1,
+                //当前页码
+                currentPage: 1,
+                currentPage2: 1,
+                //查询的页码
+                start: 1,
+                //默认数据总数
+                totalCount: 0,
+                totalCount2: 0,
+                allocateProductNum: 0,
+                orderNub: 0,
+                orderNub2: 0,
+                allocateProductNum2: 0,
+                today:'',
+                tomorrow:'',
+                query:'',
+                loading: false,
+                str:'',
+                otherSideCompanyName:'',
+                options4:[]
+            }
+        },
+        watch:{
+            '$route':function (route) {
+                    this.itemNo = '';
+                this.initData();
+            }
+        },
+        mounted() {
+            this.roleForm.compId = userInfo().companyId;
+            this.roleForm.userId = userInfo().userId;
+            this.initData();
+        },
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            handleIconClickCode(){
+        	    console.log(1)
+            },
+            async initData(param){
+                if (param == undefined){
+                    this.filters.date.startDate = new Date();
+                    this.filters.date.startDate.setHours(0);
+                    this.filters.date.startDate.setMinutes(0);
+                    this.filters.date.startDate.setSeconds(0);
+                    this.filters.date.startDate.setMilliseconds(0);
+                    this.filters.date.endDate = new Date();
+                    this.filters.date.endDate.setHours(23);
+                    this.filters.date.endDate.setMinutes(59);
+                    this.filters.date.endDate.setSeconds(59);
+                    this.filters.date.endDate.setMilliseconds(59);
+                    param={
+                        "companyId":this.roleForm.compId,
+//                        "startTime":this.today,
+//                        "endTime":this.tomorrow,
+                        "startTime":this.filters.date.startDate,
+                        "endTime":this.filters.date.endDate,
+                        "searchKey":this.query,
+                        "getHeader":"1",
+                        "pageIndex":this.currentPage,
+                        "pageSize":this.pagesize
+                    }
+                }
+
+                const res = await queryOrderDetailSales(param);
+                if (res.isSuccess == true) {
+                    let table = res.result.pageResult.results;
+                    if (this.radio3 == '1') {
+                        this.tableData = table;
+                        this.orderNub = res.result.salesCount.orderNub;
+                        this.allocateProductNum = res.result.salesCount.allocateProductNum;
+                        this.totalCount = res.result.pageResult.totalCount;
+                    }else{
+                        this.tableData2 = table;
+                        this.otherSideCompanyName = this.tableData2.otherSideCompanyName;
+                        this.orderNub2 = res.result.salesCount.orderNub;
+                        this.allocateProductNum2 = res.result.salesCount.allocateProductNum;
+                        this.totalCount2 = res.result.pageResult.totalCount;
+                    }
+                }
+            },
+//            handleIconClickDate(date){
+//                this.tableData = [];
+//                let newTime = date;
+//               this.today = newTime +' 00:00:00';
+//               this.tomorrow = newTime +' 23:59:59';
+//                let param={
+//                    "companyId":this.roleForm.compId,
+////                    "startTime":this.today,
+////                    "endTime":this.tomorrow,
+//                    "startTime":this.filters.date.startDate,
+//                    "endTime":this.filters.date.endDate,
+//                    "searchKey":this.query,
+//                    "getHeader":"1",
+//                    "pageIndex":this.currentPage,
+//                    "pageSize":this.pagesize
+//                }
+//                this.initData(param)
+//            },
+            checkNull(val){
+                if(val!=undefined&&val!=''){
+                    return true;
+                }
+                return false;
+            },
+            //组合查询
+            handleIconClick(){
+                this.str = '';
+                var list = [];
+                if(this.checkNull(this.filters.date.startDate)){
+                    var start = {name:"startDate",value:this.filters.date.startDate};
+                    list.push(start);
+                }
+                if(this.checkNull(this.filters.date.endDate)){
+                    var end = {name:"endDate",value:this.filters.date.endDate};
+                    list.push(end);
+                }
+
+                this.str = '{';
+                list.forEach((obj)=>{
+                    if(obj.name=='startDate'||obj.name=='endDate'){
+                        var time = formatDate(obj.value,'yyyy-MM-dd hh:mm:ss');
+                        this.str = this.str + '"' + obj.name + '":"' + time + '",'
+                    }else{
+                        this.str = this.str + '"' + obj.name + '":"' + obj.value + '",'
+                    }
+
+                });
+                this.str = this.str + '"pageIndex":"' + this.currentPage + '",' + '"pageSize":"' + this.pagesize + '",' + '"searchKey":"' + this.query + '",' +'"getHeader":"' + 1 + '",' +  '"companyId":"' + this.roleForm.compId + '"}';
+                var param = JSON.parse(this.str);
+                this.initData(param);
+            },
+            //远程搜索模糊查询货号
+            async remoteMethod(query){
+                this.query = query;
+                    let param = {
+                        "companyId":this.roleForm.compId,
+//                        "startTime":this.today,
+//                        "endTime":this.tomorrow,
+                        "startTime":this.filters.date.startDate,
+                        "endTime":this.filters.date.endDate,
+                        "searchKey":this.query,
+                        "getHeader":"1",
+                        "pageIndex":this.currentPage,
+                        "pageSize":this.pagesize
+                    };
+                    const res = await queryOrderDetailSales(param);
+                    if (res.isSuccess == true){
+                        let table= res.result.pageResult.results;
+                        this.tableData = table;
+                        this.orderNub = res.result.salesCount.orderNub;
+                        this.allocateProductNum = res.result.salesCount.allocateProductNum;
+                        this.totalCount =  res.result.pageResult.totalCount;
+                    }
+
+            },
+            //远程搜索模糊查询电商卖家名称
+            async remoteMethod2(query){
+                if(query!=''){
+                    this.loading = true;
+                    let param = {
+                        "companyId":userInfo().companyId,
+                        "sellName":query,
+                        "pageIndex":1,
+                        "pageSize":100
+                    };
+                    const res = await queryStallCustomer(param);
+                    setTimeout(() => {
+                        this.loading = false;
+                        this.options4 =  res.result.results;
+                    }, 200);
+                } else {
+                    this.options4 = [];
+                }
+
+            },
+            choseLabel(){
+                if(this.radio3 == '1'){
+                    let param = {
+                        "companyId":this.roleForm.compId,
+//                        "startTime":this.today,
+//                        "endTime":this.tomorrow,
+                        "startTime":this.filters.date.startDate,
+                        "endTime":this.filters.date.endDate,
+                        "searchKey":this.query,
+                        "getHeader":"1",
+                        "pageIndex":this.currentPage,
+                        "pageSize":this.pagesize
+                    };
+                    this.initData(param)
+                }else if(this.radio3 == '2'){
+                    let param = {
+                        "companyId":this.roleForm.compId,
+//                        "startTime":this.today,
+//                        "endTime":this.tomorrow,
+                        "startTime":this.filters.date.startDate,
+                        "endTime":this.filters.date.endDate,
+                        "searchKey":this.query,
+                        "getHeader":"1",
+                        "modeCfg":{mode:'1',orderType:2},
+                        "pageIndex":this.currentPage,
+                        "pageSize":this.pagesize2
+                    };
+                    this.initData(param)
+                }
+            },
+            handleSizeChange(val) {
+                this.pagesize = val;
+                let param = {
+                    "companyId":this.roleForm.compId,
+//                    "startTime":this.today,
+//                    "endTime":this.tomorrow,
+                    "searchKey":this.query,
+                    "startTime":this.filters.date.startDate,
+                    "endTime":this.filters.date.endDate,
+                    "getHeader":"1",
+                    "pageIndex":this.currentPage,
+                    "pageSize":this.pagesize
+                };
+                this.initData(param)
+            },
+            handleCurrentChange(val) {
+                this.currentPage = val;
+                let param = {
+                    "companyId":this.roleForm.compId,
+//                    "startTime":this.today,
+//                    "endTime":this.tomorrow,
+                    "startTime":this.filters.date.startDate,
+                    "endTime":this.filters.date.endDate,
+                    "searchKey":this.query,
+                    "getHeader":"1",
+                    "pageIndex":this.currentPage,
+                    "pageSize":this.pagesize
+                };
+                this.initData(param)
+            },
+            formatJson(filterVal, jsonData) {
+		　　　　　　return jsonData.map(v => filterVal.map(j => v[j]));
+		　　　},
+            async exportExcel(){
+                let param ={
+                    pageIndex:this.currentPage,
+            		pageSize:this.pagesize,
+                    companyId:this.roleForm.compId,
+                    getHeader:"1",
+//                    startTime:this.today,
+//                    endTime:this.tomorrow,
+                    "startTime":this.filters.date.startDate,
+                    "endTime":this.filters.date.endDate,
+                }
+                const res = await queryOrderDetailSales(param);
+                const list = [];
+                  if (res.isSuccess){
+                      res.result.pageResult.results.forEach(obj => {
+                        let title= '' ;//商品名称
+                    	let productCode = '';//商品货号
+                    	let colours = '';//颜色
+                    	let sizes = '';//尺码
+                        let alreadyout = '';//已出货量
+                    	let readyout = '';//待出货量
+                    	let totalout = '';//商品总量
+                    	let imgUrl_main = '';//产品主图
+                    	if(obj.productName){
+                    		title = obj.productName;
+                    	}
+                    	if(obj.productCode){
+                    		productCode = obj.productCode;
+                    	}
+                          console.log(productCode)
+                    	var reg = new RegExp('_' , "g")
+                    	if(obj.details[0].color){
+                            colours = obj.details[0].color.replace(reg,"/");
+                    	}
+                    	if(obj.details[0].size){
+                            sizes = obj.details[0].size.replace(reg,"/");
+                    	}
+                        if(obj.details[0].allocateProductNum){
+                            alreadyout = obj.details[0].allocateProductNum;
+                        }
+                    	if(obj.details[0].orderNum&&obj.details[0].allocateProductNum){
+                    		readyout = obj.details[0].orderNum-obj.details[0].allocateProductNum;
+                    	}
+                    	if(obj.orderNub){
+                    		totalout = obj.orderNub;
+                    	}
+                    	if(obj.imgUrl_main){
+                    		imgUrl_main = obj.imgUrl_main;
+                    	}
+                    	let row = {
+		            		title : title,
+							productCode : productCode,
+							colours : colours,
+							sizes : sizes,
+							alreadyout : alreadyout,
+							readyout : readyout,
+							totalout : totalout,
+							imgUrl_main : imgUrl_main
+		            	}
+                        console.log(row)
+		            	list.push(row);
+                    });
+
+                    const tHeader = ['商品名称', '商品货号','颜色','尺码','已出货量','待出货量','商品总量','主图'];
+			　　　　const filterVal = ['title', 'productCode','colours','sizes','alreadyout','readyout','totalout','imgUrl_main'];
+            　　　　const data = this.formatJson(filterVal, list);
+			　　　　export_json_to_excel(tHeader, data, '档口统计表');
+                  }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                  }
+            },
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/commodityStatistics';
+</style>

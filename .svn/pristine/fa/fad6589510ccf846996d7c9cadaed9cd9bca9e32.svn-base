@@ -1,0 +1,450 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('logToolsSeller')">
+                <router-link :to='{path:"/logToolsSeller"}'>日志查看</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('addShop')">
+                <router-link :to='{path:"/addShop"}'>绑定店铺</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('MSConfigSeller')">
+                <router-link :to='{path:"/MSConfigSeller"}'>系统配置</router-link>
+            </li>
+            <li class="menuIndex2" v-if="getMenuAuthFun('siteConfig')">
+                <router-link :to='{path:"/siteConfig"}'>地址配置</router-link>
+            </li>
+        </ul>
+       <div class="siteConfig">
+           <div class="siteTop">
+               <el-button class="buttonColor3" @click="openToAdd">+添加地址</el-button>
+           </div>
+           <div class="siteTable">
+               <el-table
+                   :data="tableData"
+                   style="width: 100%">
+                   <el-table-column
+                       prop="receiverName"
+                       label="收货人"
+                       width="180">
+                   </el-table-column>
+                   <el-table-column
+                       prop="area"
+                       label="所在地区"
+                       width="180">
+                   </el-table-column>
+                   <el-table-column
+                       prop="detailAddress"
+                       label="详细地址">
+                       <template scope="scope">
+                           <el-popover
+                               ref="popover1"
+                               placement="top"
+                               width="200"
+                               trigger="hover"
+                               :content=scope.row.detailAddress>
+                           </el-popover>
+                           <p style="display:block;white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" v-popover:popover1>{{scope.row.detailAddress}}</p>
+                       </template>
+                   </el-table-column>
+                   <el-table-column
+                       prop="postCode"
+                       label="邮编">
+                   </el-table-column>
+                   <el-table-column
+                       prop="mobile"
+                       label="电话/手机">
+                   </el-table-column>
+                   <el-table-column
+                       label="操作">
+                       <template scope="scope">
+                          <div class="flex siteOperation">
+                              <a href="javascript:void(0)" @click="modifyInfo(scope.$index)">修改</a>
+                              <a href="javascript:void(0)" @click="delAddressInfo(scope.row.id)">删除</a>
+                              <el-button size="mini" v-if="scope.row.bdefault" class="defaultAddress">默认地址</el-button>
+                              <el-button size="mini" v-else @click="setDefaultAddress(scope.$index)">设为默认</el-button>
+                          </div>
+                       </template>
+                   </el-table-column>
+               </el-table>
+               <el-pagination
+                   small
+                   class="right"
+                   style="margin-top: 20px;"
+                   @size-change="handleSizeChange"
+                   @current-change="handleCurrentChange"
+                   :current-page="currentPage"
+                   :page-sizes="[10, 20, 30, 40,50]"
+                   :page-size="pageSize"
+                   layout="total, sizes, prev, pager, next, jumper"
+                   :total="totalCount">
+               </el-pagination>
+           </div>
+       </div>
+        <el-dialog
+            title="添加地址"
+            :visible.sync="dialogVisible"
+            size="tiny">
+            <div class="addDialog">
+                <el-form ref="form" :model="form" label-width="110px" :rules="rules">
+                    <el-form-item label="所在地区" prop="selectedOptions">
+                        <div class="flex choseRegion">
+                            <p>中国</p>
+                            <el-cascader
+                                style="width: 270px;"
+                                size="large"
+                                :options="options"
+                                v-model="form.selectedOptions"
+                                @change="handleChange">
+                            </el-cascader>
+                        </div>
+                    </el-form-item>
+                    <el-form-item label="详细地址" prop="address">
+                        <el-input
+                            type="textarea"
+                            :rows="2"
+                            maxlength="50"
+                            placeholder="例如街道名称，门牌号码，楼层和房间号等"
+                            v-model="form.address">
+                        </el-input>
+                    </el-form-item>
+                    <el-form-item label="邮政编码">
+                        <el-input v-model="form.postalCode"  placeholder="如您不清楚邮递区号，请填写000000"></el-input>
+                    </el-form-item>
+                    <el-form-item label="收货人姓名" prop="name">
+                        <el-input v-model="form.name" placeholder="请输入收货人姓名"></el-input>
+                    </el-form-item>
+                    <el-form-item label="手机号码" prop="mobile">
+                        <el-input v-model="form.mobile" placeholder="请填写正常使用的手机号码"></el-input>
+                    </el-form-item>
+                </el-form>
+            </div>
+            <span slot="footer" class="dialog-footer flex2">
+                <el-button @click="saveAddressInfo" class="buttonColor3" :disabled="isAdd">确 定</el-button>
+                <el-button @click="dialogVisible = false" class="buttonColor2">取 消</el-button>
+            </span>
+        </el-dialog>
+        <el-dialog
+            title="修改地址"
+            :visible.sync="dialogVisible1"
+            size="tiny">
+            <div class="addDialog">
+                <el-form ref="form" :model="form" label-width="110px" :rules="rules">
+                    <el-form-item label="所在地区" prop="selectedOptions">
+                        <div class="flex choseRegion">
+                            <p>中国</p>
+                            <el-cascader
+                                style="width: 270px;"
+                                size="large"
+                                :options="options"
+                                v-model="form.selectedOptions"
+                                @change="handleChange">
+                            </el-cascader>
+                        </div>
+                    </el-form-item>
+                    <el-form-item label="详细地址" prop="address">
+                        <el-input
+                            type="textarea"
+                            :rows="2"
+                            maxlength="50"
+                            placeholder="例如街道名称，门牌号码，楼层和房间号等"
+                            v-model="form.address">
+                        </el-input>
+                    </el-form-item>
+                    <el-form-item label="邮政编码">
+                        <el-input v-model="form.postalCode"  placeholder="如您不清楚邮递区号，请填写000000"></el-input>
+                    </el-form-item>
+                    <el-form-item label="收货人姓名" prop="name">
+                        <el-input v-model="form.name" placeholder="请输入收货人姓名"></el-input>
+                    </el-form-item>
+                    <el-form-item label="手机号码" prop="mobile">
+                        <el-input v-model="form.mobile" placeholder="请填写正常使用的手机号码"></el-input>
+                    </el-form-item>
+                </el-form>
+            </div>
+            <span slot="footer" class="dialog-footer flex2">
+                <el-button @click="modifyAddress" class="buttonColor3" :disabled="isModify">确 定</el-button>
+                <el-button @click="dialogVisible1 = false" class="buttonColor2">取 消</el-button>
+            </span>
+        </el-dialog>
+    </div>
+</template>
+
+<script>
+    import {queryDeliveryAddress,saveOrUpdateAddressInfo,delAddress} from '@/api/getData'
+    import {mapActions, mapState} from 'vuex'
+    import {formatDate} from '../utils/date.js'
+    import {getMenuAuth,haveMenuAuth} from  '../utils/AuthMenu.js'
+    import { regionData ,CodeToText,TextToCode} from 'element-china-area-data'
+    import {userInfo} from '../config/mUtils.js'
+
+    export default {
+        components: {
+        },
+        data() {
+            var validateMobile = (rule, value, cb) => {
+                var pattern = /^1(3|4|5|7|8)\d{9}$/
+                if(value==undefined||value===''){
+                    this.isAdd = false;
+                    this.isModify = false;
+                    cb()
+                }else if (!pattern.test(value)) {
+                    cb(new Error('请输入11位手机号'));
+                    this.isAdd = true;
+                    this.isModify = true;
+                } else {
+                    this.isAdd = false;
+                    this.isModify = false;
+                    cb()
+                }
+            }
+            var validateAddress = (rule,value,cb) =>{
+                if(value==undefined||value===''){
+                    this.isAdd = true;
+                    this.isModify = true;
+                    cb("请输入详细地址")
+                }else if(value.length>50){
+                    this.isAdd = true;
+                    this.isModify = true;
+                    cb("仅限输入50个字符")
+                }else{
+                    this.isAdd = false;
+                    this.isModify = false;
+                    cb()
+                }
+            }
+            return {
+                tableData:[],
+                dialogVisible:false,
+                dialogVisible1:false,
+                currentPage:1,
+                pageSize:10,
+                totalCount:0,
+                form: {
+                    id:'',
+                    selectedOptions:[],
+                    address:'',
+                    postalCode:'',
+                    name: '',
+                    mobile:''
+
+                },
+                section:'',
+                options: regionData,
+                isAdd:false,
+                isModify:false,
+                rules:{
+                    selectedOptions: [{ required: true, message: '请选择地区', trigger: 'blur' }],
+                    address:[{required: true, validator:validateAddress, trigger: 'blur' }],
+                    name:[{required:true,message:'请输入收货人姓名',trigger:'blur'}],
+                    mobile:[{validator:validateMobile,trigger:'blur'}]
+                },
+                currRow:0,
+            }
+        },
+        mounted(){
+            this.queryAddressInfo();
+        },
+        methods:{
+            getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+
+            handleSizeChange(val){
+                this.pageSize = val;
+                this.queryAddressInfo();
+            },
+
+            openToAdd(){
+                this.isAdd = false;
+                this.form = {};
+                this.dialogVisible =true;
+            },
+
+            handleCurrentChange(val){
+                this.currentPage = val;
+                this.queryAddressInfo();
+            },
+
+            //查询地址信息
+            async queryAddressInfo(){
+                let param = {
+                    "deliveryAddress":{"companyId":userInfo().companyId},
+                    "pageIndex":this.currentPage,
+                    "pageSize":this.pageSize};
+                const res = await queryDeliveryAddress(param);
+                if(res.isSuccess){
+                    this.tableData =[];
+                    var table = res.result.results;
+                    var table1 = [];
+                    table.forEach((obj)=>{
+                        if(obj.bdefault==1){
+                            this.tableData.push(obj);
+                        }else{
+                            table1.push(obj);
+                        }
+                    });
+                    table1.forEach((obj)=>{
+                        this.tableData.push(obj);
+                    });
+                }else{
+                    this.$message({
+                        type:'error',
+                        message:'查询失败'
+                    });
+                }
+            },
+
+            //选择区域
+            handleChange (value) {
+                this.section = '';
+                var table = this.form.selectedOptions;
+                var i = 0;
+                table.forEach((obj)=>{
+                    if(i==0){
+                        this.section = CodeToText[obj];
+                    }else{
+                        this.section = this.section + "/"  + CodeToText[obj];
+                    }
+                    i = i + 1;
+                });
+            },
+
+            //修改显示地址
+            modifyInfo(val){
+                this.isModify = false;
+                this.currRow = val;
+                this.form = {};
+                this.form.selectedOptions = [];
+                this.form.id = this.tableData[val].id;
+
+                var codes = [];
+                codes = this.tableData[val].area.split("/");
+                var i = 0;
+                this.form.selectedOptions.push(TextToCode[codes[i]].code);
+                this.form.selectedOptions.push(TextToCode[codes[i]][codes[i+1]].code);
+                this.form.selectedOptions.push(TextToCode[codes[i]][codes[i+1]][codes[i+2]].code);
+
+                this.form.address = this.tableData[val].detailAddress;
+                this.form.postalCode = this.tableData[val].postCode;
+                this.form.name = this.tableData[val].receiverName;
+                this.form.mobile = this.tableData[val].mobile;
+                this.dialogVisible1 = true;
+            },
+
+            //修改地址
+            async modifyAddress(){
+                if(this.form.selectedOptions==undefined||this.form.selectedOptions.length==0||this.form.address==undefined||this.form.address==''||this.form.name==undefined||this.form.name==''||this.form.mobile==undefined||this.form.mobile==''){
+                    return;
+                }
+                var vo = this.tableData[this.currRow];
+                var i = 0;
+                var flag = false;
+                var list = vo.area.split("/");
+                if(TextToCode[list[0]].code==this.form.selectedOptions[0]&&TextToCode[list[0]][list[1]].code==this.form.selectedOptions[1]&&TextToCode[list[0]][list[1]][list[2]].code==this.form.selectedOptions[2]){
+                    flag=true;
+                }
+
+                if(flag&&vo.detailAddress==this.form.address&&vo.postCode==this.form.postalCode&&vo.receiverName==this.form.name&&vo.mobile==this.form.mobile){
+                    this.$message({type:'info',message:'数据没有改变'});
+                    return;
+                }
+                let param = {
+                    "id":vo.id,
+                    "companyId": vo.companyId,
+                    "receiverName": this.form.name,
+                    "area": this.section,
+                    "detailAddress": this.form.address,
+                    "postCode": this.form.postalCode,
+                    "mobile":this.form.mobile
+                };
+                const res = await saveOrUpdateAddressInfo(param);
+                if(res.isSuccess){
+                    this.$message({
+                        type:'info',
+                        message:'修改成功'
+                    });
+                    this.dialogVisible1 = false;
+                    this.queryAddressInfo();
+                }else{
+                    this.$message({
+                        type:'info',
+                        message:'修改失败'
+                    });
+                }
+            },
+
+            //添加地址
+            async saveAddressInfo(){
+                if(this.form.selectedOptions==undefined||this.form.selectedOptions.length==0||this.form.address==undefined||this.form.address==''||this.form.name==undefined||this.form.name==''){
+                    return;
+                }
+
+                let param = {
+                    "companyId": userInfo().companyId,
+                    "receiverName": this.form.name,
+                    "area": this.section,
+                    "detailAddress": this.form.address,
+                    "postCode": this.form.postalCode,
+                    "mobile":this.form.mobile
+                };
+                const res = await saveOrUpdateAddressInfo(param);
+                if(res.isSuccess){
+                    this.$message({type:'info',message:'保存成功'});
+                    this.dialogVisible = false;
+                    this.queryAddressInfo();
+                }else{
+                    this.$message({type:'error',message:res.errorMsg});
+                }
+            },
+
+            async delAddressInfo(val){
+                let param = {
+                    "ids":val
+                };
+                const res = await delAddress(param);
+                if(res.isSuccess){
+                    this.queryAddressInfo();
+                }else{
+                    this.$message({type:'error',message:'删除失败'});
+                }
+            },
+
+            //设置默认值
+            async setDefaultAddress(val){
+                var vo = this.tableData[val];
+                let param = {
+                    "id":vo.id,
+                    "companyId": vo.companyId,
+                    "receiverName": vo.receiverName,
+                    "area": vo.area,
+                    "detailAddress": vo.detailAddress,
+                    "postCode": vo.postCode,
+                    "mobile":vo.mobile,
+                    "bdefault":1
+                };
+                const res = await saveOrUpdateAddressInfo(param);
+                if(res.isSuccess){
+                    this.$message({
+                        type:'info',
+                        message:'设置成功'
+                    });
+                    this.dialogVisible1 = false;
+                    this.$router.go(0);
+                }else{
+                    this.$message({
+                        type:'info',
+                        message:'设置失败'
+                    });
+                }
+            }
+
+        },
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/siteConfig';
+</style>

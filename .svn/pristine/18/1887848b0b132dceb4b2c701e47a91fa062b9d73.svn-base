@@ -1,0 +1,142 @@
+<template>
+    <div class="fillcontain">
+        <ul :class="[identity ==1 ?'stallShareMenu':identity ==2 ?'sellerShareMenu':'']">
+            <li class="ListMenu">
+                <router-link :to='{path:"/messageCenter"}'>消息中心</router-link>
+            </li>
+        </ul>
+        <div class="messageCenter">
+            <div :class="[identity ==1 ?'stallShareMenu':identity ==2 ?'sellerShareMenu':'']">
+                <div>
+                    <a href="javascript:void(0)" class="buttonColor11">删除</a>
+                    <a href="javascript:void(0)" class="buttonColor11">标记已读</a>
+                </div>
+                <el-col :span="24" class="radioColor messageRadio">
+                    <el-radio-group v-model="radio" size="small">
+                        <el-radio-button label="1">全部</el-radio-button>
+                        <el-radio-button label="2">未读(20)</el-radio-button>
+                        <el-radio-button label="3">已读(300)</el-radio-button>
+                    </el-radio-group>
+                </el-col>
+                <div class="messageTable">
+                    <el-table
+                        :data="tableData"
+                        style="width: 100%">
+                        <el-table-column
+                            type="selection"
+                            width="55">
+                        </el-table-column>
+                        <el-table-column
+                            label=""
+                            width="75">
+                            <template scope="scope">
+                                <div class="flex2">
+                                    <img v-if="scope.row.HasRead == 1" src="../image/read.png" alt="">
+                                    <img v-if="scope.row.HasRead == 2" src="../image/unread.png" alt="">
+                                </div>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            label="标题"
+                            width="160">
+                            <template scope="scope">
+                                <p>【{{scope.row.title}}】</p>
+                                <!--
+                                消息类型：档口：系统消息、新订单确认、订单配货、包裹动态、订单付款、新订单退货、商品货号修改
+                                         卖家：系统消息、交易动态、订单付款、退货动态、商品货号修改
+                                -->
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            label="内容">
+                            <template scope="scope">
+                                <router-link :to='{path:"/messageCenterDetails"}' class="messageContent">{{scope.row.content}}</router-link>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            prop="date"
+                            label="时间"
+                            width="200">
+                            <template scope="scope">
+                                <p class="messageContent">{{scope.row.date}}</p>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                    <el-pagination
+                        small
+                        style="margin-top: 20px;text-align: center;"
+                        @size-change="handleSizeChange"
+                        @current-change="handleCurrentChange"
+                        :current-page="currentPage4"
+                        :page-sizes="[100, 200, 300, 400]"
+                        :page-size="100"
+                        layout="total, sizes, prev, pager, next, jumper"
+                        :total="400">
+                    </el-pagination>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                //1为档口、2为卖家身份
+                identity:2,
+
+                radio:1,
+                tableData: [{
+                    title:'系统消息',
+                    content:'系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息',
+                    date: '2016-05-02 15：00',
+                    HasRead:1,
+                },{
+                    title:'付款提醒',
+                    content:'系统消息',
+                    date: '2016-05-02 15：00',
+                    HasRead:2,
+                },{
+                    title:'确认提醒',
+                    content:'系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息',
+                    date: '2016-05-02 15：00',
+                    HasRead:1,
+                },{
+                    title:'配货提醒',
+                    content:'系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息',
+                    date: '2016-05-02 15：00',
+                    HasRead:1,
+                },{
+                    title:'商品货号修改',
+                    content:'系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息系统消息',
+                    date: '2016-05-02 15：00',
+                    HasRead:1,
+                },],
+                currentPage4: 4,
+
+            }
+        },
+        methods: {
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+            },
+        },
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin.less';
+    @import "../style/common";
+    @import '../style/messageCenter';
+
+</style>

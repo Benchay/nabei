@@ -1,0 +1,264 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <horizontal-Menu  :menuParams ='this.menuParams' :exeptArray = "this.exeptArray" :routerPath="this.$route.path"></horizontal-Menu>
+            <!--
+            <li class="menuIndex" v-if="getMenuAuthFun('logTools')">
+                <router-link :to='{path:"/logTools"}'>日志查看</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('MSConfig')">
+                <router-link :to='{path:"/MSConfig"}'>系统配置</router-link>
+            </li>-->
+            <!--<li>-->
+                <!--<router-link :to='{path:"/SellerSettlementMethod"}'>卖家结算方式</router-link>-->
+            <!--</li>-->
+        </ul>
+        <div class="logTools">
+            <div class="logToolsTop">
+                <el-date-picker
+                    size="small"
+                    v-model="filters.date.startDate"
+                    format="yyyy-MM-dd"
+                    type="date"
+                    placeholder="选择开始日期"
+                >
+                </el-date-picker>
+                -
+                <el-date-picker
+                    size="small"
+                    v-model="filters.date.endDate"
+                    type="date"
+                    format="yyyy-MM-dd"
+                    placeholder="选择截止日期"
+                    @change="handleIconClickDate"
+                >
+                </el-date-picker>
+                <el-select v-model="moduleNum"
+                	placeholder="选择操作模块"
+                	size="small"
+                	@change="moduleNumChanged"
+                	style="width:150px;">
+				    <el-option
+				        v-for="item in moduleOptions"
+				        :key="item.num"
+				        :label="item.name"
+				        :value="item.num">
+				    </el-option>
+				</el-select>
+                <el-input
+                    size="small"
+                    placeholder="选择操作人"
+                    icon="search"
+                    v-model="input2"
+                    :on-icon-click="handleIconClick">
+                </el-input>
+            </div>
+            <div class="logToolsTable">
+                <el-table
+                    :data="tableData"
+                    style="width: 100%"
+                    max-height="500">
+                    <!--<el-table-column
+                        prop="number"
+                        label="序号"
+                        width="110">
+                    </el-table-column>-->
+                    <el-table-column
+                        prop="createTime"
+                        label="操作时间"
+                        :formatter="mydateFormat">
+                    </el-table-column>
+                    <el-table-column
+                        prop="operatorUserName"
+                        label="用户名">
+                    </el-table-column>
+                    <el-table-column
+                        prop="operModeName"
+                        label="操作模块">
+                    </el-table-column>
+                    <el-table-column
+                        prop="operTypeName"
+                        label="操作类型">
+                    </el-table-column>
+                    <el-table-column
+                        prop="message"
+                        label="操作内容"
+                        width="300">
+                    </el-table-column>
+                    <el-table-column
+                        prop="clientIP"
+                        label="操作IP">
+                    </el-table-column>
+                    <el-table-column
+                        prop="terminal"
+                        label="终端">
+                    </el-table-column>
+                </el-table>
+            </div>
+            <el-pagination
+                small
+                class="right"
+                style="margin-top: 20px;"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :current-page="currentPage"
+                :page-sizes="[10, 20, 30, 40,50]"
+                :page-size="pagesize"
+                layout="total, sizes, prev, pager, next, jumper"
+                :total="totalCount">
+            </el-pagination>
+        </div>
+    </div>
+</template>
+
+<script>
+    import {queryApplications,queryModules,loadUserInIds,queryCLogs,queryULogs,queryLogDetail,queryCompInfoByIds} from '@/api/getData'
+    import {mapActions, mapState} from 'vuex'
+    import {formatDate} from '../utils/date.js'
+    import {getMenuAuth,haveMenuAuth} from  '../utils/AuthMenu.js'
+    import {setStore,getStore} from  '../config/mUtils'
+    import {mydateFormat} from '../utils/dataFormater.js'
+    import horizontalMenu from '../components/horizontalMenu'
+
+    export default {
+        components: {
+            horizontalMenu,
+        },
+        data() {
+            return {
+                menuParams:{"parentMethod":'munu_dk_007',"companyType":1},
+                exeptArray:[],
+            	filters:{
+                    date:{
+                        startDate:'',
+                        endDate:''
+                    }
+                },
+            	pagesize: 10,
+                //默认高亮行数据id
+                highlightId: -1,
+                //当前页码
+                currentPage: 1,
+                //查询的页码
+                start: 1,
+                //默认数据总数
+                totalCount: 0,
+                value6:'',
+                input2:'',
+                roleForm:{
+                	companyId:'',
+                	type:''
+                },
+                moduleNum:10000,
+                moduleOptions:[],
+                tableData:[{
+                    number:1,
+                    name:'admin',
+                    operationModule:'商品管理',
+                    operationType:'新增',
+                    operationDate:'2017-8-18 15：00',
+                    operationContent:'',
+                }]
+            }
+        },
+        mounted(){
+        	var curComp = JSON.parse(getStore("curCompany"));
+        	this.roleForm.companyId = curComp.id;
+        	this.roleForm.type = curComp.type;
+
+        	this.queryModules();
+        	this.loadDataWithCondition(this.gatherParam());
+        },
+        methods:{
+        	mydateFormat,
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            gatherParam(){
+            	let  param = {
+                    Log:{
+                    	operMode:this.moduleNum,
+                    	companyId:this.roleForm.companyId,
+                    },
+                    startDate:this.filters.date.startDate==''?'':formatDate(this.filters.date.startDate,'yyyy-MM-dd 00:00:00'),
+                    endDate:this.filters.date.endDate==''?'':formatDate(this.filters.date.endDate,'yyyy-MM-dd 23:59:59'),
+                    "pageSize": this.pagesize,
+                    "pageIndex": this.currentPage
+                };
+                return param;
+            },
+            handleSizeChange(val) {
+                this.pagesize = val;
+                this.loadDataWithCondition(this.gatherParam());
+            },
+            handleCurrentChange(val) {
+                this.currentPage = val;
+                this.loadDataWithCondition(this.gatherParam());
+            },
+            moduleNumChanged(){
+                this.loadDataWithCondition(this.gatherParam());
+            },
+            async queryModules(){
+            	const res = await queryModules({"type":this.roleForm.type});
+            	//console.log(res);
+            	if(res.isSuccess){
+            		this.moduleOptions = res.result;
+            	}
+            },
+            async loadDataWithCondition(param){
+            	var res;
+            	var userModuleNums = new Array(10000,10001,10002,10003,10004,10005,10006,10010);
+            	if(param.Log.operMode == undefined||userModuleNums.indexOf(param.Log.operMode)>-1){
+            		res = await queryULogs(param);
+            	}else{
+            		res = await queryCLogs(param);
+            	}
+            	if(res.isSuccess){
+            		var tempIds = [];
+        			for(var i in res.result.data){
+        				tempIds.push(res.result.data[i].createUserId);
+        			}
+        			const res1 = await loadUserInIds({pageIndex:1,pageSize:1000,ids:tempIds.join(',')});
+        			if(res1.isSuccess){
+        				for(var i in res.result.data){
+        					res1.result.data.forEach(function(item,index){
+        						if(item.userId==res.result.data[i].createUserId){
+        							res.result.data[i].operatorUserName = item.userName;
+        						}
+        					});
+        				}
+        			}else{
+        				this.$message({
+	                        type: 'error',
+	                        message: res.errorMsg
+	                    });
+	                    return;
+        			}
+            		this.tableData = res.result.data;
+            		this.totalCount = res.result.totalCount;
+            	}else{
+            		this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+            	}
+            	//console.log(res);
+            },
+            //按操作人搜索
+            handleIconClick(){
+        	    console.log(1)
+            },
+            //按日期搜索
+            handleIconClickDate(){
+                this.loadDataWithCondition(this.gatherParam());
+            },
+        },
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/logTools';
+</style>

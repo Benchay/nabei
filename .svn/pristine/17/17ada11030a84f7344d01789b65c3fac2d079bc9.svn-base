@@ -1,0 +1,415 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/fastShipping2"}'>快速出货</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/returnManagement2"}'>快速退货</router-link>
+            </li>
+            <li class="menuIndex">
+                <router-link :to='{path:"/indentManagement"}'>订单管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/sellerSettlement"}'>客户结算</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/customerManagement"}'>客户管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/statisticalStatement"}'>销售统计</router-link>
+            </li>
+        </ul>
+        <div class="purchasing-content">
+            <div class="purchasingAll">
+                <div class="right">
+                    <router-link :to='{path:"/indentManagement"}'  class="comeBack">返回</router-link>
+                </div>
+                <!--状态9 所有按钮不显示-->
+
+                <!--状态2.待退货 显示内容-->
+                <div class="purPendingButton" v-show="showOfSign">
+                    <a href="javascript:void(0)" class="buttonColor" @click="signForOrder">签收</a>
+                </div>
+
+                <div class="purPendingButton" v-show="showConfirm">
+                    <a href="javascript:void(0)" class="buttonColor"  @click="confirmedReturn">确认退货</a>
+                </div>
+
+                <!---->
+                <!--状态1.配货待确认  显示内容-->
+                <div class="purPendingButton" v-show="confirmAllOrder">
+                    <a href="javascript:void(0)" class="buttonColor" @click="confirmWholeOrder">确 认</a>
+                </div>
+                <!---->
+                <!--状态6.立即入库 显示内容-->
+                <div class="purPendingButton">
+                    <!--<a href="javascript:void(0)" class="buttonColor">挂起中</a>-->
+                    <a href="javascript:void(0)" class="buttonColor" @click="dialogVisible2 = true">立即入库</a>
+                </div>
+                <div class="sumTotal flex" style="padding-top: 30px;padding-bottom: 30px;">
+                    <p style="margin-right: 20px;">订单编号：{{orderId}}</p>
+                    <p style="margin-right: 20px;">电商卖家名称：{{orderVO.busiName}}</p>
+                    <p>下单时间：{{formatDate(orderVO.orderTime)}}</p>
+                </div>
+                <!---->
+                <div class="stocktakingTable" v-for="item in tableDetails">
+                    <el-table
+                        :data="tableData"
+                        @selection-change="handleSelectionChange"
+                        style="width: 100%">
+                        <!--状态6.立即入库 、签收之后 确认收货 显示勾选框 -->
+                        <el-table-column
+                            v-if="showOfSelect"
+                            type="selection"
+                            width="55">
+                        </el-table-column>
+                        <!---->
+                        <el-table-column
+                            width="250"
+                            label="主图/货号">
+                            <template scope="scope">
+                                <div class="flex">
+                                    <img src="../image/111.png" alt=""  class="tableImg">
+                                    <p>{{scope.row.productNumber}}</p>
+                                </div>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            prop="productName"
+                            width="250"
+                            label="商品名称">
+                        </el-table-column>
+                        <el-table-column
+                            prop="color"
+                            label="颜色">
+                        </el-table-column>
+                        <el-table-column
+                            prop="size"
+                            label="尺码">
+                        </el-table-column>
+                        <el-table-column
+                            prop="orderNum"
+                            label="数量">
+                        </el-table-column>
+                        <el-table-column
+                            prop="unitPrice"
+                            label="单价">
+                        </el-table-column>
+                    </el-table>
+                </div>
+                <el-pagination
+                    small
+                    class="right"
+                    style="margin-top: 20px;"
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :current-page="currentPage"
+                    :page-sizes="[10, 20, 30, 40]"
+                    :page-size="pagesize"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    :total="totalCount">
+                </el-pagination>
+                <a href="javascript:void(0)" class="export_excle" @click="exportTableData">导出excel</a>
+            </div>
+        </div>
+        <el-dialog
+            title="确认退货"
+            :visible.sync="dialogConfirmedReturn"
+            size="tiny">
+            <div class="confirmedReturn flex2">
+                <div>
+                    <p>确认接收已选中的<span>58</span>件商品？</p>
+                    <p>*未选中的商品默认退货失败</p>
+                </div>
+            </div>
+            <span slot="footer" class="dialog-footer flex2">
+                <el-button type="primary" @click="dialogConfirmedReturn = false">确 定</el-button>
+                 <el-button @click="dialogConfirmedReturn = false">取 消</el-button>
+              </span>
+        </el-dialog>
+        <el-dialog
+            title="立即人库"
+            :visible.sync="dialogVisible2"
+            size="tiny">
+            <div class="newPackage">
+                <div class="flex2">
+                    确认将选中的20件商品入库吗？
+                </div>
+            </div>
+            <span slot="footer" class="dialog-footer flex2">
+                <el-button type="primary" @click="dialogVisible = false">确 定</el-button>
+                 <el-button @click="dialogVisible = false">取 消</el-button>
+              </span>
+        </el-dialog>
+    </div>
+</template>
+<script>
+    import headTop from '../components/headTop'
+    import {signOrder,queryOrderInfo,querySalesOrderDetail,confirmSalesReturnInfo,confirmWholeReturnOrder} from '@/api/getData'
+    import {formatDate} from '../utils/date.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                currentPage:4,
+                erweima:false,
+                dialogConfirmedReturn:false,
+                dialogRefusedReturn:false,
+                dialogVisible1:false,
+                dialogVisible2:false,
+                clickIndex:0,
+                input:'',
+                radio:1,
+                items:[
+                    {title:'全部'},
+                    {title:'配货'},
+                    {title:'退货'},
+                ],
+                warehouseList:[
+                    {
+                        label:1,
+                        list:'仓库1'
+                    },
+                    {
+                        label:2,
+                        list:'仓库2'},
+                    {
+                        label:3,
+                        list:'仓库3'},
+                ],
+                tableDetails:[
+                    {
+                        name:'电商买家名称名称',
+                        numbers: 'NG123',
+                        checkDate:'2017-05-11 12:21:11',
+                    }
+                ],
+                tableData: [{
+                    productName:'名称名称名称名称名称',
+                    productNumber:'134546546',
+                    color:'红色',
+                    size:'L',
+                    price:100,
+                    amount:20,
+                }
+                ],
+                orderId:'',
+                status:0,
+                showOfSign:true,
+                showConfirm:true,
+                showOfSelect:false,
+                confirmAllOrder:true,
+                order:'',
+                orderVO:'',
+                currentPage:1,
+                pageSize:10,
+                totalCount:0,
+                multipleSelection:'',
+            }
+        },
+        mounted(){
+            this.orderId = this.$route.query.orderId;
+            let param = {"orderId":this.orderId};
+            this.loadOrderInfo(param);//获取订单信息
+        },
+        methods: {
+
+            //多选响应
+            handleSelectionChange: function(val) {
+                this.multipleSelection = val;
+            },
+
+            async loadOrderInfo(param){
+                const res = await queryOrderInfo(param);
+                if(res.isSuccess){
+                    this.orderVO = res.result.data;
+                    this.status = this.orderVO.status;
+                    if(this.status==7){
+                        this.showOfSign = true;
+                    }else{
+                        this.showOfSign = false;
+                    }
+                    if(this.status>8){
+                        this.showConfirm = false;
+                    }else{
+                        this.showConfirm = true;
+                    }
+                    this.initLoadData();
+                }else{
+                    this.$message({
+                        duration:this.GLOBAL.MESSAGE_DISSMISS_TIME_MID,
+                        type:'error',
+                        message:res.errorMsg
+                    });
+                }
+            },
+            async initLoadData(){
+                this.tableData = [];
+                let param = {
+                    "companyId":"1000",
+                    "orderId":this.orderId,
+                    "status":this.status,
+                    "orderType":4,
+                    "packageId":"-1",
+                    "pageIndex":this.currentPage,
+                    "pageSize":this.pageSize
+                };
+                const res = await querySalesOrderDetail(param);
+                if(res.isSuccess){
+                    let table = res.result.data.results;
+                    for(let i = 0 ;i<table.length;i++){
+                        let datas = table[i].details;
+                        for(let j = 0 ; j < datas.length;j++){
+                            this.tableData.push(datas[j]);
+                        }
+                    }
+                }
+            },
+            async signForOrder(){
+                let param={
+                    "orderId":this.orderId
+                };
+                const res = await signOrder(param);
+                if(res.isSuccess){
+                    this.$message({
+                        duration:this.GLOBAL.MESSAGE_DISSMISS_TIME_MID,
+                        type:'info',
+                        message:'订单已签收'
+                    });
+                    this.order = res.result.data;
+                    this.status = this.order.status;
+                    this.showOfSign = false;
+                    this.showOfSelect = true;
+                }else{
+                    this.$message({
+                        type:'error',
+                        message:res.errorMsg
+                    });
+                }
+            },
+            async confirmedReturn(){
+                if(this.status==7){
+                    this.$message({
+                        duration:this.GLOBAL.MESSAGE_DISSMISS_TIME_MID,
+                        type:'info',
+                        message:'当前订单未签收，请先签收'
+                    });
+                }else if (this.status == 8){
+                    this.batchConfirmOrder();
+                    //this.dialogConfirmedReturn = true;
+                }
+
+            },
+            //批量退货
+            batchConfirmOrder(){
+              if(this.multipleSelection==undefined||this.multipleSelection.length==0){
+                  this.$message({
+                      type: 'error',
+                      message: '请先勾选要退货的商品！'
+                  });
+                  return;
+              }
+                var array = [];
+                this.multipleSelection.forEach((item) => {
+                    let pa = {"id":item.orderDetailId,"allocateProductNum":item.orderNum};
+                    array.push(pa);
+                })
+                if(array.length <1){
+                    this.$message({
+                        type: 'error',
+                        message: '请先勾选要退货的商品！'
+                    });
+                    return;
+                }
+                this.$confirm('是否确认选中的信息?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    this.confirmSalesReturn(array);
+                }).catch(() => {
+
+                });
+            },
+            async confirmSalesReturn(array){
+                let param = {
+                    "orderId":this.orderId,
+                    "companyId":"1000",
+                    "orderDetails":array
+                };
+                const res = await confirmSalesReturnInfo(param);
+                if(res.isSuccess){
+                    this.$message({
+                        type:'info',
+                        message:res.result.msg
+                    });
+                    this.showConfirm = false;//该订单已确认
+                    this.confirmAllOrder = false;
+                    this.status = 9;
+                }
+            },
+            //整个订单退货
+            async confirmWholeOrder(){
+                //this.dialogVisible1 = true
+                if(this.status==7){
+                    this.$message({
+                        type:'info',
+                        message:'当前订单未签收，请先签收之后再操作'
+                    });
+                    return ;
+                }
+                this.$confirm('是否确认退掉当前订单的所有商品?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    this.confirmWholeOrderInfo();
+                }).catch(() => {
+
+                });
+
+            },
+            async confirmWholeOrderInfo(){
+                let param = {
+                    "orderId":this.orderId
+                };
+                const res = await confirmWholeReturnOrder(param);
+                if(res.isSuccess){
+                    this.$message({
+                        duration:this.GLOBAL.MESSAGE_DISSMISS_TIME_MID,
+                        type:'info',
+                        message:res.result.msg
+                    });
+                    this.showConfirm = false;//该订单已确认
+                    this.confirmAllOrder = false;
+                }
+            },
+            //数据格式化
+            formatDate:function(val) {
+                if (val == undefined||val=='') {
+                    return "";
+                }
+                var date = new Date(val);
+                return formatDate(date,'yyyy-MM-dd hh:mm:ss');
+            },
+
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+            },
+
+        }
+    }
+</script>
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/purchasingManagement';
+    @import "../style/indentManagement";
+</style>

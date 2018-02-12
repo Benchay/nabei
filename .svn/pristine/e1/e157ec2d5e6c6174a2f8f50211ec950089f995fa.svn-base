@@ -1,0 +1,458 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('fastShipping2')">
+                <router-link :to='{path:"/fastShipping2"}'>快速出货</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('indentManagement')">
+                <router-link :to='{path:"/indentManagement"}'>订单管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('takeGoods')">
+                <router-link :to='{path:"/takeGoods"}'>取货码</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('sellerSettlement')">
+                <router-link :to='{path:"/sellerSettlement"}'>客户结算</router-link>
+            </li>
+            <li class="menuIndex" v-if="getMenuAuthFun('SettlementRecordsStall')">
+                <router-link :to='{path:"/SettlementRecordsStall"}'>结算单</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('customerManagement')">
+                <router-link :to='{path:"/customerManagement"}'>客户管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('statisticalStatement')">
+                <router-link :to='{path:"/statisticalStatement"}'>销售统计</router-link>
+            </li>
+        </ul>
+        <div class="sellerSettlement">
+            <div class="sellerTop">
+                <el-select
+                    v-model="otherSideCompanyName"
+                    filterable
+                    remote
+                    reserve-keyword
+                    placeholder="请输入客户名称"
+                    :remote-method="remoteMethod"
+                    :loading="loading"
+                    @change="handleIconClick">
+                    <el-option
+                        v-for="item in options4"
+                        :key="item.sellId"
+                        :label="item.sellName"
+                        :value="item.sellId">
+                    </el-option>
+                </el-select>
+                <el-select v-model="value" placeholder="结算方式" @change="handleIconClick">
+                    <el-option
+                        v-for="item in options"
+                        :key="item.value"
+                        :label="item.label"
+                        :value="item.value">
+                    </el-option>
+                </el-select>
+                <el-select v-model="balanceType" placeholder="请选择收支方式" @change="handleIconClick">
+                    <el-option
+                        v-for="item in types"
+                        :key="item.value2"
+                        :label="item.label"
+                        :value="item.value2">
+                    </el-option>
+                </el-select>
+            </div>
+            <div style="margin-top: 20px;">
+                <el-radio-group v-model="radio" size="small" class="radioGreen" @change="handleIconClick">
+                    <el-radio-button label="-1">全部</el-radio-button>
+                    <el-radio-button label="0">等待付款</el-radio-button>
+                    <el-radio-button label="4">付款中</el-radio-button>
+                    <el-radio-button label="1">付款成功</el-radio-button>
+                    <el-radio-button label="2">付款失败</el-radio-button>
+                    <el-radio-button label="3">已关闭</el-radio-button>
+                </el-radio-group>
+            </div>
+            <div class="sellerTable">
+                <el-table
+                    :data="tableData3"
+                    style="width: 100%;">
+                    <el-table-column
+                        prop="otherSideCompanyName"
+                        label="客户名称"
+                        width="180">
+                    </el-table-column>
+                    <el-table-column
+                        prop="actualPayFee"
+                        label="结算金额">
+                        <template scope="scope">{{scope.row.actualPayFee==undefined?0:scope.row.actualPayFee.toFixed(2)}}</template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="type"
+                        label="收支类型">
+                        <template scope="scope">
+                            {{scope.row.type==1||scope.row.type==11?'收款':scope.row.type==2||scope.row.type==22?'付款':''}}
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="status"
+                        label="结算状态">
+                        <template scope="scope">
+                            <p>{{scope.row.status==0?'等待付款':scope.row.status==1?'付款成功':scope.row.status==2?'付款失败':scope.row.status==3?'已关闭':scope.row.status==4?'付款中':''}}</p>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="settlementType"
+                        label="结算方式">
+                        <template scope="scope">
+                            <p>{{scope.row.settlementType==1?'单订单结算':scope.row.settlementType==2?'多订单结算':''}}</p>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="actualPayFeeType"
+                        label="结算账户类型">
+                        <template scope="scope">
+                            <p>{{scope.row.actualPayFeeType==1?'余额':scope.row.actualPayFeeType==3?'支付宝':scope.row.actualPayFeeType==4?'微信':scope.row.actualPayFeeType==5?'银行卡':''}}</p>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        width="150"
+                        label="结算时间">
+                        <template scope="scope">{{scope.row.updateTime==undefined?formatDate(scope.row.createTime):formatDate(scope.row.updateTime)}}</template>
+                    </el-table-column>
+                    <el-table-column
+                        width="300"
+                        label="操作">
+                        <template scope="scope">
+                            <div class="flex stallOperation2">
+                                <!--<el-button v-if="haveMenuAuthFun('SettlementRecordsStall',1)&&(scope.row.type==22&&scope.row.status==0)" class="blue2" type="text" style="margin-right: 10px;" @click="quickSettlementLink(scope.row.otherSideCompanyId,scope.row.id,scope.row.type,scope.row.status)">立即付款</el-button>-->
+                                <router-link :to='{path:"/sellerSettlementDetails",query:{saleCompanyId:scope.row.otherSideCompanyId,settlementOrderId:scope.row.id}}'>查看详情</router-link>
+                                <!--<router-link :to='{path:"/indentManagementAccountDetails",query:{settlementOrderId:scope.row.id}}' v-if="scope.row.status==4&&(scope.row.type==1||scope.row.type==11)">查看凭证</router-link>-->
+                                <!--<el-button v-if="haveMenuAuthFun('SettlementRecordsStall',1)&&(scope.row.status==4&&(scope.row.type==1||scope.row.type==11))" class="blue2"  type="text" @click="confirmSettlementOrder(scope.row.id)">审核通过</el-button>-->
+                                <!--<el-button v-if="haveMenuAuthFun('SettlementRecordsStall',1)&&(scope.row.status==4&&(scope.row.type==1||scope.row.type==11))" class="blue2"  type="text" @click="confirmNSettlementOrder(scope.row.id)">审核不通过</el-button>-->
+
+                            </div>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+            <el-pagination
+                small
+                class="right"
+                style="margin-top: 20px;"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :page-sizes="[10, 20, 30, 40]"
+                :current-page="currentPage"
+                :page-size="pageSize"
+                layout="total, sizes,prev, pager, next, jumper"
+                :total="totalCount">
+            </el-pagination>
+            <a href="javascript:void(0)" class="export_excle" @click="exportTableData">导出excel</a>
+            <div style="height:160px;">
+                &nbsp;&nbsp;
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    import {querySettlementOrder,queryStallCustomer,confirmSettlementOrder} from '@/api/getData'
+    import {userInfo,getStore,setStore} from  '../config/mUtils'
+    import {formatDate} from '../utils/date.js'
+    import {getMenuAuth,haveMenuAuth} from  '../utils/AuthMenu.js'
+    import {export_json_to_excel} from '../vendor/Export2Excel.js'
+
+    export default {
+        data() {
+            return {
+                input:'',
+                radio:-1,
+                options: [{
+                    value: '1',
+                    label: '单订单结算'
+                }, {
+                    value: '2',
+                    label: '多订单结算'
+                }],
+                types:[
+                    {
+                        value2:'1',
+                        label:'收款'
+                    },
+                    {
+                        value2:'22',
+                        label:'付款'
+                    }
+                ],
+                value2:'',
+                value:'',
+                tableData3:[],
+                currentPage:1,
+                pageSize:10,
+                totalCount:0,
+                roleForm: {
+                    userId: '',
+                    roleId: '',
+                    compId:''
+                },
+                status:'',
+                otherSideCompanyName:'',
+                loading:false,
+                options4:[],
+                balanceType:'',
+                str:''
+            }
+        },
+        mounted(){
+            this.saleCompanyId = this.$route.query.saleCompanyId;
+            this.roleForm.userId = userInfo().userId;
+            this.roleForm.compId = userInfo().companyId;
+
+            let param = {
+                "type":this.balanceType,
+                "settlementType":this.value,
+                "otherSideCompanyId":this.otherSideCompanyName,
+                "status":this.getStatus(),
+                "companyId":userInfo().companyId,
+                "pageIndex":this.currentPage,
+                "pageSize":this.pageSize
+            };
+            this.initData(param);
+        },
+        methods: {
+        	haveMenuAuthFun(pathName, mode){
+        		return haveMenuAuth(pathName, mode);
+        	},
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+
+            checkNull(val){
+        	    if(val!=undefined&&val!=''){
+        	        return true;
+                }
+                return false;
+            },
+
+            //组合查询
+            handleIconClick(){
+                this.str = '';
+                var list = [];
+                if(this.checkNull(this.otherSideCompanyName)){
+                    var id = {name:"otherSideCompanyId",value:this.otherSideCompanyName};
+                    list.push(id);
+                }
+                if(this.checkNull(this.value)){
+                    var sType = {name:"settlementType",value:this.value};
+                    list.push(sType);
+                }
+                if(this.checkNull(this.balanceType)){
+                    var bType = {name:"type",value:this.balanceType};
+                    list.push(bType);
+                }
+                if(this.checkNull(this.getStatus())){
+                    var s = this.getStatus();
+                    var state = {name:"status",value:s};
+                    list.push(state);
+                }
+
+                this.str = '{';
+                list.forEach((obj)=>{
+                    this.str = this.str + '"' + obj.name + '":"' + obj.value + '",'
+                });
+                this.str = this.str + '"pageIndex":"' + this.currentPage + '",' + '"pageSize":"' + this.pageSize + '",' + '"companyId":"' + userInfo().companyId + '"}';
+                var param = JSON.parse(this.str);
+                this.initData(param);
+            },
+
+            handleSizeChange(val) {
+                this.pageSize = val;
+                this.str = '';
+                var list = [];
+                if(this.checkNull(this.otherSideCompanyName)){
+                    var id = {name:"otherSideCompanyId",value:this.otherSideCompanyName};
+                    list.push(id);
+                }
+                if(this.checkNull(this.value)){
+                    var sType = {name:"settlementType",value:this.value};
+                    list.push(sType);
+                }
+                if(this.checkNull(this.balanceType)){
+                    var bType = {name:"type",value:this.balanceType};
+                    list.push(bType);
+                }
+                if(this.checkNull(this.getStatus())){
+                    var s = this.getStatus();
+                    var state = {name:"status",value:s};
+                    list.push(state);
+                }
+
+                this.str = '{';
+                list.forEach((obj)=>{
+                    this.str = this.str + '"' + obj.name + '":"' + obj.value + '",'
+                });
+                this.str = this.str + '"pageIndex":"' + this.currentPage + '",' + '"pageSize":"' + this.pageSize + '",' + '"companyId":"' + userInfo().companyId + '"}';
+                var param = JSON.parse(this.str);
+                this.initData(param);
+
+            },
+            handleCurrentChange(val) {
+                this.currentPage = val;
+                this.str = '';
+                var list = [];
+                if(this.checkNull(this.otherSideCompanyName)){
+                    var id = {name:"otherSideCompanyId",value:this.otherSideCompanyName};
+                    list.push(id);
+                }
+                if(this.checkNull(this.value)){
+                    var sType = {name:"settlementType",value:this.value};
+                    list.push(sType);
+                }
+                if(this.checkNull(this.balanceType)){
+                    var bType = {name:"type",value:this.balanceType};
+                    list.push(bType);
+                }
+                if(this.checkNull(this.getStatus())){
+                    var s = this.getStatus();
+                    var state = {name:"status",value:s};
+                    list.push(state);
+                }
+
+                this.str = '{';
+                list.forEach((obj)=>{
+                    this.str = this.str + '"' + obj.name + '":"' + obj.value + '",'
+                });
+                this.str = this.str + '"pageIndex":"' + this.currentPage + '",' + '"pageSize":"' + this.pageSize + '",' + '"companyId":"' + userInfo().companyId + '"}';
+                var param = JSON.parse(this.str);
+                this.initData(param);
+            },
+            //加载初始数据
+            async initData(param){
+                const res = await querySettlementOrder(param);
+                if(res.isSuccess){
+                    this.tableData3 = res.result.results;
+                    this.totalCount = res.result.totalCount;
+                }
+            },
+            //远程搜索模糊查询档口名称
+            async remoteMethod(query){
+                if(query!=''){
+                    this.loading = true;
+                    let param = {
+                        "companyId":userInfo().companyId,
+                        "sellName":query,
+                        "pageIndex":1,
+                        "pageSize":100
+                    };
+                    const res = await queryStallCustomer(param);
+                    setTimeout(() => {
+                        this.loading = false;
+                        this.options4 = res.result.results;
+                    }, 200);
+                } else {
+                    this.options4 = [];
+                }
+            },
+
+            //立即结算
+            quickSettlementLink(otherSideCompanyId,id,type,status){
+                if(status!=0){
+                    this.$message({
+                        type:'info',
+                        message:'当前结算单已结算'
+                    });
+                    return;
+                }
+                if(type==22){
+                    this.$router.push({path:"/sellerSettlementImmediately",query:{saleCompanyId:otherSideCompanyId,activeName:"second",settlementOrderId:id}});
+                }else{
+                    this.$message({
+                        type:'info',
+                        message:'当前结算单为收款类型，不可结算'
+                    });
+                }
+            },
+
+            //确认订单
+            async confirmSettlementOrder(val){
+                let param = {
+                    "id":val,
+                    "status":1
+                };
+                const res = await confirmSettlementOrder(param);
+                if(res.isSuccess){
+                    this.$message({
+                        type:'info',
+                        message:'已确认'
+                    });
+                }else{
+                    this.$message({
+                        type:'error',
+                        message:'操作失败'
+                    });
+                }
+            },
+            //审核不通过
+            async confirmNSettlementOrder(val){
+                let param = {
+                    "id":val,
+                    "status":2
+                };
+                const res = await confirmSettlementOrder(param);
+                if(res.isSuccess){
+                    this.$message({
+                        type:'info',
+                        message:'已确认'
+                    });
+                }else{
+                    this.$message({
+                        type:'error',
+                        message:'操作失败'
+                    });
+                }
+            },
+
+            //获取状态
+            getStatus(){
+                if(this.radio=='-1'){
+                    this.status = '';
+                }else{
+                    this.status = this.radio;
+                }
+                return this.status;
+            },
+            //
+            changeStatus(){
+                let param = {
+                    "status":this.getStatus(),
+                    "companyId":userInfo().companyId,
+                    "otherSideCompanyId":this.saleCompanyId,
+                    "pageIndex":this.currentPage,
+                    "pageSize":this.pageSize
+                };
+                this.initData(param);
+            },
+            //格式化时间
+//            formatDate:function(row,column){
+//                let data = row[column.property];
+//                if(data==undefined||data==''){
+//                    return '';
+//                }
+//                return formatDate(data*1,'yyyy-MM-dd hh:mm:ss');
+//            },
+            formatDate:function(val){
+                if(val==undefined){
+                    return '';
+                }
+                return formatDate(val*1,'yyyy-MM-dd hh:mm:ss');
+            },
+            //导出excel
+            async exportTableData() {
+
+            }
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/sellerSettlement';
+</style>

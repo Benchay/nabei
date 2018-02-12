@@ -1,0 +1,80 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/fastShipping2"}'>快速出货</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/returnManagement2"}'>快速退货</router-link>
+            </li>
+            <li class="menuIndex">
+                <router-link :to='{path:"/orderPurchaseStall"}'>订单管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/sellerSettlement"}'>客户结算</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/customerManagement"}'>客户管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/statisticalStatement"}'>销售统计</router-link>
+            </li>
+        </ul>
+        <div class="orderFinancial">
+            <router-link :to='{path:"/indentManagementCompleteAccount"}' class="right comeBack2">返回</router-link>
+            <p class="financialTitle">付款详情</p>
+            <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                    <th>结算时间：2017-02-01 15：00</th>
+                    <th>本次结算金额：-￥5000</th>
+                    <th></th>
+                    <th></th>
+                </tr>
+                <tr>
+                    <td>付款金额：￥50000</td>
+                    <td>抹平金额：￥5000</td>
+                    <td>实际付款金额：￥50000</td>
+                </tr>
+                <tr>
+                    <th>付款帐号：xxxxxxxxxxxxxxxxx</th>
+                    <th>收款方：xxxxxxxxxxxxxx</th>
+                    <th colspan="2">收款账户：xxxxx（支付宝）<span>(对应银行账户：招商银行 123 123 123 123)</span></th>
+                </tr>
+                <tr>
+                    <td colspan="4">结算方式：多订单合并</td>
+                </tr>
+                <tr>
+                    <td colspan="4">付款说明：付款说明付款说明付款说明付款说明付款说明付款说明</td>
+                </tr>
+                <tr>
+                    <!--限制最多三张截图-->
+                    <td colspan="4"  class="detailImage"><p>截图凭证：</p>
+                        <img src="../image/head11.jpg" alt=""><img src="../image/head11.jpg" alt="">
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</template>
+<script>
+    import headTop from '../components/headTop'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+
+            }
+        },
+        methods: {
+
+        }
+    }
+</script>
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/orderFinancial';
+</style>

@@ -1,0 +1,463 @@
+<template>
+    <div class="fillcontain">
+        <ul :class="[identity ==1 ?'stallShareMenu':identity ==2 ?'sellerShareMenu':'']">
+            <li>
+                <router-link :to='{path:"/financialManagement"}'>账户总览</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/financialManagement2"}'>余额交易记录</router-link>
+            </li>
+            <li class="ListMenu">
+                <router-link :to='{path:"/financialManagement3"}'>金币交易记录</router-link>
+            </li>
+        </ul>
+        <div class="financialManagement">
+            <div class="tradingRecord">
+                <div>
+                    <el-date-picker
+                        v-model="dateRange"
+                        type="daterange"
+                        placeholder="选择日期范围"
+                        @change="handleIconClick"
+                        :picker-options="pickerOptions2">
+                    </el-date-picker>
+
+                    <el-input
+                        class="dinanciaSearch right"
+                        placeholder="搜索"
+                        v-model="criteria"
+                        icon="search"
+                        @change="handleIconClick">
+                    </el-input>
+                </div>
+                <div class="incomingsAndOutgoings">
+                    <ul>
+                        <li class="incomings flex">
+                            <p>总收入<span>{{changedFee.inFee}}</span>金币</p>
+                        </li>
+                        <li class="outgoings flex">
+                            <p>总支出<span>{{changedFee.outFee}}</span>金币</p>
+                        </li>
+
+                        <!--<li class="TouchBalance">-->
+                        <!--<el-select class="TouchBalance1 right" v-model="value" size="mini" placeholder="余额收支明细">-->
+                        <!--<el-option-->
+                        <!--v-for="item in options"-->
+                        <!--:key="item.value"-->
+                        <!--:label="item.label"-->
+                        <!--:value="item.value">-->
+                        <!--</el-option>-->
+                        <!--</el-select>-->
+                        <!--</li>-->
+                    </ul>
+
+                </div>
+                <div class="daybook">
+                    <el-table
+                        :data="tableData"
+                        style="width: 100%">
+                        <el-table-column
+                            prop="flowNo"
+                            label="流水"
+                        >
+                        </el-table-column>
+                        <el-table-column
+                            prop="createTime"
+                            label="日期"
+                            width="150"
+                            :formatter="mydateFormat"
+                        >
+                        </el-table-column>
+                        <el-table-column
+                            prop="recordType"
+                            label="类型名称"
+                            :formatter="flowTypeFormat"
+                        >
+                        </el-table-column>
+                        <el-table-column
+                            prop="accountType"
+                            label="交易账户"
+                            :formatter="accountFormat"
+                        >
+                        </el-table-column>
+                        <el-table-column
+                            prop="changeFee"
+                            label="金额变化">
+                        </el-table-column>
+                        <el-table-column
+                            prop="freezed"
+                            label="冻结金额">
+                        </el-table-column>
+                        <el-table-column
+                            prop="stutas"
+                            label="状态"
+                            :formatter="stutasFormat"
+                        >
+                        </el-table-column>
+                        <el-table-column
+                            prop="memo"
+                            label="描述">
+                        </el-table-column>
+
+
+                        <el-table-column label="操作">
+                            <template scope="scope">
+                                <el-button
+                                    size="small"
+                                    type="primary"
+                                    @click="viewDetail(scope.$index, scope.row)">查看凭证详情</el-button>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </div>
+                <el-pagination
+                    small
+                    class="right"
+                    style="margin-top: 20px;"
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :current-page="currentPage"
+                    :page-sizes="[10, 20, 30, 40]"
+                    :page-size="pagesize"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    :total="totalCount">
+                </el-pagination>
+                <a href="javascript:void(0)" class="export_excle" @click="exportTableData">导出excle</a>
+            </div>
+
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {queryRangeChanged,queryFinanceRecord,queryRangeCondition} from '@/api/getData'
+    import {mapActions, mapState} from 'vuex'
+    import {formatDate} from '../utils/date.js'
+    import {stutasFormat,accountFormat,flowTypeFormat,mydateFormat} from '../utils/dataFormater.js'
+    import {userInfo,getStore,setStore} from  '../config/mUtils'
+    import {export_json_to_excel} from '../vendor/Export2Excel.js'
+
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+//              1为档口、2为卖家身份
+                identity:1,
+
+                input2: '',
+                dateRange:'',
+                warningalue:true,
+                pickerOptions2: {
+                    shortcuts: [{
+                        text: '最近一周',
+                        onClick(picker) {
+                            const end = new Date();
+                            const start = new Date();
+                            start.setTime(start.getTime() - 3600 * 1000 * 24 * 7);
+                            picker.$emit('pick', [start, end]);
+                        }
+                    }, {
+                        text: '最近一个月',
+                        onClick(picker) {
+                            const end = new Date();
+                            const start = new Date();
+                            start.setTime(start.getTime() - 3600 * 1000 * 24 * 30);
+                            picker.$emit('pick', [start, end]);
+                        }
+                    }, {
+                        text: '最近三个月',
+                        onClick(picker) {
+                            const end = new Date();
+                            const start = new Date();
+                            start.setTime(start.getTime() - 3600 * 1000 * 24 * 90);
+                            picker.$emit('pick', [start, end]);
+                        }
+                    }]
+                },
+
+                //默认每页数据量
+                pagesize: 8,
+
+                //默认高亮行数据id
+                highlightId: -1,
+
+                //当前页码
+                currentPage: 1,
+
+                //查询的页码
+                start: 1,
+
+                //默认数据总数
+                totalCount: 0,
+
+                platformAccountVO: {
+                    name: '',
+                    blance: '',
+                    freezed: '',
+                    companyId: '',
+                    status: '',
+                    balanceNotice:'',
+                    threshold: '',
+                    goldBalance:'',
+                    financeAccounts:[]
+
+                },
+                criteria:'',
+                changedFee :{
+                    inFee:'',
+                    outFee:''
+                },
+
+                financeAccount:{
+                    "accType":"",
+                    "blance":0,
+                    "defaultAcc":false,
+                    "id":"",
+                    "platformAccountId":"",
+                    "status":0
+                },
+                options: [{
+                    value: '选项1',
+                    label: '支付宝明细'
+                }, {
+                    value: '选项2',
+                    label: '微信明细'
+                }, {
+                    value: '选项3',
+                    label: '网银明细'
+                }],
+                value: '选项1',
+
+                tableData: [],
+                value: ''
+            }
+        },
+        mounted(){
+            this.loadData2();
+
+            const s = document.createElement('script');
+			s.type = 'text/javascript';
+			s.src = 'http://oss.sheetjs.com/js-xlsx/xlsx.full.min.js';
+			document.body.appendChild(s);
+        },
+
+        computed: {
+            financeAccounts: function () {
+                if(financeAccounts.length()>0){
+
+                }
+            }
+        },
+        methods: {
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+            },
+            handleIconClick(ev) {
+                let start='',end='';
+                if(this.dateRange!=''){
+                    start = formatDate(this.dateRange[0],'yyyy-MM-dd hh:mm');
+                    end = formatDate(this.dateRange[1],'yyyy-MM-dd hh:mm');
+                }
+
+                let  param = {
+                    "companyId":userInfo().companyId,
+                    "accountType":"2",
+                    "params": this.criteria,
+
+                    "pageSize": this.pagesize,
+                    "pageIndex": this.currentPage,
+                    "start":start,
+                    "end":end
+                };
+                this.loadDataWithCondition(param);
+
+            },
+            ...mapActions(['queryRangeChanged']),
+
+            async loadData2() {
+
+
+                let  param = {
+                    "companyId":userInfo().companyId,
+                    "accountType":"2",
+                    "pageSize": this.pagesize,
+                    "pageIndex": this.currentPage,
+
+                };
+
+                const res = await queryRangeCondition(param);
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: '加载数据成功'
+                    });
+
+                    this.tableData = res.result.results;
+                    this.totalCount = res.result.totalCount;
+                    this.changedFee= res.result.groupData;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+            async loadDataWithCondition(param) {
+
+                const res = await queryRangeCondition(param);
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: '加载数据成功'
+                    });
+
+                    this.tableData = res.result.results;
+                    this.totalCount = res.result.totalCount;
+                    this.changedFee= res.result.groupData;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+
+
+            viewDetail: function(index, row) {
+                setStore("financeRecordId",row.id)
+
+                this.$router.push("financialManagementDetail")
+            },
+
+
+			async exportTableData() {
+            	let start='',end='';
+                if(this.dateRange!=''){
+                    start = formatDate(this.dateRange[0],'yyyy-MM-dd hh:mm');
+                    end = formatDate(this.dateRange[1],'yyyy-MM-dd hh:mm');
+                }
+
+                let  param = {
+                    "companyId":userInfo().companyId,
+                    "accountType":"2",
+                    "params": this.criteria,
+                    "pageSize": this.pagesize,
+                    "pageIndex": this.currentPage,
+                    "start":start,
+                    "end":end
+                };
+                const res = await queryRangeCondition(param);
+                const list = [];
+                if (res.isSuccess == true) {
+                	for(let i=0;i<res.result.results.length;i++){
+						let data1 = res.result.results[i];
+						let flowNo = '';
+						let createTime = '';
+						let recordType = '';
+						let accountType = '';
+						let changeFee = 0;
+						let freezed = 0;
+						let status = '';
+						let memo = '';
+
+						if(data1.flowNo){
+							flowNo = data1.flowNo;
+						}
+						if(data1.createTime){
+							var date2 = new Date(data1.createTime);
+		                	createTime = formatDate(date2,'yyyy-MM-dd hh:mm');
+						}
+
+						if(data1.recordType && data1.recordType =='1'){
+					        recordType = '充值';
+					    }else if(data1.recordType && data1.recordType=='2'){
+					        recordType = '提现'
+					    }else if(data1.recordType && data1.recordType=='3'){
+					        recordType = '转账'
+					    }else{
+					        recordType = '其他'
+					    }
+
+					    if(data1.accountType && data1.accountType =='1'){
+					        accountType = '账户余额';
+					    }else if(data1.accountType && data1.accountType =='2'){
+					        accountType = '金币'
+					    }else if(data1.accountType && data1.accountType =='3'){
+					        accountType = '支付宝'
+					    }else if(data1.accountType && data1.accountType =='4'){
+					        accountType = '微信'
+					    }else if(data1.accountType && data1.accountType =='5'){
+					        accountType = '银行卡'
+					    }
+
+					    if(data1.changeFee){
+					    	changeFee = data1.changeFee;
+					    }
+					    if(data1.freezed){
+					    	freezed = data1.freezed;
+					    }
+
+					    if(data1.stutas && data1.stutas =='1'){
+					        status = '待审核';
+					    }else if(data1.stutas && data1.stutas =='2'){
+					        status = '审核中'
+					    }else if(data1.stutas && data1.stutas =='3'){
+					        status = '已完成'
+					    }
+					    if(data1.memo){
+					    	memo = data1.memo;
+					    }
+
+						let row = {
+		            		flowNo : flowNo,
+							createTime : createTime,
+							recordType : recordType,
+							accountType : accountType,
+							changeFee : changeFee,
+							freezed : freezed,
+							status : status,
+							memo : memo
+		            	}
+		            	list.push(row);
+                	}
+                	const tHeader = ['流水', '日期','类型名称','交易账户','金额变化','冻结金额','状态','描述'];
+			　　　　const filterVal = ['flowNo', 'createTime','recordType','accountType','changeFee','freezed','status','memo'];
+			　　　　const data = this.formatJson(filterVal, list);
+			　　　　export_json_to_excel(tHeader, data, '金币交易记录表');
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            formatJson(filterVal, jsonData) {
+	　　　　　　return jsonData.map(v => filterVal.map(j => v[j]))
+	　　　　},
+
+
+          //  stutasFormat,accountFormat,flowTypeFormat,mydateFormat
+            accountFormat,
+            stutasFormat,
+            flowTypeFormat,
+            mydateFormat
+
+        }
+
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/financialManagement';
+</style>

@@ -1,0 +1,254 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('currentInventory')">
+                <router-link :to='{path:"/currentInventory"}'>当前库存</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('inventoryDetail')">
+                <router-link :to='{path:"/inventoryDetail"}'>库存变动</router-link>
+            </li>
+            <li class="menuIndex" v-if="getMenuAuthFun('stocktaking')">
+                <router-link :to='{path:"/stocktaking"}'>库存盘点</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('stockTransshipment')">
+                <router-link :to='{path:"/stockTransshipment"}'>库存调拨</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('inventoryWarning')">
+                <router-link :to='{path:"/inventoryWarning"}'>库存预警</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('storeManagement')">
+                <router-link :to='{path:"/storeManagement"}'>多仓管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('inventoryInitialize')">
+                <router-link :to='{path:"/inventoryInitialize"}'>库存初始化</router-link>
+            </li>
+        </ul>
+        <div class="stocktaking">
+            <el-date-picker
+                class="left"
+                v-model="selectedDate"
+                @change="handleIconClick"
+				format="yyyy-MM"
+				value-format="yyyy-MM"
+                placeholder="选择月份"
+                type="month">
+            </el-date-picker>
+            <div class="right">
+                <router-link :to='{path:"/stocktaking"}' class="comeBack">返回</router-link>
+            </div>
+            <div class="flex2 diffDate" style="width:100%;">
+                盘点差异表
+            </div>
+            <div class="diffBumber flex2">
+                <p>差异总数 <span>{{totalDiff}}件</span></p>
+                <p>差异总金额 <span>￥{{totalSum}}</span>元</p>
+            </div>
+            <div class="stocktakingTable">
+                <el-table
+                    :data="tableData"
+                    style="width: 100%">
+                    <el-table-column
+                        width="250"
+                        label="主图/货号">
+                        <template scope="scope">
+                            <div class="flex" style="padding: 3px;">
+                            	<img v-if="scope.row.imgUrl_main != ''" :src="scope.row.imgUrl_main" alt="">
+                                <img v-else src="../image/product_default.png" alt="">
+                                <p>{{scope.row.productCode}}</p>
+                            </div>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="title"
+                        width="270"
+                        label="商品名称">
+                    </el-table-column>
+                    <el-table-column
+                        prop="stockNum"
+                        label="盘点前数量">
+						 <template scope="scope">
+                            {{scope.row.checkActualNum-scope.row.diffNum}}
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="checkActualNum"
+                        label="盘点数量">
+                    </el-table-column>
+                    <el-table-column
+                        prop="diffNum"
+                        label="差异总数">
+                    </el-table-column>
+                    <el-table-column
+                        prop="price"
+                        label="差异总金额">
+						<template scope="scope">
+                            {{scope.row.price?scope.row.price.toFixed(2):0.00.toFixed(2)}}
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+            <el-pagination
+                small
+                class="right"
+                style="margin-top: 20px;"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :page-sizes="[10, 20, 30, 40,50]"
+                :current-page="currentPage"
+                :page-size="pageSize"
+                layout="total,sizes, prev, pager, next, jumper"
+                :total="totalCount">
+            </el-pagination>
+            <a href="javascript:void(0)" @click="exportData" class="export_excle">导出excel</a>
+            <div style="height:160px;">
+                &nbsp;
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {queryLastCheckedDiff} from '@/api/getData'
+    import {userInfo,getStore} from  '../config/mUtils'
+	import {getMenuAuth,haveMenuAuth} from  '../utils/AuthMenu.js'
+	import {export_json_to_excel} from '../vendor/Export2Excel.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                currentPage:1,
+                pageSize:10,
+                selectedDate:'',
+                tableData:[],
+                totalCount:0,
+                totalSum:0,
+                totalDiff:0,
+                date:''
+            }
+
+        },
+        mounted(){
+            let curDate = new Date();
+            this.selectedDate =   curDate.getFullYear()+"-"+(curDate.getMonth()+1)
+			this.date = this.selectedDate;
+            this.loadData();
+        },
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            handleSizeChange(val) {
+                this.pageSize = val;
+                this.loadData();
+            },
+            handleCurrentChange(val) {
+                this.currentPage = val;
+                this.loadData();
+            },
+            handleIconClick(val){
+
+                this.date = val;
+	
+                this.loadData();
+            },
+            async loadData() {
+                let param = {
+                    "companyId":userInfo().companyId,
+                    "pageIndex":this.currentPage,
+                    "pageSize":this.pageSize,
+                    "date":this.date,
+                    "withTotal":true
+                }
+                const res = await queryLastCheckedDiff(param);
+                if (res.isSuccess == true) {
+                    this.tableData = res.result.results;
+                    this.totalCount = res.result.totalCount;
+                    if(param.withTotal){
+                        this.totalSum = res.result.groupData.price;
+                        this.totalDiff = res.result.groupData.diffNum;
+                    }
+                    this.$message({
+                        type: 'success',
+                        message: '数据加载成功！'
+                    });
+
+                }else{
+                    this.tableData=[]
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            
+            //导出文档
+			async exportData() {
+			   let param = {
+                    "companyId":userInfo().companyId,
+                    "pageIndex":1,
+                    "pageSize":this.totalCount,
+                    "date":this.date,
+                    "withTotal":true
+                }
+                const res = await queryLastCheckedDiff(param);
+                if (res.isSuccess == true) {
+                	const list = [];
+                	res.result.results.forEach(obj => {
+                		let productCode = '';
+                		let title = '';
+                		let stockNum = '0';
+                		let checkActualNum = '0';
+                		let diffNum = '0';
+                		let price = '0';
+                		let memo = '';
+                		if(obj.productCode){
+                			productCode = obj.productCode;
+                		}
+                		if(obj.title){
+                			title = obj.title;
+                		}
+                		if(obj.checkActualNum){
+                			stockNum = obj.checkActualNum;
+                			checkActualNum = obj.checkActualNum;
+                		}
+                		if(obj.diffNum){
+                			stockNum -= obj.diffNum;
+                			diffNum = obj.diffNum;
+                		}
+                		if(obj.price){
+                			price = obj.price;
+                		}
+                		let row = {
+                			productCode : productCode,
+                			title : title,
+                			stockNum : stockNum,
+                			checkActualNum : checkActualNum,
+                			diffNum : diffNum,
+                			price : price
+                		}
+                		list.push(row);
+                	});
+                    const tHeader = ['商品货号', '商品名称','盘点前数量','盘点数量','差异总数','差异总金额'];
+			　　　　const filterVal = ['productCode', 'title','stockNum','checkActualNum','diffNum','price'];
+			　　　　const data = this.formatJson(filterVal, list);
+			　　　　export_json_to_excel(tHeader, data, '库存盘点差异表');
+                }
+            },
+            
+            formatJson(filterVal, jsonData) {
+		　　　　　　return jsonData.map(v => filterVal.map(j => v[j]));
+		　　　},
+        },
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/stocktaking';
+</style>

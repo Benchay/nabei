@@ -1,0 +1,146 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/currentInventory"}'>当前库存</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/inventoryDetail"}'>库存变动</router-link>
+            </li>
+            <li class="menuIndex">
+                <router-link :to='{path:"/stocktaking"}'>库存盘点</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/stockTransshipment"}'>库存调拨</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/inventoryWarning"}'>库存预警</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/storeManagement"}'>多仓管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/inventoryInitialize"}'>库存初始化</router-link>
+            </li>
+        </ul>
+        <div class="stocktaking">
+            <el-date-picker
+                class="left"
+                v-model="value4"
+                placeholder="选择月份"
+                type="month">
+            </el-date-picker>
+            <div class="right">
+                <router-link :to='{path:"/stocktaking"}' class="comeBack">返回</router-link>
+            </div>
+            <div class="flex2 diffDate" style="width:100%;">
+                盘点差异表
+            </div>
+            <div class="diffBumber flex2">
+                <p>差异数 <span>-100件</span></p>
+                <p>差异金额 <span>￥100.00</span>元</p>
+            </div>
+            <div class="stocktakingTable">
+                <el-table
+                    :data="tableData2"
+                    style="width: 100%">
+                    <el-table-column
+                        label="主图/货号">
+                        <template scope="scope">
+                            <div class="flex2">
+                                <img src="../image/111.png" alt="">
+                                <p></p>
+                            </div>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="productName"
+                        label="商品名称">
+                    </el-table-column>
+                    <el-table-column
+                        prop="supplier"
+                        label="当前库存">
+                    </el-table-column>
+                    <el-table-column
+                        prop="supplier"
+                        label="盘点数量">
+                    </el-table-column>
+                    <el-table-column
+                        prop="supplier"
+                        label="差异总数">
+                    </el-table-column>
+                    <el-table-column
+                        prop="stockNum"
+                        label="差异总金额">
+                    </el-table-column>
+                </el-table>
+            </div>
+            <el-pagination
+                small
+                class="right"
+                style="margin-top: 20px;"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :current-page="currentPage"
+                :page-sizes="[10, 20, 30, 40]"
+                :page-size="pagesize"
+                layout="total, sizes, prev, pager, next, jumper"
+                :total="totalCount">
+            </el-pagination>
+            <a href="javascript:void(0)" class="export_excle">导出excel</a>
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                currentPage:5,
+                pagesize:4,
+                value4:'',
+                tableData2:[
+                    {
+                        productName:'商品名称名称名称',
+                        color:'白色',
+                        size:'L',
+                        productCode:'YF1001',
+                        supplier:123,
+                        stockNum:5000,
+                        name:'刘小无',
+                        diffNum:-10,
+                    },
+                    {
+                        productName:'商品名称名称名称',
+                        color:'白色',
+                        size:'L',
+                        productCode:'YF1001',
+                        supplier:123,
+                        stockNum:5000,
+                        name:'刘小无',
+                        diffNum:-10,
+                    }
+                ]
+            }
+        },
+        methods: {
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+            },
+        },
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/stocktaking';
+</style>

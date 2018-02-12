@@ -1,0 +1,259 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('stallProcurement')">
+                <router-link :to='{path:"/stallProcurement"}'>采购入库</router-link>
+            </li>
+            <li class="menuIndex" v-if="getMenuAuthFun('stallPurchase')">
+                <router-link :to='{path:"/stallPurchase"}'>采购退货</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('supplierManagement')">
+                <router-link :to='{path:"/supplierManagement"}'>供应商管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('purchaseStatistics')">
+                <router-link :to='{path:"/purchaseStatistics"}'>采购统计</router-link>
+            </li>
+        </ul>
+        <div class="stallProcurement">
+            <div style="height: 30px;">
+                <router-link :to='{path:"/stallPurchase"}' class="comeBack right">返回</router-link>
+            </div>
+            <div class="stallTable">
+                <div class="tableTop">
+                    <div class="flex left">
+                        <div>供应商：{{stockOrder.otherSideCompanyName}}</div>
+                        <div>提交人：{{stockOrder.createUserName}}</div>
+                        <div>总数量：{{stockOrder.orderNum}}</div>
+                        <div>总成本：{{totalPrice}}</div>
+                    </div>
+                </div>
+                <el-table
+                    :data="stockOrder.details"
+                     @selection-change="handleSelectionChange"
+                    style="width: 100%">
+                    <el-table-column
+                        type="selection"
+                        width="55">
+                    </el-table-column>
+                    <el-table-column
+                        label="主图/货号">
+                        <template scope="scope">
+                            <div class="flex" style="padding: 3px;">
+                            	<img v-if="scope.row.imgUrl_main != ''" :src="scope.row.imgUrl_main" alt="">
+                                <img v-else src="../image/product_default.png" alt="">
+                                <p>{{scope.row.productCode}}</p>
+                            </div>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="colour"
+                        label="颜色">
+                    </el-table-column>
+                    <el-table-column
+                        prop="size"
+                        label="尺码">
+                    </el-table-column>
+                    <el-table-column
+                        prop="orderNum"
+                        label="采购数量">
+                    </el-table-column>
+                    <el-table-column
+                    	prop="price"
+                        label="采购成本/元"
+                        :formatter="priceFormat">
+                    </el-table-column>
+
+                </el-table>
+            </div>
+            <div class="date">
+                <p>创建时间：{{stockOrder.createTime}}</p>
+                <!--根据状态显示-->
+                <p v-if="state == 1 ">签收时间：{{stockOrder.updateTime}}</p>
+                <!---->
+            </div>
+            <a href="javascript:void(0)" @click="exportData" class="export_excle">导出excel</a>
+            <div style="height: 160px;">
+                &nbsp;
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    import {loadStockOrder,saveStockOrder} from '@/api/getData'
+    import {userInfo,getStore,setStore} from  '../config/mUtils'
+    import {formatDate} from '../utils/date.js'
+    import {getMenuAuth,haveMenuAuth} from  '../utils/AuthMenu.js'
+    import {export_json_to_excel} from '../vendor/Export2Excel.js'
+
+
+    export default {
+        components: {
+
+        },
+        data() {
+            return {
+                state:2,
+                value6: '',
+               stockOrder:{
+                    detail:[]
+               },
+               totalPrice:0,
+                createTime:'',
+                updateTime:'',
+                //多选数组
+                multipleSelection: [],
+                //当前页码
+                currentPage: 1,
+
+                pagesize:10,
+
+                //默认数据总数
+                totalCount: 0,
+            }
+        },
+
+        watch: {
+            '$route': function (route) {
+                this.param = this.$route.query.param;
+                this.loadData(this.param);
+
+            }
+        },
+        mounted(){
+            this.param = this.$route.query.param;
+            this.loadData(this.param);
+        },
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+            },
+            handleIconClick(ev) {
+                console.log(ev);
+            },
+            async loadData(param) {
+                //  /api/queryStockOrderDetail?companyId=1000&warehouseId=W001&orderType=2,3&pageIndex=1&pageSize=10
+                if(param == undefined || param == ''){
+                	return;
+                }
+                let  requestParam = {
+                    "stockOrderId":param
+                };
+                this.totalPrice = 0;
+                const res = await loadStockOrder(requestParam);
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: '加载数据成功'
+                    });
+                    this.stockOrder = res.result;
+                    this.stockOrder.details.forEach((obj) => {
+                    	if(obj.orderNum && obj.price){
+                    		this.totalPrice = this.totalPrice + obj.orderNum*obj.price;
+                    	}
+                    });
+                    this.totalPrice = this.totalPrice.toFixed(2);
+                    this.stockOrder.createTime = formatDate(this.stockOrder.createTime,'yyyy-MM-dd hh:mm');
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            //多选响应
+            handleSelectionChange: function(val) {
+                this.multipleSelection = val;
+            },
+            async  signIn(status){
+                if(this.multipleSelection.length==0){
+                    this.$message({type:'error', message:'您没有选择商品!'});
+                    return ;
+                }
+                this.stockOrder.details = this.multipleSelection;
+                this.stockOrder.status=status;
+                this.$confirm('确认签收吗？')
+                    .then(_ => {
+                        this.saveStockOrder(this.stockOrder);
+                    })
+                    .catch(_ => {});
+            },
+
+            async saveStockOrder(stockOrder){
+                const res = await saveStockOrder(stockOrder);
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: '签收成功!'
+                    });
+                    this.param = this.$route.query.param;
+                    this.loadData(this.param);
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+            priceFormat:function(row, column) {
+			    let price = row.price;
+			    let orderNum = row.orderNum;
+			    if(price && orderNum){
+			    	let totalPrice = price*orderNum;
+			    	return totalPrice.toFixed(2);
+			    }
+			    return 0;
+			},
+
+			async exportData(){
+            	let params = {
+        			stockOrderId:this.param
+        		}
+
+                const res = await loadStockOrder(params);
+            	if (res.isSuccess == true) {
+                    const tHeader = ['货号', '颜色','尺码','采购数量','采购成本/元'];
+			　　　    const filterVal = ['productCode', 'colour','size','orderNum','price'];
+			　　　    const list = [];
+					res.result.details.forEach(obj => {
+						let price = '';
+						if(obj.price){
+							let totalPrice = obj.price*obj.orderNum;
+							price = totalPrice.toFixed(2);
+						}
+						let row = {
+							productCode:obj.productCode,
+							colour:obj.colour,
+							size:obj.size,
+							orderNum:obj.orderNum,
+							price:price
+						}
+						list.push(row);
+					});
+			　　　   const data = this.formatJson(filterVal, list);
+			　　　   export_json_to_excel(tHeader, data, '采购退货详情数据');
+                }
+
+
+          },
+
+          formatJson(filterVal, jsonData) {
+		　　　　　　return jsonData.map(v => filterVal.map(j => v[j]));
+		　　　},
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/stallProcurement';
+</style>

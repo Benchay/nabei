@@ -1,0 +1,84 @@
+import {getLodop}   from '../Lodop/LodopFuncs.js'
+import {formatDate} from '../utils/date.js'
+
+
+ //SET_PRINT_STYLE:设置纯文本打印项风格,格式：SET_PRINT_STYLE(strStyleName,varStyleValue)。
+        //strStyleName：打印风格名，设定纯文本风格名称及其含义如下：|varStyleValue：打印风格值，相关值如下：
+        //“FontName”： 字体名称。|值： 字符型，与操作系统字体名一致，缺省是“宋体”。
+        //“FontSize”： 字体大小。|值：数值型，单位是pt，缺省值是9，可以含小数，如13.5。
+        //“FontColor”： 字体颜色。|值：整数或字符型，如同CSS的color。
+        //“Bold”： 是否粗体。|值：数字型，1代表粗体，0代表非粗体，缺省值是0。
+        //“Italic”： 是否斜体。|值：数字型，1代表斜体，0代表非斜体，缺省值是0。
+        //“Underline”： 是否下滑线。|值：数字型，1代表有下划线，0代表无下划线，缺省值是0。
+        //“Alignment”： 内容左右靠齐方式。|值：数字型，1--左靠齐 2--居中 3--右靠齐，缺省值是1。
+        //“Angle”： 旋转角度。|值：数字型，逆时针旋转角度数，单位是度，0度表示不旋转
+
+
+export  function printOrderInfo(orderInfo,orderDetail,stall){
+    var lodopResult = getLodop();
+    if(lodopResult.code == 0){
+        return lodopResult;
+    }
+    LODOP = lodopResult.lodop;
+    var tr = '';
+    LODOP.PRINT_INITA(0,0,800,716,"打印预览");
+    LODOP.SET_PRINT_MODE("PROGRAM_CONTENT_BYVAR",true);
+    //LODOP.ADD_PRINT_CHART(227,1026,604,185,1,"");
+    LODOP.SET_PRINT_STYLEA(0,"FontSize",8);
+    //LODOP.ADD_PRINT_TABLE(199,29,300,800,"\r\n<table>\r\n" + tr + "</table>");
+    LODOP.ADD_PRINT_TEXT(22,80,162,26,orderInfo.companyName);
+    LODOP.SET_PRINT_STYLEA(0,"FontSize",11);
+    LODOP.SET_PRINT_STYLEA(0,"Alignment",2);
+    LODOP.ADD_PRINT_TEXT(55,33,69,20,"档口编码：");
+    LODOP.ADD_PRINT_TEXT(79,33,55,20,"客户：");
+    LODOP.ADD_PRINT_TEXT(102,33,74,20,"出货单号：");
+    LODOP.ADD_PRINT_TEXT(55,104,189,20,stall.serialNub);
+    LODOP.ADD_PRINT_TEXT(79,89,206,20,orderInfo.busiCompanyName);
+    LODOP.ADD_PRINT_TEXT(102,89,188,20,orderInfo.orderCode);
+    LODOP.ADD_PRINT_TEXT(127,31,267,20,"*******************************************");
+    LODOP.ADD_PRINT_TEXT(174,30,271,20,"===========================================");
+    LODOP.ADD_PRINT_TEXT(149,32,79,20,"商品货号");
+    LODOP.SET_PRINT_STYLEA(0,"Alignment",2);
+    LODOP.ADD_PRINT_TEXT(149,111,59,20,"单价");
+    LODOP.SET_PRINT_STYLEA(0,"Alignment",2);
+    LODOP.ADD_PRINT_TEXT(150,171,49,20,"数量");
+    LODOP.SET_PRINT_STYLEA(0,"Alignment",2);
+    LODOP.ADD_PRINT_TEXT(150,222,75,20,"金额");
+    LODOP.SET_PRINT_STYLEA(0,"Alignment",2);
+    //
+    var i=0;
+    orderDetail.forEach((obj)=>{
+        var moveV=i*20;
+        var moveH=0;
+        LODOP.ADD_PRINT_TEXT(190 + moveV,32,300,20,(i+1)+"."+obj.productCode + "("+obj.color+";" +obj.size+")");
+        moveH+=300;
+        //LODOP.ADD_PRINT_TEXT(190 + moveV,32 + moveH,100,20,obj.price );
+        LODOP.ADD_PRINT_TEXT(190,150,100,20,obj.unitPrice );
+        LODOP.ADD_PRINT_TEXT(190,180,100,20,"X" );
+        LODOP.ADD_PRINT_TEXT(190,200,100,20,obj.orderNum );
+        LODOP.ADD_PRINT_TEXT(190,250,100,20,obj.totalFee );
+        i++;
+    });
+    LODOP.ADD_PRINT_TEXT(326,33,277,20,"============================================");
+    LODOP.ADD_PRINT_TEXT(350,35,64,20,"总数量：");
+    LODOP.ADD_PRINT_TEXT(350,181,59,20,"总金额：");
+    LODOP.ADD_PRINT_TEXT(350,98,58,20,orderInfo.totalNum);
+    LODOP.ADD_PRINT_TEXT(352,242,70,20,orderInfo.totalFee);
+    LODOP.ADD_PRINT_TEXT(373,31,282,20,"*********************************************");
+    LODOP.ADD_PRINT_TEXT(396,31,58,20,"时间：");
+    LODOP.ADD_PRINT_TEXT(416,32,70,20,"联系电话：");
+    LODOP.ADD_PRINT_TEXT(437,32,75,20,"档口地址：");
+    LODOP.ADD_PRINT_TEXT(396,89,223,20,formatDate(orderInfo.createTime,'yyyy-MM-dd hh:mm:ss'));
+    LODOP.ADD_PRINT_TEXT(417,103,211,20,stall.linkTel);
+    LODOP.ADD_PRINT_TEXT(437,107,205,20,stall.location);
+    LODOP.ADD_PRINT_TEXT(461,30,284,20,"*********************************************");
+    LODOP.ADD_PRINT_TEXT(478,87,161,20,"扫一扫二维码查看订单详情");
+    LODOP.ADD_PRINT_TEXT(632,86,169,20,"欢迎您光临！请保留好小票！");
+    LODOP.ADD_PRINT_BARCODE(498,88,150,131,"QRCode","hmj_stall_order_shop" +orderInfo.id);//打印二维码
+    LODOP.ADD_PRINT_TEXT(651,117,100,20,"谢谢您的惠顾！");
+    LODOP.ADD_PRINT_RECT(7,7,331,681,0,1);
+    LODOP.PREVIEW();
+}
+
+
+

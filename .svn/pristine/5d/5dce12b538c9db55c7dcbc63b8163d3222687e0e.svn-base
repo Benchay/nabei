@@ -1,0 +1,104 @@
+<template>
+    <div class="fillcontain">
+        <div class="stallIntroduction">
+            <el-carousel trigger="click" class="stallCarousel" indicator-position="outside" arrow="always" :autoplay="false">
+                <el-carousel-item class="stallList">
+                    <div class="listText">
+                        <p>一、菜单栏介绍</p>
+                        <p class="text2">左侧显示主菜单列表，顶部显示二级菜单，方便快捷，提供一站式服务</p>
+                    </div>
+                    <div class="listImg">
+                        <img src="../image/xinshou.png" alt="">
+                    </div>
+                </el-carousel-item>
+                <el-carousel-item class="stallList">
+                    <div class="listText">
+                        <p>二、采购流程</p>
+                        <p class="text2">1、【采购管理】 卖家可进行商品采购，采购方式包括两种：</p>
+                        <p class="text2">(1)需求较小的卖家，可先绑定店铺，同步网店订单后针对性转换成采购需求，向对应档口进行商品采购。</p>
+                        <p class="text2">(2)需求较大的卖家，可同步聚水潭采购商品数据，转换成采购需求，向对应档口进行商品采购。</p>
+
+                    </div>
+                    <div class="listImg">
+                        <img src="../image/xinshou.png" alt="">
+                    </div>
+                </el-carousel-item>
+                <el-carousel-item class="stallList">
+                    <div class="listText">
+                        <p>二、采购流程</p>
+                        <p class="text2">2、成功绑定店铺后，同步订单-转换成采购需求。</p>
+                    </div>
+                    <div class="listImg">
+                        <img src="../image/xinshou.png" alt="">
+                    </div>
+                </el-carousel-item>
+                <el-carousel-item class="stallList">
+                    <div class="listText">
+                        <p>二、采购流程</p>
+                        <p class="text2">3、采购需求中，未匹配到档口的商品用户可以修改商品对应的档口信息，以便档口确认。</p>
+                    </div>
+                    <div class="listImg">
+                        <img src="../image/xinshou.png" alt="">
+                    </div>
+                </el-carousel-item>
+                <el-carousel-item class="stallList">
+                    <div class="listText">
+                        <p>三、商品管理</p>
+                        <p class="text2">【商品管理】 添加新商品，同一个商品的不同货号可以设置关联。</p>
+                    </div>
+                    <div class="listImg">
+                        <img src="../image/xinshou.png" alt="">
+                    </div>
+                </el-carousel-item>
+                <el-carousel-item class="stallList">
+                    <div class="listText">
+                        <p>四、财务初始化</p>
+                        <p class="text2">1、【财务管理】绑定财务账户，可以选择：支付宝、微信、银行卡三种方式。</p>
+                    </div>
+                    <div class="listImg">
+                        <img src="../image/xinshou.png" alt="">
+                    </div>
+                </el-carousel-item>
+                <el-carousel-item class="stallList">
+                    <div class="listText">
+                        <p>四、财务初始化</p>
+                        <p class="text2">2、【财务关联】--【财务总览】 账户余额充值，确保随时有钱，用钱方便。</p>
+                    </div>
+                    <div class="listImg">
+                        <img src="../image/xinshou.png" alt="">
+                    </div>
+                </el-carousel-item>
+                <el-carousel-item class="stallList">
+                    <div class="listText">
+                        <p>四、财务初始化</p>
+                        <p class="text2">3、账户支付密码设置，交易更安全更放心。</p>
+                    </div>
+                    <div class="listImg">
+                        <img src="../image/xinshou.png" alt="">
+                    </div>
+                </el-carousel-item>
+            </el-carousel>
+        </div>
+    </div>
+</template>
+
+<script>
+
+    export default {
+        data(){
+            return{
+
+            }
+        },
+        methods: {
+
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import "../style/common";
+    @import "../style/introduction";
+
+</style>

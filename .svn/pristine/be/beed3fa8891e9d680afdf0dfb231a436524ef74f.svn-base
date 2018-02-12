@@ -1,0 +1,414 @@
+import {getLodop}   from '../Lodop/LodopFuncs.js'
+
+
+ //SET_PRINT_STYLE:设置纯文本打印项风格,格式：SET_PRINT_STYLE(strStyleName,varStyleValue)。  
+        //strStyleName：打印风格名，设定纯文本风格名称及其含义如下：|varStyleValue：打印风格值，相关值如下：  
+        //“FontName”： 字体名称。|值： 字符型，与操作系统字体名一致，缺省是“宋体”。  
+        //“FontSize”： 字体大小。|值：数值型，单位是pt，缺省值是9，可以含小数，如13.5。  
+        //“FontColor”： 字体颜色。|值：整数或字符型，如同CSS的color。  
+        //“Bold”： 是否粗体。|值：数字型，1代表粗体，0代表非粗体，缺省值是0。  
+        //“Italic”： 是否斜体。|值：数字型，1代表斜体，0代表非斜体，缺省值是0。  
+        //“Underline”： 是否下滑线。|值：数字型，1代表有下划线，0代表无下划线，缺省值是0。  
+        //“Alignment”： 内容左右靠齐方式。|值：数字型，1--左靠齐 2--居中 3--右靠齐，缺省值是1。  
+        //“Angle”： 旋转角度。|值：数字型，逆时针旋转角度数，单位是度，0度表示不旋转  
+  
+
+export function  printPreview(){
+		
+			var  codeStr = document.getElementById("preview").innerHTML;
+			
+				//console.log(document.getElementById("barCode"))
+                var lodopResult = getLodop();
+				if(lodopResult.code == 0){
+					return lodopResult;
+				}
+				this.LODOP = lodopResult.lodop;
+				
+                LODOP.PRINT_INIT('打印测试');
+				LODOP.SET_PRINT_PAGESIZE (0,'800','600',0);
+				LODOP.ADD_PRINT_HTML(0,15,800,500,codeStr);
+				LODOP.PREVIEW();
+				//LODOP.PRINT_DESIGN();
+		};
+		
+export function  printDesign(){
+			var  codeStr = document.getElementById("preview").innerHTML;
+				//console.log(document.getElementById("barCode"))
+				var lodopResult = getLodop();
+				if(lodopResult.code == 0){
+					return lodopResult;
+				}
+				this.LODOP = lodopResult.lodop;
+                LODOP.PRINT_INIT('打印测试');
+				LODOP.SET_PRINT_PAGESIZE (0,'800','500',0);
+				LODOP.ADD_PRINT_HTM(0,15,800,500,codeStr);
+				LODOP.PRINT_DESIGN();
+		};
+		
+export function  groupPrintPreviewHGZ(group){
+					var lodopResult = getLodop();
+ 					if(lodopResult.code == 0){
+ 						return lodopResult;
+ 					}
+ 					LODOP = lodopResult.lodop;
+					LODOP.PRINT_INIT('打印测试');
+					LODOP.SET_PRINT_PAGESIZE (2,'800','500',0);	
+					CreateHGZAllPages(group)
+					LODOP.PREVIEW();
+					//LODOP.SET_PRINT_MODE("PRINT_SETUP_PROGRAM",true);
+					//LODOP.PRINT_DESIGN(); 
+}
+
+export function  groupPrintHGZ(group){
+					var lodopResult = getLodop();
+ 					if(lodopResult.code == 0){
+ 						return lodopResult;
+ 					}
+ 					LODOP = lodopResult.lodop;
+					LODOP.PRINT_INIT('打印测试');
+					LODOP.SET_PRINT_PAGESIZE (2,'800','500',0);	
+					CreateHGZAllPages(group)
+					LODOP.PRINT();
+}			
+		
+export function  groupPrintPreview(group,width,height){
+					if(!width){
+						width = 600;
+						height = 400;
+					}
+ 					var lodopResult = getLodop();
+ 					if(lodopResult.code == 0){
+ 						return lodopResult;
+ 					}
+ 					LODOP = lodopResult.lodop;
+					LODOP.PRINT_INIT('打印测试');
+					LODOP.SET_PRINT_PAGESIZE (0,width,height,0);
+					if(width==600){
+						CreateAllPages_6040	(group);
+					}else{
+						CreateAllPages(group);							
+					}
+					
+							
+					LODOP.PREVIEW(); 
+					// LODOP.SET_PRINT_MODE("PRINT_SETUP_PROGRAM",true);
+					//LODOP.PRINT_DESIGN(); 
+		};	
+
+
+export function  groupPrint(group,width,height){
+				var lodopResult = getLodop();
+				if(lodopResult.code == 0){
+					return lodopResult;
+				}
+				if(!width){
+						width = 600;
+						height = 400;
+					}
+				this.LODOP = lodopResult.lodop;
+				LODOP.PRINT_INIT('打印测试');
+				LODOP.SET_PRINT_PAGESIZE (0,width,height,0);
+				if(width==600){
+						CreateAllPages_6040	(group);
+					}else{
+						CreateAllPages(group);							
+					}
+				LODOP.PRINT();
+                
+				//LODOP.PRINT_DESIGN(); 
+		};			
+		
+export function  lodopPrintPreview(title,barCode,detail,dateTime){
+				var lodopResult = getLodop();
+				if(lodopResult.code == 0){
+					return lodopResult;
+				}
+				this.LODOP = lodopResult.lodop;
+                LODOP.PRINT_INIT('打印测试');
+				LODOP.SET_PRINT_PAGESIZE (0,'800','500',0);
+				LODOP.ADD_PRINT_TEXT(10,20,500,30,title)
+				LODOP.SET_PRINT_STYLEA(0, "itemtype", 1);
+				LODOP.SET_PRINT_STYLEA(0, "fontsize", 16);
+				LODOP.SET_PRINT_STYLEA(0, "bold", 1);
+
+				LODOP.ADD_PRINT_BARCODE(50,20,300,50,"Code39",barCode); 
+
+				LODOP.ADD_PRINT_TEXT(120,20,500,30,detail)
+				LODOP.SET_PRINT_STYLEA(0, "itemtype", 1);
+				LODOP.SET_PRINT_STYLEA(0, "fontsize", 12);
+				LODOP.SET_PRINT_STYLEA(0, "bold", 1); 
+				
+				LODOP.ADD_PRINT_TEXT(150,50,500,30,dateTime)
+				LODOP.SET_PRINT_STYLEA(0, "itemtype", 1);
+				LODOP.SET_PRINT_STYLEA(0, "fontsize", 8);
+				LODOP.SET_PRINT_STYLEA(0, "bold", 1); 
+				LODOP.PREVIEW();
+				//LODOP.PRINT_DESIGN(); 
+		};
+		
+		
+export function  lodopPrintDesign(title,barCode,detail,dateTime){
+				var lodopResult = getLodop();
+				if(lodopResult.code == 0){
+					return lodopResult;
+				}
+				this.LODOP = lodopResult.lodop;
+                LODOP.PRINT_INIT('打印测试');
+				LODOP.SET_PRINT_PAGESIZE (0,'800','500',0);
+				LODOP.ADD_PRINT_TEXT(10,20,500,30,title)
+				LODOP.SET_PRINT_STYLEA(0, "itemtype", 1);
+				LODOP.SET_PRINT_STYLEA(0, "fontsize", 16);
+				LODOP.SET_PRINT_STYLEA(0, "bold", 1);
+
+				LODOP.ADD_PRINT_BARCODE(50,20,300,50,"Code39",barCode); 
+
+				LODOP.ADD_PRINT_TEXT(120,20,500,30,detail)
+				LODOP.SET_PRINT_STYLEA(0, "itemtype", 1);
+				LODOP.SET_PRINT_STYLEA(0, "fontsize", 12);
+				LODOP.SET_PRINT_STYLEA(0, "bold", 1); 
+				
+				LODOP.ADD_PRINT_TEXT(150,50,500,30,dateTime)
+				LODOP.SET_PRINT_STYLEA(0, "itemtype", 1);
+				LODOP.SET_PRINT_STYLEA(0, "fontsize", 8);
+				LODOP.SET_PRINT_STYLEA(0, "bold", 1); 
+				//LODOP.PREVIEW();
+				LODOP.PRINT_DESIGN(); 
+		};
+
+export function  barCodePreview(id){
+				var  codeStr = document.getElementById("id").innerHTML;
+				var lodopResult = getLodop();
+				if(lodopResult.code == 0){
+					return lopResult;
+				}
+				this.LODOP = lodopResult.lodop;
+                LODOP.PRINT_INIT('预览条码');
+				LODOP.SET_PRINT_PAGESIZE (0,'800','400',0);
+				LODOP.ADD_PRINT_HTM(10,15,800,400,codeStr);
+				LODOP.PREVIEW();	
+            };
+			
+export function  barCodePrint(id){
+				var  codeStr = document.getElementById("id").innerHTML;
+				var lodopResult = getLodop();
+				if(lodopResult.code == 0){
+					return lopResult;
+				}
+				this.LODOP = lodopResult.lodop;
+                LODOP.PRINT_INIT('打印条码');
+				LODOP.SET_PRINT_PAGESIZE (0,'800','400',0);
+				LODOP.ADD_PRINT_HTM(10,15,800,400,codeStr);
+				LODOP.PRINT();            
+            };	
+			
+			
+export function  barCodeDesign(id){
+				var  codeStr = document.getElementById("id").innerHTML;
+				var lodopResult = getLodop();
+				if(lodopResult.code == 0){
+					return lopResult;
+				}
+				this.LODOP = lodopResult.lodop;
+                LODOP.PRINT_INIT('预览条码');
+				LODOP.SET_PRINT_PAGESIZE (0,'800','400',0);
+				LODOP.ADD_PRINT_HTM(10,15,800,400,codeStr);
+				LODOP.PRINT_DESIGN();
+            };			
+
+
+export function  lodopBarCodePreview(id){
+				var  codeStr = document.getElementById("id").innerHTML;
+				var lodopResult = getLodop();
+				if(lodopResult.code == 0){
+					return lopResult;
+				}
+				this.LODOP = lodopResult.lodop;
+                LODOP.PRINT_INIT('预览条码');
+				LODOP.SET_PRINT_PAGESIZE (0,'800','400',0);
+				LODOP.ADD_PRINT_TEXT(10,40,500,50,"胖胖哥&文艺男")
+				LODOP.SET_PRINT_STYLEA(0, "itemtype", 1);
+				LODOP.SET_PRINT_STYLEA(0, "fontsize", 16);
+				LODOP.SET_PRINT_STYLEA(0, "bold", 1);
+				LODOP.ADD_PRINT_BARCODE(50,30,500,100,"EAN128A","DSA095-GT03-HEI-2XL"); 
+				LODOP.ADD_PRINT_TEXT(160,40,500,100,"规格:黑色；2XL")
+				LODOP.SET_PRINT_STYLEA(0, "itemtype", 1);
+				LODOP.SET_PRINT_STYLEA(0, "fontsize", 15);
+				LODOP.SET_PRINT_STYLEA(0, "bold", 1);
+				LODOP.PREVIEW();	
+            };
+			
+export function  lodopBarCodePrint(id){
+				var  codeStr = document.getElementById("id").innerHTML;
+				var lodopResult = getLodop();
+				if(lodopResult.code == 0){
+					return lopResult;
+				}
+				this.LODOP = lodopResult.lodop;
+                LODOP.PRINT_INIT('打印条码');
+				LODOP.SET_PRINT_PAGESIZE (0,'800','400',0);
+				LODOP.ADD_PRINT_TEXT(10,40,500,50,"胖胖哥&文艺男")
+				LODOP.SET_PRINT_STYLEA(0, "itemtype", 1);
+				LODOP.SET_PRINT_STYLEA(0, "fontsize", 16);
+				LODOP.SET_PRINT_STYLEA(0, "bold", 1);
+				LODOP.ADD_PRINT_BARCODE(50,30,500,100,"EAN128A","DSA095-GT03-HEI-2XL"); 
+				LODOP.ADD_PRINT_TEXT(160,40,500,100,"规格:黑色；2XL")
+				LODOP.SET_PRINT_STYLEA(0, "itemtype", 1);
+				LODOP.SET_PRINT_STYLEA(0, "fontsize", 15);
+				LODOP.SET_PRINT_STYLEA(0, "bold", 1);
+				LODOP.PRINT();            
+            };	
+			
+
+
+	function prn2_setup() {		
+					LODOP.PRINT_INIT('打印测试');
+					LODOP.SET_PRINT_PAGESIZE (0,'800','500',0);
+					CreateOnePages();					
+					
+		LODOP.SET_PRINT_MODE("PRINT_SETUP_PROGRAM",true);
+		LODOP.PRINT_DESIGN();
+		CLODOP.On_Return=function(TaskID,Value){alert(Value)};
+		
+	};		
+
+			
+export function  lodopBarCodeDesign(id){
+				var  codeStr = document.getElementById("id").innerHTML;
+				var lodopResult = getLodop();
+				if(lodopResult.code == 0){
+					return lopResult;
+				}
+				this.LODOP = lodopResult.lodop;
+                LODOP.PRINT_INIT('预览条码');
+				LODOP.SET_PRINT_PAGESIZE (0,'800','400',0);
+				LODOP.ADD_PRINT_TEXT(10,40,500,50,"胖胖哥&文艺男")
+				LODOP.SET_PRINT_STYLEA(0, "itemtype", 1);
+				LODOP.SET_PRINT_STYLEA(0, "fontsize", 16);
+				LODOP.SET_PRINT_STYLEA(0, "bold", 1);
+				LODOP.ADD_PRINT_BARCODE(50,30,500,100,"EAN128A","DSA095-GT03-HEI-2XL"); 
+				LODOP.ADD_PRINT_TEXT(160,40,500,100,"规格:黑色；2XL")
+				LODOP.SET_PRINT_STYLEA(0, "itemtype", 1);
+				LODOP.SET_PRINT_STYLEA(0, "fontsize", 15);
+				LODOP.SET_PRINT_STYLEA(0, "bold", 1);
+				LODOP.PRINT_DESIGN();
+            };	
+
+
+export function CreateAllPages(group){
+		 group.forEach(({title,barCode,detail,dateTime,printNum,barText})=>{
+					for(var i =0;i<printNum;i++){
+					LODOP.NEWPAGE();
+					LODOP.ADD_PRINT_TEXT(14,25,500,30,title);
+					LODOP.SET_PRINT_STYLEA(0,"FontName","微软雅黑");
+					LODOP.SET_PRINT_STYLEA(0,"FontSize",16);
+					LODOP.SET_PRINT_STYLEA(0,"Bold",1);
+					LODOP.ADD_PRINT_BARCODE(45,25,300,50,"Code39",barCode);
+					LODOP.SET_PRINT_STYLEA(0,"ShowBarText",0);
+					LODOP.ADD_PRINT_TEXT(104,22,280,31,barText);
+					LODOP.SET_PRINT_STYLEA(0,"FontName","微软雅黑");
+					LODOP.SET_PRINT_STYLEA(0,"FontSize",12);
+					LODOP.SET_PRINT_STYLEA(0,"Alignment",2);
+					LODOP.SET_PRINT_STYLEA(0,"Bold",1);
+					LODOP.ADD_PRINT_TEXT(133,22,280,28,detail);
+					LODOP.SET_PRINT_STYLEA(0,"FontName","微软雅黑");
+					LODOP.SET_PRINT_STYLEA(0,"FontSize",12);
+					LODOP.SET_PRINT_STYLEA(0,"Alignment",2);
+					LODOP.SET_PRINT_STYLEA(0,"Bold",1);
+					LODOP.SET_PRINT_STYLEA(0,"Alignment",2);
+					LODOP.SET_PRINT_STYLEA(0,"Bold",1);	
+					LODOP.ADD_PRINT_TEXT(170,22,280,30," --------由拿呗提供专业信息服务 Nabei.net--------");
+					LODOP.SET_PRINT_STYLEA(0,"FontName","微软雅黑");
+					LODOP.SET_PRINT_STYLEA(0,"FontSize",8);
+					LODOP.SET_PRINT_STYLEA(0,"FontColor","#808080");					
+					}
+				}); 	
+		
+	};	
+	
+
+export function CreateAllPages_6040(group){
+		console.log(group);
+		 group.forEach(({title,barCode,detail,dateTime,printNum,barText})=>{
+					for(var i =0;i<printNum;i++){
+					LODOP.NEWPAGE();
+					
+					LODOP.PRINT_INIT("打印测试");
+					LODOP.SET_PRINT_PAGESIZE(0,600,400,"0");
+					LODOP.SET_PRINT_MODE("PRINT_SETUP_PROGRAM",true);
+					LODOP.ADD_PRINT_TEXT(10,25,200,30,"公司A档口");
+					LODOP.SET_PRINT_STYLEA(0,"FontName","微软雅黑");
+					LODOP.SET_PRINT_STYLEA(0,"FontSize",12);
+					LODOP.SET_PRINT_STYLEA(0,"Bold",1);
+					LODOP.ADD_PRINT_BARCODE(41,25,200,45,"Code39",barCode);
+					LODOP.SET_PRINT_STYLEA(0,"ShowBarText",0);
+					LODOP.ADD_PRINT_TEXT(95,15,200,45,"A001-YYY-红色-S");
+					LODOP.SET_PRINT_STYLEA(0,"FontName","微软雅黑");
+					LODOP.SET_PRINT_STYLEA(0,"Alignment",2);
+					LODOP.SET_PRINT_STYLEA(0,"Bold",1);
+					LODOP.ADD_PRINT_TEXT(118,15,200,25,"红色;S");
+					LODOP.SET_PRINT_STYLEA(0,"FontName","微软雅黑");
+					LODOP.SET_PRINT_STYLEA(0,"Alignment",2);
+					LODOP.SET_PRINT_STYLEA(0,"Bold",1);
+					LODOP.ADD_PRINT_TEXT(136,25,200,25," -------由拿呗提供专业信息服务 Nabei.net-------");
+					LODOP.SET_PRINT_STYLEA(0,"FontName","微软雅黑");
+					LODOP.SET_PRINT_STYLEA(0,"FontSize",6);
+					LODOP.SET_PRINT_STYLEA(0,"FontColor","#808080");
+					LODOP.SET_PRINT_STYLEA(0,"Alignment",2);
+				
+					}
+				}); 	
+		
+	};	
+		
+	
+	
+
+	
+export function CreateHGZAllPages(group){	
+		 group.forEach(({title,barCode,detail,dateTime,printNum,companyName,barText,productCode,price})=>{
+					for(var i =0;i<printNum;i++){
+					LODOP.NEWPAGE();
+					LODOP.ADD_PRINT_TEXT(29,25,160,35,"合格证");
+					LODOP.SET_PRINT_STYLEA(0,"FontName","微软雅黑");
+					LODOP.SET_PRINT_STYLEA(0,"FontSize",18);
+					LODOP.SET_PRINT_STYLEA(0,"Alignment",2);
+					LODOP.SET_PRINT_STYLEA(0,"Bold",1);
+					LODOP.ADD_PRINT_TEXT(69,25,160,25,"商品名称:"+title);
+					LODOP.SET_PRINT_STYLEA(0,"FontName","微软雅黑");
+					LODOP.SET_PRINT_STYLEA(0,"FontSize",12);
+					LODOP.SET_PRINT_STYLEA(0,"Bold",1);
+					LODOP.ADD_PRINT_TEXT(99,25,160,25,"档口:"+companyName);
+					LODOP.SET_PRINT_STYLEA(0,"FontName","微软雅黑");
+					LODOP.SET_PRINT_STYLEA(0,"FontSize",12);
+					LODOP.SET_PRINT_STYLEA(0,"Bold",1);
+					LODOP.ADD_PRINT_TEXT(129,25,160,25,"货号:P006");
+					LODOP.SET_PRINT_STYLEA(0,"FontName","微软雅黑");
+					LODOP.SET_PRINT_STYLEA(0,"FontSize",12);
+					LODOP.SET_PRINT_STYLEA(0,"Bold",1);
+					LODOP.ADD_PRINT_TEXT(159,25,160,25,"规格:"+detail);
+					LODOP.SET_PRINT_STYLEA(0,"FontName","微软雅黑");
+					LODOP.SET_PRINT_STYLEA(0,"FontSize",12);
+					LODOP.SET_PRINT_STYLEA(0,"Bold",1);
+					LODOP.ADD_PRINT_TEXT(189,25,160,25,"商品等级：合格品");
+					LODOP.SET_PRINT_STYLEA(0,"FontName","微软雅黑");
+					LODOP.SET_PRINT_STYLEA(0,"FontSize",12);
+					LODOP.SET_PRINT_STYLEA(0,"Bold",1);
+					LODOP.ADD_PRINT_BARCODE(215,13,175,40,"Code39",barCode);
+					LODOP.ADD_PRINT_TEXT(256,-1,300,10,"--------------------------------------");
+					LODOP.ADD_PRINT_TEXT(268,25,160,40,"单价:"+price);
+					LODOP.SET_PRINT_STYLEA(0,"FontName","微软雅黑");
+					LODOP.SET_PRINT_STYLEA(0,"FontSize",15);
+					LODOP.SET_PRINT_STYLEA(0,"Alignment",2);
+					LODOP.SET_PRINT_STYLEA(0,"Bold",1);
+
+					
+						
+					}
+					
+				}); 	
+		
+	};		
+	
+			
+			
+			

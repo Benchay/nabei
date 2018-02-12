@@ -1,0 +1,164 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li class="menuIndex2">
+                <router-link :to='{path:"/salesReturn"}'>退货管理</router-link>
+            </li>
+        </ul>
+        <div class="promptlyReturns radioRed">
+            <el-col :span="10" class="isLeft">
+                <el-col :span="24" class="leftList leftList2">
+                    <div class="flex">
+                        <el-col :span="4" class="title">货号：</el-col>
+                        <el-col :span="19" class="content" style="width:300px">
+                            <el-input icon="search" v-model="input3" placeholder="支持手动输入/扫一扫"></el-input>
+                        </el-col>
+                    </div>
+                    <el-col :span="4">&nbsp;</el-col>
+                    <el-col :span="19" class="content">
+                        <div class="contentInfo flex">
+                            <img src="../image/111.png" alt="">
+                            <div class="infoRight">
+                                <p>库存(件)：1000</p>
+                                <p>单价(元)：￥25</p>
+                            </div>
+                        </div>
+                    </el-col>
+                </el-col>
+                <el-col :span="24" class="flex leftList">
+                    <el-col :span="4" class="title">颜色：</el-col>
+                    <el-col :span="18" class="content">
+                        <el-radio-group v-model="radio3">
+                            <el-radio-button :label="item.value" v-for="item in colors" >{{item.value}}</el-radio-button>
+                        </el-radio-group>
+                    </el-col>
+                </el-col>
+                <el-col :span="24" class="flex leftList">
+                    <el-col :span="4" class="title">尺码：</el-col>
+                    <el-col :span="18" class="content">
+                        <el-radio-group v-model="radio4">
+                            <el-radio-button :label="item.value" v-for="item in sizes" >{{item.value}}</el-radio-button>
+                        </el-radio-group>
+                    </el-col>
+                </el-col>
+                <el-col :span="24" class="flex leftList">
+                    <el-col :span="4" class="title">数量：</el-col>
+                    <el-col :span="18" class="content">
+                        <el-input-number v-model="num6" :min="1" :max="7"></el-input-number>
+                    </el-col>
+                </el-col>
+                <el-col :span="24" class="flex2 leftButton">
+                    <a href="javascript:void(0)" class="buttonColor3">加入退货清单</a>
+                </el-col>
+            </el-col>
+            <el-col :span="14" class="isRight">
+                <div>退货清单</div>
+                <div class="rightDelete right"><a href="javascript:void(0)"  class="buttonColor3">删除</a></div>
+                <el-table
+                    :data="tableData"
+                    border
+                    class="rightTable"
+                    show-summary
+                    height="400"
+                    style="width: 100%">
+                    <el-table-column
+                        type="selection"
+                        width="55"
+                    >
+                    </el-table-column>
+                    <el-table-column
+                        label="主图/货号">
+                        <template scope="scope">
+                            <div class="flex2 tableFirst">
+                                <img src="../image/111.png" alt=""  class="tableImg">
+                                <p>YH112</p>
+                            </div>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="color"
+                        v-model="color"
+                        label="颜色">
+                    </el-table-column>
+                    <el-table-column
+                        prop="size"
+                        v-model="size"
+                        label="尺码">
+                    </el-table-column>
+                    <el-table-column
+                        prop="orderNum"
+                        v-model="orderNum"
+                        label="数量">
+                    </el-table-column>
+                    <el-table-column
+                        prop="closeFee"
+                        v-model="closeFee"
+                        label="金额">
+                    </el-table-column>
+                </el-table>
+                <div class="tips">
+                    <p>*提示：</p>
+                    <p>1.商品默认显示档口当前在售价，价格有变动可自行协商档口，手动调整！<br/>
+                        2.点击开始匹配后，系统会自动匹配档口</p>
+                </div>
+                <el-col :span="24" class="flex2 payButton">
+                    <router-link :to='{path:"/promptlyReturnsAffirm"}' class="buttonColor3">开始匹配</router-link>
+                </el-col>
+            </el-col>
+        </div>
+    </div>
+</template>
+<script>
+    import headTop from '../components/headTop'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                input3:'',
+                radio3:'',
+                radio4:'',
+                radio5:'',
+                num6:1,
+                tableData:[{
+                    color:'白色',
+                    size:'S',
+                    orderNum:12,
+                    closeFee:12,
+                }],
+                colors:[{
+                    label:1,
+                    value:'白色'
+                },{
+                    label:2,
+                    value:'黑色'
+                },{
+                    label:3,
+                    value:'绿色'
+                }],
+                sizes:[{
+                    label:1,
+                    value:'S'
+                },{
+                    label:2,
+                    value:'M'
+                },{
+                    label:3,
+                    value:'L'
+                }],
+            }
+        },
+        methods: {
+            handleSelectSupplier(){
+                this.dialogVisible = true;
+            },
+        }
+    }
+</script>
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/salesReturn';
+</style>

@@ -1,0 +1,265 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/fastShipping2"}'>快速出货</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/indentManagement"}'>订单管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/takeGoods"}'>取货码</router-link>
+            </li>
+            <li class="menuIndex">
+                <router-link :to='{path:"/sellerSettlement"}'>客户结算</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/SettlementRecordsStall"}'>结算单</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/customerManagement"}'>客户管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/statisticalStatement"}'>销售统计</router-link>
+            </li>
+        </ul>
+        <div class="sellerSettlement">
+            <div class="details" v-for="list in info">
+                <el-col :span="24">
+                    <el-col :span="24">电商卖家名称：{{customName}}</el-col>
+                    <el-col :span="6">当前总欠款：{{unClosedFee}}</el-col>
+                    <el-col :span="18">
+                        <div  class="flex">
+                            <p v-bind:class="[list.state ==1?'style1':list.state ==2?'style2':'']">{{list.state == 1?'周结':list.state == 2?'月结':''}}</p>
+                            <p>{{list.date}}</p>
+                        </div>
+                    </el-col>
+                    <el-col :span="6">已到期：{{toReviceFee}}</el-col>
+                    <el-col :span="18">未到期：{{undueFee}}</el-col>
+                </el-col>
+            </div>
+            <div class="detailsTable">
+                <el-table
+                    :data="tableData6"
+                    @selection-change="handleSelectionChange"
+                    @current-change="handleCurrentSelectionChange"
+                    style="width: 100%">
+                    <el-table-column
+                        type="selection"
+                        width="55">
+                    </el-table-column>
+                    <el-table-column
+                        prop="orderNo"
+                        label="订单编号">
+                    </el-table-column>
+                    <el-table-column
+                        prop="closeFee"
+                        label="已结金额">
+                    </el-table-column>
+                    <el-table-column
+                        label="未结金额">
+                        <template scope="scope">
+                           <p>{{scope.row.totalFee-scope.row.closeFee}}</p>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="hasExpireDays"
+                        label="是否到期">
+                    </el-table-column>
+                    <el-table-column
+                        label="操作">
+                        <template scope="scope">
+                            <!--<router-link class="blue2" :to='{path:"/indentManagementPortionPicking",query:{orderId:scope.row.id}}'>查看详情</router-link>-->
+                            <el-button class="blue2" type="text" @click="queryDetails(scope.row.id,scope.row.orderType)">查看详情</el-button>
+                        </template>
+                    </el-table-column>
+                </el-table>
+                <a href="javascript:void(0)" class="buttonColor" style="margin-top: 90px;" @click="quickSettlement">立即结算</a>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {getDebtInfo,queryOrderBySettlementOrder} from '@/api/getData'
+    import {userInfo} from  '../config/mUtils'
+    import {formatDate} from '../utils/date.js'
+    import {mydateFormat} from '../utils/dataFormater.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                checked:false,
+                info:[],
+                tableData6:[],
+                initData:{
+                    companyId:'',
+                    saleCompanyId:'',
+                },
+                //多选数组
+                multipleSelection: [],
+                sumTotalFee:0,
+
+                saleName:'',
+                unClosedFee:'',
+                toReviceFee:'',
+                undueFee:0,
+                orderIds:[],
+                settlementDay:'',
+                settlementOrderId:'',
+            }
+        },
+        watch: {
+            '$route': function (route) {
+                this.$route.go(0);
+            }
+        },
+
+        mounted(){
+            this.initData.saleCompanyId  =  this.$route.query.saleCompanyId;
+            this.initData.companyId = userInfo().companyId;
+            this.unClosedFee  =  this.$route.query.unClosedFee;
+            this.settlementOrderId = this.$route.query.settlementOrderId;
+            this.toReviceFee  =  this.$route.query.toReviceFee;
+            this.settlementDay = this.$route.query.settlementDay;
+            if(this.settlementDay!=undefined&&this.settlementDay!=''){
+                let pa = {
+                    state:this.settlementDay.type,
+                    date:this.settlementDay.settlementDay
+                };
+                this.info.push(pa);
+            }else{
+                let p = {
+                    state:'',
+                    date:''
+                };
+                this.info.push(p);
+            }
+
+            if(this.toReviceFee==undefined){
+                this.toReviceFee = 0;
+            }
+            this.undueFee = this.unClosedFee- this.toReviceFee;
+            this.customName = this.$route.query.customName
+           if(this.settlementOrderId!=undefined&&this.settlementOrderId!=''){
+                this.loadSettlementOrders();
+           }else{
+               this.loadData();
+           }
+
+        },
+        methods: {
+            //加载欠款订单
+            async loadData(){
+                let para = {
+                    "companyId":userInfo().companyId,
+                    "saleCompanyId":this.initData.saleCompanyId,
+                    "orderType":2,
+                    "withTotal":true
+                };
+                const res = await getDebtInfo(para);
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message:'数据加载成功!'
+                    });
+                    this.tableData6 = res.result.results;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            //根据结算单加载订单
+            async loadSettlementOrders(){
+                this.tableData6 = [];
+                let param= {
+                    "settlementOrderId":this.settlementOrderId
+                };
+                const res = await queryOrderBySettlementOrder(param);
+                if(res.isSuccess){
+                    let table = res.result.results;
+                    table.forEach((obj)=>{
+                        let par = {
+                            "orderNo":obj.orderCode,
+                            "closeFee":obj.closeFee,
+                            "totalFee":obj.totalFee,
+                            "closingFee":obj.closingFee,
+                            "hasExpireDays":'',
+                            "id":obj.id
+                        };
+                        this.tableData6.push(par);
+                    });
+
+                }else{
+                    this.$message({
+                        type:'error',
+                        message:'数据加载失败'
+                    });
+                }
+            },
+
+            handleCurrentSelectionChange(val){
+                if(val.closingFee!=undefined&&val.closingFee!=''&&val.closingFee>0){
+                    this.$message({
+                        duration:this.GLOBAL.MESSAGE_DISSMISS_TIME_MID,
+                        type:'error',
+                        message:'当前订单正在结算中，不能再次结算'
+                    });
+                    return;
+                }
+            },
+            //多选响应
+            handleSelectionChange: function(val) {
+                this.multipleSelection = val;
+            },
+            //立即结算
+            quickSettlement(){
+                var sumTotalFee=0;
+                var closeFee = 0;
+                this.orderIds = [];
+                this.multipleSelection.forEach((item) => {
+                    if(item.closingFee!=undefined&&item.closingFee!=''&&item.closingFee>0){
+
+                    }else{
+                        this.orderIds.push(item.id);
+                        sumTotalFee += item.totalFee;
+                        closeFee += item.closeFee;
+                    }
+                })
+                if(this.orderIds.length <1){
+                    this.$message({
+                        duration:this.GLOBAL.MESSAGE_DISSMISS_TIME_MID,
+                        type: 'error',
+                        message: '请先勾选要结算的订单！'
+                    });
+                    return;
+                }
+                this.$router.push({path:"/sellerSettlementImmediately",query:{orderIds:this.orderIds,saleCompanyId:this.initData.saleCompanyId,customName:this.customName,activeName:'first'}});
+            },
+
+            //查看详情
+            queryDetails(id,orderType){
+                if(orderType==2){
+                    this.$router.push({path:"/indentManagementPortionPicking",query:{orderId:id}});
+                }else if(orderType==4){
+                    this.$router.push({path:"/sellReturnStorage",query:{orderId:id}});
+                }
+            },
+
+
+
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/sellerSettlement';
+</style>

@@ -1,0 +1,25 @@
+.stallManage{
+    margin:2px 30px;
+    background: #fff;
+    padding: 20px 40px;
+    color:#333;
+    height:100%;
+    overflow: auto;
+    .stallManageTop>div{
+        width: 200px;
+        margin-right: 10px;
+        margin-bottom: 20px;
+    }
+    .stallButton{
+        height: 40px;
+    }
+    .stallOperation{
+        a{
+            color:@red;
+            margin-right: 15px;
+        }
+    }
+}
+.dialogAddStall{
+    padding-right: 25px;
+}

@@ -1,0 +1,345 @@
+
+.tableImg{
+    width: 40px;
+    height: 40px;
+    margin: 4px;
+}
+.indentManagement{
+    margin:1px 30px;
+    background: #fff;
+    padding: 20px 40px;
+    height:77%;
+    .search{
+        width:200px;
+    }
+    .indentList{
+        margin: 20px 0;
+    }
+}
+.color1{
+    color:@orange;
+}
+.color2{
+    color:#333;
+}
+.color3{
+    color:@red;
+}
+.color4{
+    color:@blue2;
+}
+//弹窗
+.ConfirmedReturn{
+    .comfirmTop{
+        height: 40px;
+        border: 1px solid #d4d4d4;
+        justify-content: flex-start;
+        font-size: 12px;
+        p{
+            margin-left: 30px;
+        }
+    }
+    img{
+        width: 40px;
+        height: 40px;
+    }
+    .comfirmSelect{
+        margin-top: 10px;
+        .confirmselect1{
+            width: 110px;
+        }
+        .confirmInput{
+            //width: 200px;
+            margin-left: 10px;
+        }
+    }
+    .comfirmFoot{
+        width:100%;
+        font-size: 12px;
+        height: 80px;
+        justify-content: flex-end;
+        p{
+            margin-right: 20px;
+        }
+    }
+}
+.stocktakingTable{
+    img{
+        height: 45px;
+        width: 45px;
+    }
+    .sumTotal{
+        font-size: 14px;
+        width:100%;
+        box-sizing: border-box;
+        height: 50px;
+        border:1px solid rgb(223, 230, 236);
+        p{
+            margin: 0 20px;
+            color:#333;
+            font-size: 13px;
+        }
+    }
+}
+.newPackage{
+    border-top: 1px solid #d4d4d4;
+    border-bottom: 1px solid #d4d4d4;
+    padding: 45px 0;
+    .radio{
+        margin-right: 20px;
+    }
+    .warehouse{
+        padding: 35px 50px 0;
+    }
+}
+.packageList{
+    font-size: 14px;
+    margin-top: 20px;
+    color:#333;
+    .leftTitle
+    {
+        height: 20px;
+        line-height: 20px;
+        .leftGreen{
+            width: 4px;
+            height:100%;
+            background: #80c758;
+            display: inline-block;
+            margin-right: 10px;
+        }
+    }
+    ul>li{
+        width: 50px;
+        text-align: center;
+        margin-right: 50px;
+    }
+    .check a{
+        color:#333;
+    }
+    .check:hover a {
+        color:#20a0ff;
+    }
+}
+.orderForm{
+    overflow: hidden;
+    margin-top: 30px;
+}
+.orderForm>div{
+    font-size: 12px;
+    margin-bottom: 20px;
+}
+.packageTabs{
+    ul{
+        margin-bottom: 15px;
+        font-size: 13px;
+        li{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+                a{
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    border-bottom: 3px solid @blue2;
+                    width: 100px;
+                    height: 35px;
+                    color:#333;
+            }
+        }
+        .change2{
+            border-top:1px solid @blue2;
+            border-left:1px solid @blue2;
+            border-right:1px solid @blue2;
+            color:@blue2;
+        }
+        .change3{
+            border-top:1px solid @red;
+            border-left:1px solid @red;
+            border-right:1px solid @red;
+            color:@red;
+        }
+    }
+    .tabsLi{
+        a{
+            border-bottom: 3px solid @red;
+        }
+    }
+}
+.ReturnProblem{
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    p{
+        width: 80px;
+    }
+    .ReturnProblem-text{
+        width: 250px;
+    }
+}
+.inform{
+    padding: 30px 0 50px;
+}
+.confirmedReturn{
+    margin-top: 20px;
+    p:last-child{
+        font-size: 12px;
+        color:#999;
+    }
+    p{
+        margin-bottom: 20px;
+    }
+    span{
+        color:@blue2;
+    }
+}
+//立即配货，继续配货
+.Picking{
+    margin:1px 30px;
+    background: #fff;
+    padding: 20px 40px;
+    height:77%;
+    color:#666;
+    .isLeft{
+        .title{
+            box-sizing: border-box;
+            height: 25px;
+            line-height: 23px;
+            ul>li>a{
+                font-size: 12px;
+                height: 30px;
+                color:#999;
+                border:1px solid #999;
+                padding: 6px 12px;
+                //background: url("../image/parcel01.png") no-repeat 1px center;
+                //background-size: 100%;
+                display: inline-block;
+            }
+            .change2{
+                color:#fff;
+                background: @blue2;
+                border:1px solid @blue2;
+            }
+            .blue2{
+                font-size: 12px;
+                margin-left: 10px;
+            }
+        }
+        padding: 10px 20px;
+        .leftButton{
+            margin-top: 30px;
+            a{
+                margin-right: 20px;
+            }
+        }
+    }
+    .isRight{
+        background: yellowgreen;
+    }
+}
+.ReturnFailure{
+    height: 100px;
+    padding: 10px 5px;
+    font-size: 14px;
+    p{
+        height: 40px;
+        line-height: 40px;
+    }
+}
+.orderDetails{
+    color:#333;
+    height: 120px;
+    font-size: 12px;
+    border:1px solid #d4d4d4;
+    border-radius: 2px;
+    margin: 30px 0 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    .detailsLeft{
+        img{
+            width: 80px;
+            height: 80px;
+            border-radius: 5px;
+        }
+        div{
+            margin-left: 10px;
+            p{
+                height: 24px;
+                line-height: 24px;
+            }
+        }
+    }
+    .detailsCenter{
+        p{
+            height: 30px;
+            line-height: 30px;
+        }
+        .title{
+            color:@orange;
+        }
+    }
+    .detailsRight{
+        a{
+            color:#333;
+            div{
+                border:1px solid #d4d4d4;
+                border-radius: 5px;
+                width: 70px;
+                height: 70px;
+                margin:0 5px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                p{
+                    margin: 5px 0;
+                }
+            }
+        }
+    }
+}
+//包裹动态
+.dynamic>div{
+    margin: 0 0 10px;
+}
+.dynamicList{
+    min-height: 320px;
+    margin-top: 30px;
+    .track-rcol{width: 100%; border: 1px solid #eee;padding-bottom: 20px;}
+    .track-list{margin: 20px; padding-left: 5px; position: relative;}
+    .track-list li{
+        position: relative; padding: 9px 0 0 25px; line-height: 18px; border-left: 1px solid #d9d9d9; color: #999;
+        .node-icon{position: absolute; left: -6px; top: 50%; width: 11px; height: 11px;
+            background: url(../image/yuan.png) no-repeat;background-size:100%; }
+        .time{margin-right: 20px; position: relative; top: 4px; display: inline-block; vertical-align: middle;}
+        .txt{max-width: 500px;margin-left: 80px;position: relative; display: inline-block; vertical-align: middle;font-size: 12px}
+    }
+    .track-list li:first-child{
+        color: red; padding-top: 0; border-left-color: #fff;
+        .time{margin-right: 20px; }
+        .txt{max-width: 500px; }
+        .node-icon{position: absolute; left: -6px; top: 50%; width: 11px; height: 11px;
+            background: url(../image/yuan2.png) no-repeat;background-size:100%;}
+    }
+}
+.dialogStorageNum{
+    margin-top: 25px;
+    span{
+        color: @red;
+    }
+}
+.amount{
+    width: 80px;
+}
+//立即配货 添加包裹
+.chosePackage{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding-left: 30%;
+    label{
+        height: 40px;
+    }
+
+}

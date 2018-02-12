@@ -1,0 +1,348 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('logToolsSeller')">
+                <router-link :to='{path:"/logToolsSeller"}'>日志查看</router-link>
+            </li>
+             <li class="menuIndex2" v-if="getMenuAuthFun('addShop')">
+                <router-link :to='{path:"/addShop"}'>绑定店铺</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('MSConfigSeller')">
+                <router-link :to='{path:"/MSConfigSeller"}'>系统配置</router-link>
+            </li>
+        </ul>
+        <div class="addShop">
+              <el-row>
+                <el-col :span="24">
+                    <div class="top">
+                        <span class="toptitle">平台选择：</span>
+                        <template>
+                            <el-select v-model="value" placeholder="请选择" size="small" class="selectad">
+                                <el-option
+                                v-for="item in options"
+                                :label="item.label"
+                                :value="item.value">
+                                </el-option>
+                            </el-select>
+                        </template>
+                         <el-button class="buttonColor3 addshopbtn" @click="gotobindwebstore">+添加授权店铺</el-button>
+                    </div>
+                </el-col>
+            </el-row>
+            <el-row>
+                <el-col :span="24">
+                    <p class="tip">(备注：一个拿呗账号可以同时管理多个店铺，但是一个店铺不能同时绑定在多个拿呗账号下。目前只支持淘宝平台店铺绑定)</p>
+                </el-col>
+            </el-row>
+            <div class="havenoshop" v-show="tableData3.length==0">
+                <div class="imgwrap">
+                    <img class="leftImg" src="../image/shops@3x.png" width="100%" height="100%" alt="">
+                </div>
+                <span class="nstitle">没有添加授权店铺</span>
+            </div>
+            <div class="tablewrap" v-show="tableData3.length>0">
+                <el-table
+                    :data="tableData3"
+                    style="width: 100%">
+                    <el-table-column
+                        label="序号">
+                        <template scope="scope">
+                            <span>{{scope.$index+1}}</span>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        label="平台类型"
+                        width="120">
+                        <template scope="scope">
+                            <div class="flex">
+                                <img width="36" height="36" src="../image/taobao-01.png" alt=""  class="tableImg">
+                                <p style="margin-left: 5px;">{{scope.row.storeSysType}}</p>
+                            </div>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="name"
+                        width="180"
+                        label="店铺名称">
+                    </el-table-column>
+                    <el-table-column
+                        label="授权状态">
+                        <template scope="scope">
+                            <span>{{scope.row.status==0?'未授权':scope.row.status==1?'已授权':scope.row.status==2?'已解绑':scope.row.status==3?'授权过期':scope.row.status==4?'已删除':''}}</span>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                          label="授权时间">
+                        <template scope="scope">
+                            <span>{{timestr}}</span>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        label="最近同步时间">
+                        <template scope="scope">
+                            <span>{{lastSynchTime}}</span>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        label="操作">
+                        <template scope="scope">
+                            <a @click="deledianpu(webstore)" class="red">删除</a>
+                            <a @click="tongbu(webstore.id)" class="red" style="margin-left: 15px;">立即同步</a>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+            <p class="middletitle">授权教程</p>
+            <div class="bannerwrap">
+                <template>
+            <el-carousel trigger="click" indicator-position="outside" arrow="always" :autoplay="false">
+                    <el-carousel-item v-for="item in items">
+                        <div class="lunwrap">
+                            <img :src="item.imgUrl" width="80%" height="100%" alt="">
+                        </div>
+                    </el-carousel-item>
+                </el-carousel>
+                </template>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {getBindWebStoreUrl,findWebStoreRecord,deleteWebStoreRecord,batchDeleteWebStoreRecord,syncWebStoreProduct} from '@/api/getData'
+	import {formatDate} from '../utils/date.js'
+	import {setStore,getStore,userInfo} from  '../config/mUtils'
+	import {getMenuAuth,haveMenuAuth} from  '../utils/AuthMenu.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        computed: {
+
+        },
+        data() {
+            return {
+                items:[{
+                    imgUrl:require("../image/bd_banner01.png")
+                },
+                {
+                    imgUrl:require("../image/bd_banner02.png")
+                    },
+                {
+                    imgUrl:require("../image/bd_banner03.png")
+                    },
+                {
+                    imgUrl:require("../image/bd_banner04.png")
+                    },
+                {
+                    imgUrl:require("../image/bd_banner05.png")
+                    },
+                {
+                    imgUrl:require("../image/bd_banner06.png")
+                    },
+                {
+                    imgUrl:require("../image/bd_banner07.png")
+                    },
+                {
+                    imgUrl:require("../image/bd_banner08.png")
+                    }],
+                options: [{
+                value: '1',
+                label: '淘宝'
+                }, {
+                value: '2',
+                label: '京东'
+                }, {
+                value: '3',
+                label: '唯品会'
+                }],
+                value: '1',
+            	//默认每页数据量
+                pagesize: 5,
+                //当前页码
+                currentPage: 1,
+                totalCount:'',
+                webstore:'',
+                lastSynchTime:'',
+                timestr:'',
+            	bindWebStoreUrl:'',
+                rotate:false,
+                tableData3:[],
+                storeList:[],
+            }
+        },
+        async mounted(){
+            this.initloadUrl();
+
+            this.initloadData();
+            // console.log(this.items);
+        },
+        methods:{
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+			//从服务器获取数据
+            async initloadUrl() {
+            	let param ={
+                    companyId:userInfo().companyId,
+                    companyType: 2,
+            		view:'web'
+            	}
+                const res = await getBindWebStoreUrl(param);
+                if (res.isSuccess == true) {
+                    this.bindWebStoreUrl = res.result.url;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            //从服务器获取数据
+            async initloadData() {
+                this.tableData3 = [];
+            	this.storeList = [];
+            	let param ={
+            		pageIndex:1,
+            		pageSize:this.pagesize,
+            		searchCompanyIds:[userInfo().companyId]
+            	}
+                const res = await findWebStoreRecord(param);
+                if (res.isSuccess == true) {
+                	res.result.data.results.forEach((obj) => {
+                		let state = 1;
+                		if(obj.validEndTime>new Date().valueOf()){
+                			state = 0;
+                		}
+                		if(obj.validEndTime){
+                			var date2 = new Date(obj.validStartTime);
+		                	this.timestr = formatDate(date2,'yyyy-MM-dd hh:mm');
+                		}
+                		if(obj.lastSyncOrderTime){
+                			this.lastSynchTime = formatDate(obj.lastSyncOrderTime,'yyyy-MM-dd hh:mm');
+                		}
+                		this.webstore = {name:obj.name,state:state,validtime:this.timestr,statussq:obj.status,id:obj.id,lastSynchTime:this.lastSynchTime};
+                        this.storeList.push(this.webstore);
+                	});
+                    this.tableData3 = res.result.data.results;
+                    this.totalCount = res.result.data.totalCount;
+                    this.storeList.forEach((obj)=>{
+                            if(obj.statussq == 4){
+                                let index = this.tableData3.indexOf(obj);
+                                this.tableData3.splice(index,1); 
+                            }
+                    });
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            async initloadData2() {
+            	let param ={
+            		pageIndex:this.currentPage,
+            		pageSize:this.pagesize,
+            		companyId:userInfo().companyId
+            	}
+                const res = await findWebStoreRecord(param);
+                if (res.isSuccess == true) {
+                    this.tableData3 = res.result.data.results;
+                    this.totalCount = res.result.data.totalCount;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            async deleteRow(webstore) {
+                let ids = [];
+                ids.push(webstore.id);
+            	let param ={
+            		ids:ids
+                }
+                const res = await batchDeleteWebStoreRecord(param);
+            	if (res.isSuccess == true) {
+                    // this.initloadData();
+                    let index = this.tableData3.indexOf(webstore);
+                    this.tableData3.splice(index,1);
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            gotobindwebstore(){
+                if(this.value == 1){
+                    window.open(this.bindWebStoreUrl);
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: "暂时不支持绑定"
+                    });
+                }
+                    this.initloadData();
+            },
+            async deledianpu(webstore){
+            if(webstore.statussq == 4){
+                this.$message({
+                    type: 'error',
+                        message: "该店铺已经删除"
+                    });
+                }else{
+                    this.$confirm('是否确认删除该店铺?', '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+                        this.deleteRow(webstore);
+                        }).catch(() => {
+    
+                    });
+                }
+            },
+            async tongbu(id){
+                let starttime;
+                let date = new Date();
+                let currentTime = formatDate(date,'yyyy-MM-dd hh:mm:ss');
+                if(getStore("startDate")==null){
+                    starttime = currentTime
+                }else{
+                    starttime = getStore("startDate")
+                }
+                let param ={
+                    webStoreId:id,
+                    // startDate: starttime,
+                    // endDate: currentTime
+                    startDate: '',
+                    endDate: ''
+                }
+                setStore("startDate",currentTime)
+                console.log(param)
+                  const res = await syncWebStoreProduct(param);   
+                  if(res.isSuccess){
+                    this.$message({
+                        type: 'success',
+                        message: res.result.msg
+                    });
+                  }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                  }
+             }
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/addShop';
+</style>

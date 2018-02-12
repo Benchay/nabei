@@ -1,0 +1,362 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li class="menuIndex2">
+                <router-link :to='{path:"/salesReturn"}'>退货管理</router-link>
+            </li>
+        </ul>
+        <div class="salesReturn">
+            <div class="salesTop flex">
+                <el-date-picker
+                    size="small"
+                    v-model="filters.date.startDate"
+                    format="yyyy-MM-dd"
+                    type="date"
+                    placeholder="选择开始日期"
+                >
+                </el-date-picker>
+                -
+                <el-date-picker
+                    size="small"
+                    v-model="filters.date.endDate"
+                    type="date"
+                    format="yyyy-MM-dd"
+                    placeholder="选择截止日期"
+                    @change="handleIconClickDate"
+                >
+                </el-date-picker>
+                <div class="salesTopInput">
+                    <el-select
+                        size="small"
+                        clearable
+                        v-model="otherSideCompanyName"
+                        filterable
+                        remote
+                        reserve-keyword
+                        placeholder="请输入档口名称"
+                        :remote-method="remoteMethod"
+                        :loading="loading"
+                        @change="handleIconClickName">
+                        <el-option
+                            v-for="item in options4"
+                            :key="item.stallCompanyId"
+                            :label="item.name"
+                            :value="item.stallCompanyId">
+                        </el-option>
+                    </el-select>
+                    <el-input v-model="input2" size="small" icon="search" placeholder="订单号搜索" style="margin-right: 10px" :on-icon-click="handleIconClickCode"></el-input>
+
+                </div>
+            </div>
+            <div class="salesRadio">
+                <el-radio-group v-model="clickIndex" size="small" class="radioRed" @change="getQueryPara">
+                    <el-radio-button label="0">全部</el-radio-button>
+                    <el-radio-button label="7">待签收</el-radio-button>
+                    <el-radio-button label="8">已签收</el-radio-button>
+                    <el-radio-button label="99">已完成</el-radio-button>
+                    <el-radio-button label="10">退货失败</el-radio-button>
+                </el-radio-group>
+            </div>
+            <div class="salesTable">
+                <el-table
+                    :data="tableData"
+                    style="width: 100%">
+                    <el-table-column
+                        prop="orderCode"
+                        width="220"
+                        label="订单号">
+                    </el-table-column>
+                    <el-table-column
+                        prop="busiName"
+                        label="档口名称"
+                        width="200">
+                    </el-table-column>
+                    <el-table-column
+                        width="100"
+                        prop="totalNum"
+                        label="退货总数量">
+                    </el-table-column>
+                    <el-table-column
+                        width="100"
+                        prop="totalFee"
+                        label="退货总金额">
+                    </el-table-column>
+                    <el-table-column
+                        prop="createTime"
+                        label="操作时间"
+                        :formatter="mydateFormat">
+                    </el-table-column>
+                    <el-table-column
+                        width="80"
+                        prop="payType"
+                        label="结算方式"
+                        :formatter="checkPayType"></el-table-column>
+                    <el-table-column
+                        width="80"
+                        prop="status"
+                        label="状态">
+                        <template scope="scope">
+                            <p>{{scope.row.status == 7?'待签收':scope.row.status == 8?'已签收':scope.row.status == 9?'退货成功':scope.row.status == 10?'退货失败':scope.row.status == 50?'已取消':scope.row.status == 99?'已完成':''}}</p>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        width="80"
+                        prop="closeStutas"
+                        label="结算状态">
+                        <template scope="scope">{{scope.row.closeStutas==0?'未结算':scope.row.closeStutas==1?'已结算':scope.row.closeStutas==2?'部分结算':''}}</template>
+                    </el-table-column>
+                    <el-table-column
+                        label="操作">
+                        <template scope="scope">
+                            <router-link :to='{path:"/salesReturnDetails",query:{orderId:scope.row.id}}' class="red">查看详情</router-link>
+                        </template>
+                    </el-table-column>
+
+                </el-table>
+                <div class="left manner flex2">
+                    <router-link :to='{path:"/promptlyReturns"}' class="flex"><span class="background1"></span>立即退货</router-link>
+                </div>
+                <el-pagination
+                    small
+                    class="right"
+                    style="margin-top: 20px;"
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :page-sizes="[10, 20, 30, 40 ,50]"
+                    :current-page="currentPage"
+                    :page-size="pagesize"
+                    layout="total,sizes, prev, pager, next, jumper"
+                    :total="totalCount">
+                </el-pagination>
+            </div>
+            <div style="height:160px;">
+                &nbsp;
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    import {setStore,getStore,userInfo} from  '../config/mUtils'
+    import {queryOrder,queryVmStall} from '@/api/getData'
+    import {formatDate,timeZoneCovertDay} from '../utils/date.js'
+
+    export default {
+        filters:{
+            formatDateInfo(time){
+                return formatDate(time,"yyyy-MM-dd hh:mm:ss");
+            }
+        },
+        data() {
+            return {
+                filters:{
+                    date:{
+                        startDate:'',
+                        endDate:''
+                    }
+                },
+                input2:'',
+                searchTime:'',
+                clickIndex:0,
+                roleForm: {
+                    userId: '',
+                    roleId: '',
+                    compId:''
+                },
+                pagesize: 10,
+                //默认高亮行数据id
+                highlightId: -1,
+                //当前页码
+                currentPage: 1,
+                //查询的页码
+                start: 1,
+                //默认数据总数
+                totalCount: 0,
+
+                value5:'',
+                num1: 1,
+                orderlike: '',
+                tableData:[],
+                orderId:'',
+                busiName:'',
+                totalNum:'',
+                totalFee:'',
+                status:'',
+                orderCode:'',
+                options4:[],
+                otherSideCompanyName:'',
+                loading:false,
+                busiCompId:''
+            }
+            },
+        watch:{
+            '$route':function (route) {
+                this.loadInit();
+            }
+        },
+        mounted(){
+            this.roleForm.userId=userInfo().userId;
+            this.roleForm.compId = userInfo().companyId;
+            this.loadInit();
+        },
+        methods: {
+            handleSizeChange(val) {
+                this.pagesize = val;
+                this.getQueryPara();
+            },
+            //页码变更
+            handleCurrentChange(val) {
+                this.currentPage = val;
+                this.getQueryPara();
+            },
+            handleIconClick(ev) {
+                console.log(ev);
+                var param=this.getQueryPara();
+                this.loadDataWithCondition(param);
+            },
+            //按日期搜索
+            handleIconClickDate(){
+                this.filters.date.startDate = formatDate(this.filters.date.startDate,'yyyy-MM-dd 00:00:00');
+                this.filters.date.endDate = formatDate(this.filters.date.endDate,'yyyy-MM-dd 23:59:59');
+                let  param = {
+                    "companyId":this.roleForm.compId,
+                    "pageSize": this.pagesize,
+                    "pageIndex": this.currentPage,
+                    "startDate": this.filters.date.startDate,
+                    "endDate": this.filters.date.endDate,
+                    "orderType":3,
+                    "status":status,
+                };
+                this.loadDataWithCondition(param);
+            },
+            //远程搜索模糊查询档口名称
+            async remoteMethod(query){
+                if(query!=''){
+                    this.loading = true;
+                    let param = {
+                        "companyId":userInfo().companyId,
+                        "stallName":query,
+                        "pageIndex":1,
+                        "pageSize":100
+                    };
+                    const res = await queryVmStall(param);
+                    setTimeout(() => {
+                        this.loading = false;
+                        this.options4 = res.result.results;
+                    }, 200);
+                } else {
+                    this.options4 = [];
+                }
+
+            },
+            //档口名称搜索
+            handleIconClickName(){
+                let param ={
+                    "busiCompId":this.otherSideCompanyName,
+                    "companyId":this.roleForm.compId,
+                    "pageSize": this.pagesize,
+                    "pageIndex": this.currentPage,
+                    "startDate": this.filters.date.startDate,
+                    "endDate": this.filters.date.endDate,
+                    "orderType":3,
+                    "status":status
+                };
+                this.loadDataWithCondition(param);
+            },
+            //按订单编号搜索
+            handleIconClickCode(){
+                let  param = {
+                    "companyId":this.roleForm.compId,
+                    "pageSize": this.pagesize,
+                    "pageIndex": this.currentPage,
+                    "startDate": this.filters.date.startDate,
+                    "endDate": this.filters.date.endDate,
+                    "orderType":3,
+                    "status":status,
+                    "orderCode":this.input2,
+                };
+                this.loadDataWithCondition(param);
+            },
+            loadInit(){
+                let  param = {
+                    "companyId":this.roleForm.compId,
+                    "pageSize": this.pagesize,
+                    "pageIndex": this.currentPage,
+                    "startDate": this.filters.date.startDate,
+                    "endDate": this.filters.date.endDate,
+                    "orderType":3,
+                    "status":status,
+                };
+                this.loadDataWithCondition(param);
+            },
+            convertStatus(){
+                var returnstatus=0;
+                if(this.clickIndex==0){
+                    returnstatus=0;
+                }else{
+                    returnstatus=this.clickIndex;
+                }
+                return returnstatus;
+            },
+            getQueryPara(){
+                var status=this.convertStatus();
+                this.tableData=[];
+                //this.totalCount=0;
+                let  param = {
+                    "status":status,
+                    "orderlike":this.orderlike,
+                    "companyId":this.roleForm.compId,
+                    "pageSize": this.pagesize,
+                    "pageIndex": this.currentPage,
+                    "orderType":3,
+                    "busiCompId":this.otherSideCompanyName,
+                    "startDate": this.filters.date.startDate,
+                    "endDate": this.filters.date.endDate,
+                };
+                this.loadDataWithCondition(param);
+            },
+            async loadDataWithCondition(param) {
+                console.log
+                const res = await queryOrder(param);
+                if (res.isSuccess == true) {
+                    this.tableData = res.result.results;
+                    this.totalCount = res.result.totalCount;
+                }else{
+                    if(res.errorCode=='01'){
+                        this.tableData ='';
+                        this.totalCount = 0;
+                        return;
+                    }
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            checkPayType:function(row,column){
+                let data = row[column.property];
+                if(data==0){
+                    return '现结';
+                }else if(data==1){
+                    return '周结';
+                }else if(data==2){
+                    return '月结';
+                }
+            },
+            mydateFormat:function(row, column) {
+                var time = row[column.property];
+                if (time == undefined||time=='') {
+                    return "";
+                }
+                let date = new Date(time);
+                return formatDate(date,'yyyy-MM-dd hh:mm');
+            }
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/salesReturn';
+</style>

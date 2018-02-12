@@ -1,0 +1,759 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/verifyManage"}'>审核管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/rechangeConfig"}'>财务账户配置</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/financeSerial"}'>财务流水</router-link>
+            </li>
+            <li class="menuIndex3">
+                <router-link :to='{path:"/walletInit"}'>钱包初始化</router-link>
+            </li>
+            <!--<li>-->
+            <!--<router-link :to='{path:"/setmealConfig"}'>套餐配置</router-link>-->
+            <!--</li>-->
+        </ul>
+
+        <div class="verify-menu-search">
+            <div class="block left">
+                <el-date-picker
+                    size="small"
+                    v-model="startDate"
+                    type="date"
+                    placeholder="选择开始日期"
+                    v-on:change="selectCompanyFinanceData"
+                    :picker-options="pickerOptions0">
+                </el-date-picker>
+            </div>
+            <div class="block left" style="padding-top: 5px;">
+            	&nbsp;-&nbsp;
+            </div>
+            <div class="block left">
+                <el-date-picker
+                    size="small"
+                    v-model="endDate"
+                    type="date"
+                    placeholder="选择结束日期"
+                    v-on:change="selectCompanyFinanceData"
+                    :picker-options="pickerOptions0">
+                </el-date-picker>
+                <el-input style="width: 180px;"
+                          size="small"
+	                    placeholder="公司名称过滤"
+	                    icon="search"
+	                    v-model="companyName"
+	                    :on-icon-click="selectCompanyFinanceData">
+	                </el-input>
+                <el-input style="width: 180px;"
+                          size="small"
+	                    placeholder="操作人过滤"
+	                    icon="search"
+	                    v-model="checkUserName"
+	                    :on-icon-click="selectCompanyFinanceData">
+	                </el-input>
+            </div>
+        </div>
+        <div class="walletInit" v-show="tableData3.length>0">
+            <div>
+                <el-button type="info" @click="initAccountdialogFormClick" size="small">初始化操作</el-button>
+            </div>
+            <div class="shopList">
+                <el-table
+                    ref="multipleTable"
+                    :data="tableData3"
+                    tooltip-effect="dark"
+                    style="width: 100%">
+                    <el-table-column
+                        type="selection"
+                        width="55">
+                    </el-table-column>
+                    <el-table-column
+                        prop="companyName"
+                        label="公司名称"
+                        width="180">
+                    </el-table-column>
+                    <el-table-column
+                        prop="beanChange"
+                        label="金额变动"
+                        width="120"
+                        :formatter="formatVerifyBeanChange">
+                    </el-table-column>
+                    <el-table-column
+                        prop="frozenBeanChange"
+                        label="冻结金额变动"
+                        :formatter="formatVerifyfrozenBeanChange">
+                    </el-table-column>
+                    <el-table-column
+                        prop="goldChange"
+                        label="金币变动"
+                        :formatter="formatVerifygoldChange">
+                    </el-table-column>
+                    <el-table-column
+                        prop="frozenGoldChange"
+                        label="冻结金币变动"
+                        :formatter="formatVerifyfrozenGoldChange">
+                    </el-table-column>
+                    <el-table-column
+                        prop="createTime"
+                        width="180px"
+                        label="创建时间"
+                        :formatter="mydateFormat">
+                    </el-table-column>
+                    <el-table-column
+                        prop="checkUserName"
+                        label="操作人">
+                    </el-table-column>
+                </el-table>
+            </div>
+            <el-pagination
+                small
+                class="right"
+                style="margin-top: 20px;"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :current-page="currentPage"
+                :page-sizes="[10, 20, 30, 40]"
+                :page-size="pagesize"
+                layout="total, sizes, prev, pager, next, jumper"
+                :total="totalCount">
+            </el-pagination>
+            <a href="javascript:void(0)" class="export_excle" @click="exportCustomerData">导出excle</a>
+        </div>
+        <el-dialog title="初始化客户账户" :visible.sync="initAccountdialogForm">
+            <el-form :model="initAccountdialogform" :rules="initAccountdialogFormRule" ref="initAccountdialogform">
+            	<el-form-item label="公司id：" :label-width="formLabelWidth" style="display: none;">
+                    <el-input v-model="initAccountdialogform.companyId" auto-complete="off" class="add-dialog"></el-input>
+                </el-form-item>
+            	<el-form-item label="选择客户：" prop="compantyName" :label-width="formLabelWidth">
+                    <el-input v-model="initAccountdialogform.compantyName" auto-complete="off" style="width: 29%;" :disabled="true" class="input-dialog"></el-input>
+                    <a href="javascript:void(0)" @click="selectCustomer">选择</a>
+               </el-form-item>
+               <el-form-item label="交易类型：" prop="accountType" :label-width="formLabelWidth">
+                    <el-select v-model="initAccountdialogform.accountType" @change="checkAccountType" placeholder="选择交易类型">
+                        <el-option label="金额交易" value="1" selected></el-option>
+                        <el-option label="金币交易" value="2"></el-option>
+                    </el-select>
+                </el-form-item>
+                <el-row :gutter="20" v-show="balanceFlag">
+                    <el-col :span="10">
+                        <div class="grid-content bg-purple">
+                            <el-form-item label="金额变动：" prop="changeBalance" :label-width="formLabelWidth">
+                                <el-input v-model="initAccountdialogform.changeBalance" auto-complete="off" class="add-dialog"></el-input>
+                            </el-form-item>
+                        </div>
+                    </el-col>
+                    <el-col :span="10">
+                        <div class="grid-content bg-purple">
+                        	<el-form-item label="金额冻结变动：" prop="changefrozen" :label-width="formLabelWidth">
+                                <el-input v-model="initAccountdialogform.changefrozen" auto-complete="off" class="add-dialog"></el-input>
+                            </el-form-item>
+                        </div>
+                    </el-col>
+                </el-row>
+                <el-row :gutter="20" v-show="goldFlag">
+                    <el-col :span="10">
+                        <div class="grid-content bg-purple">
+                            <el-form-item label="金币变动：" prop="changegold" :label-width="formLabelWidth">
+                                <el-input v-model="initAccountdialogform.changegold" auto-complete="off" class="add-dialog"></el-input>
+                            </el-form-item>
+                        </div>
+                    </el-col>
+                    <el-col :span="10">
+                        <div class="grid-content bg-purple">
+                            <el-form-item label="金币冻结变动：" prop="changefrozengold" :label-width="formLabelWidth">
+                                <el-input v-model="initAccountdialogform.changefrozengold" auto-complete="off" class="add-dialog"></el-input>
+                            </el-form-item>
+                        </div>
+                    </el-col>
+                </el-row>
+                <el-form-item label="备注：" prop="memo" :label-width="formLabelWidth">
+                    <el-input v-model="initAccountdialogform.memo" auto-complete="off" class="input-dialog"></el-input>
+                </el-form-item>
+                <el-form-item label="上传凭证：" :label-width="formLabelWidth">
+                    <el-upload
+                        action="https://jsonplaceholder.typicode.com/posts/"
+                        list-type="picture-card"
+                        :on-preview="handlePictureCardPreview"
+                        :on-remove="handleRemove">
+                        <i class="el-icon-plus"></i>
+                    </el-upload>
+                    <el-dialog v-model="dialogVisible" size="tiny">
+                        <img width="100%" :src="dialogImageUrl" alt="">
+                    </el-dialog>
+                </el-form-item>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="initAccountdialogForm = false">取 消</el-button>
+                <el-button type="primary" @click="submitFormUpdate('initAccountdialogform')">确 定</el-button>
+            </div>
+        </el-dialog>
+
+        <el-dialog title="所有客户" :visible.sync="dialogCustomerVisible" size="tiny">
+                <el-form :model="customerform">
+                	<el-row>
+                		<div class="block left">
+			                <el-input style="width: 180px;"
+				                    placeholder="公司名称过滤"
+				                    icon="search"
+				                    v-model="customerform.companyName"
+				                    :on-icon-click="selectCompanyData">
+				                </el-input>
+			                <el-input style="width: 180px;"
+				                    placeholder="手机号过滤"
+				                    icon="search"
+				                    v-model="customerform.mobile"
+				                    :on-icon-click="selectCompanyData">
+				                </el-input>
+			            </div>
+                	</el-row>
+                    <div class="rechangeFinance" v-show="tableData4.length>0">
+			            <div class="shopList">
+			                <el-table
+			                    ref="singleTable"
+			                    :data="tableData4"
+			                    tooltip-effect="dark"
+			                    highlight-current-row
+			                    @current-change="handleCurrentItemChange"
+			                    style="width: 100%">
+			                    <el-table-column
+							      type="index"
+							      width="50">
+							    </el-table-column>
+			                    <el-table-column
+			                        prop="nickName"
+			                        label="公司名称"
+			                        width="122px">
+			                    </el-table-column>
+			                    <el-table-column
+			                        prop="mobile"
+			                        label="手机号"
+			                        width="132px">
+			                    </el-table-column>
+
+			                </el-table>
+			                <el-pagination
+				                    class="right"
+				                    small
+				                    layout="prev, pager, next"
+				                    style="margin-top: 20px;"
+				                  @current-change="handleCurrentItemPageChange"
+				                  :current-page="currentPageItem"
+				                  :page-size="pagesize"
+				                  :total="totalCountItem">
+				            </el-pagination>
+			            </div>
+
+			        </div>
+                </el-form>
+            </el-dialog>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {findCompanysByNameAndMoblie,updateCompanyAccountBySystem,selectFinanceBySystem} from '@/api/getData'
+    import {formatDate} from '../utils/date.js'
+    import {mydateFormat} from '../utils/dataFormater.js'
+    import {export_json_to_excel} from '../vendor/Export2Excel.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        computed: {
+            classObject: function () {
+                return {
+                    active: this.isActive && !this.error,
+                    'text-danger': this.error && this.error.type === 'fatal',
+                }
+            }
+        },
+        data() {
+        	//校验所需金额
+        	var validatechangeBalance = (rule, value, cb) => {
+                var pattern = /^(-?\d+)(\.\d+)?$/;
+                var pattern2 = /^-?\d+\.?\d{0,2}$/;
+                var data = this.initAccountdialogform.accountType;
+                if(data == "1"){
+                	if(!value){
+                		cb();
+                	}if (!pattern.test(value)) {
+	                    cb(new Error('金额必须为数字'))
+	                }else if(!pattern2.test(value)){
+	                	cb(new Error('金额不能超过两位小数'))
+	                }else{
+	                	cb();
+	                }
+                }else{
+                	cb();
+                }
+            }
+        	var validatechangefrozen = (rule, value, cb) => {
+                var pattern = /^(-?\d+)(\.\d+)?$/;
+                var pattern2 = /^-?\d+\.?\d{0,2}$/;
+                var data = this.initAccountdialogform.accountType;
+                if(data == "1"){
+	                if(!value){
+                		cb();
+                	}if (!pattern.test(value)) {
+	                    cb(new Error('金额冻结必须为数字'))
+	                }else if(!pattern2.test(value)){
+	                	cb(new Error('金额冻结不能超过两位小数'))
+	                }else{
+	                	cb();
+	                }
+	            }else{
+                	cb();
+                }
+            }
+            var validatechangegold = (rule, value, cb) => {
+                var pattern = /^(-?\d+)(\.\d+)?$/;
+                var pattern2 = /^-?\d+\.?\d{0,2}$/;
+                var data = this.initAccountdialogform.accountType;
+                if(data == "2"){
+                	if(!value){
+                		cb();
+                	}if (!pattern.test(value)) {
+	                    cb(new Error('金币必须为数字'))
+	                }else if(!pattern2.test(value)){
+	                	cb(new Error('金币不能超过两位小数'))
+	                }else{
+	                	cb();
+	                }
+                }else{
+                	cb();
+                }
+
+            }
+            var validatechangefrozengold = (rule, value, cb) => {
+                var pattern = /^(-?\d+)(\.\d+)?$/;
+                var pattern2 = /^-?\d+\.?\d{0,2}$/;
+                var data = this.initAccountdialogform.accountType;
+                if(data == "2"){
+                	if(!value){
+                		cb();
+                	}if (!pattern.test(value)) {
+	                    cb(new Error('金币冻结必须为数字'))
+	                }else if(!pattern2.test(value)){
+	                	cb(new Error('金币冻结不能超过两位小数'))
+	                }else{
+	                	cb();
+	                }
+                }else{
+                	cb();
+                }
+            }
+            var validatecompantyName = (rule, value, cb) => {
+            	var data = this.initAccountdialogform.companyId;
+            	if(!data){
+            		cb(new Error('请选择客户'))
+            	}else{
+            		cb();
+            	}
+            }
+            var validateaccountType = (rule, value, cb) => {
+            	if(value == "1"){
+            		let changeBalance = this.initAccountdialogform.changeBalance;
+            		let changefrozen = this.initAccountdialogform.changefrozen;
+            		if(!changeBalance && !changefrozen){
+            			this.$message({
+	                        type: 'error',
+	                        message: '金额变动和金额冻结变动不能同时为空'
+	                    });
+            		}else{
+            			cb();
+            		}
+            	}else if(value == "2"){
+            		let changegold = this.initAccountdialogform.changegold;
+            		let changefrozengold = this.initAccountdialogform.changefrozengold;
+            		if(!changegold && !changefrozengold){
+            			this.$message({
+	                        type: 'error',
+	                        message: '金币变动和金币冻结变动不能同时为空'
+	                    });
+            		}else{
+            			cb();
+            		}
+            	}else{
+            		cb();
+            	}
+
+            }
+            return {
+                rotate:false,
+                //默认每页数据量
+                pagesize: 8,
+
+                //默认高亮行数据id
+                highlightId: -1,
+
+                //当前页码
+                currentPage: 1,
+
+                totalCount:1,
+
+                currentPageItem:1,
+                totalCountItem:0,
+
+                balanceFlag:true,
+                goldFlag:false,
+
+                initAccountdialogForm : false,
+                dialogCustomerVisible:false,
+                customerform:{
+                	companyName:'',
+                	mobile:''
+                },
+                formLabelWidth: '120px',
+
+                initAccountdialogform:{
+                	compantyName:'',
+                	accountType:'1'
+                },
+
+                tableData3: [],
+                tableData4: [],
+                currentRow: null,
+
+                checkUserName:'',
+                startDate:'',
+                endDate:'',
+                companyName:'',
+
+                tableDataExport: [],
+
+                initAccountdialogFormRule :{
+                	changeBalance:[
+                		{ validator: validatechangeBalance, trigger: 'blur' }
+                	],
+                	changefrozen:[
+                		{ validator: validatechangefrozen, trigger: 'blur' }
+                	],
+                	changegold:[
+                		{ validator: validatechangegold, trigger: 'blur' }
+                	],
+                	changefrozengold:[
+                		{ validator: validatechangefrozengold, trigger: 'blur' }
+                	],
+                	compantyName:[
+                		{ validator: validatecompantyName, trigger: 'blur' }
+                	],
+                	accountType:[
+                		{ validator: validateaccountType, trigger: 'blur' }
+                	],
+                	memo:[
+                    	{ max: 50, message: '备注长度不能超过50 个字符', trigger: 'blur' }
+                    ]
+                }
+            }
+        },
+        async mounted(){
+        	this.initloadData();
+            this.initloadCustomerData();
+
+            const s = document.createElement('script');
+			s.type = 'text/javascript';
+			s.src = 'http://oss.sheetjs.com/js-xlsx/xlsx.full.min.js';
+			document.body.appendChild(s);
+        },
+        methods: {
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+            },
+
+            //从服务器获取数据
+        	async initloadData() {
+            	let param ={
+            		pageIndex:1,
+            		pageSize:this.pagesize,
+            		startDate:this.startDate,
+            		endDate:this.endDate,
+            		checkUserName:this.checkUserName,
+            		companyName:this.companyName
+            	}
+                const res = await selectFinanceBySystem(param);
+                if (res.isSuccess == true) {
+                    this.tableData3 = res.result.data.results;
+                    this.totalCount = res.result.data.totalCount;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.isSuccess
+                    });
+                }
+            },
+            async initloadData2() {
+            	let param ={
+            		pageIndex:this.currentPage,
+            		pageSize:this.pagesize,
+            		startDate:this.startDate,
+            		endDate:this.endDate,
+            		checkUserName:this.checkUserName,
+            		companyName:this.companyName
+            	}
+                const res = await selectFinanceBySystem(param);
+                if (res.isSuccess == true) {
+                    this.tableData3 = res.result.data.results;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.isSuccess
+                    });
+                }
+            },
+            async initloadCustomerData() {
+            	let param ={
+            		pageIndex:1,
+            		pageSize:this.pagesize,
+            		mobile:this.customerform.mobile,
+            		companyName:this.customerform.companyName
+            	}
+                const res = await findCompanysByNameAndMoblie(param);
+                if (res.isSuccess == true) {
+                    this.tableData4 = res.result.data.results;
+                    this.totalCountItem = res.result.data.totalCount;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.isSuccess
+                    });
+                }
+            },
+            async initloadCustomerData2() {
+            	let param ={
+            		pageIndex:this.currentPageItem,
+            		pageSize:this.pagesize,
+            		mobile:this.customerform.mobile,
+            		companyName:this.customerform.companyName
+            	}
+                const res = await findCompanysByNameAndMoblie(param);
+                if (res.isSuccess == true) {
+                    this.tableData4 = res.result.data.results;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.isSuccess
+                    });
+                }
+            },
+
+            async exportCustomerData() {
+            	let param ={
+            		pageIndex:1,
+            		pageSize:this.pagesize*this.totalCount,
+            		startDate:this.startDate,
+            		endDate:this.endDate,
+            		checkUserName:this.checkUserName,
+            		companyName:this.companyName
+            	}
+                const res = await selectFinanceBySystem(param);
+                const list = [];
+                if (res.isSuccess == true) {
+					this.tableDataExport = res.result.data.results;
+					for(let i=0;i<this.tableDataExport.length;i++){
+						let data1 = this.tableDataExport[i];
+						let companyName = '';
+						let moneyChange = 0;
+						let frozenMoneyChange = 0;
+						let beanChange = 0;
+						let frozenBeanChange = 0;
+						let createTime = '';
+						let userName = '';
+
+						if(data1.companyName){
+							companyName = data1.companyName;
+						}
+
+						if(data1.accType && data1.accType == "1" && data1.changeFee){
+							moneyChange = data1.changeFee;
+						}
+						if(data1.accType && data1.accType == "1" && data1.freezed){
+							frozenMoneyChange = data1.freezed;
+						}
+						if(data1.accType && data1.accType == "2" && data1.changeFee){
+							beanChange = data1.changeFee;
+						}
+						if(data1.accType && data1.accType == "2" && data1.freezed){
+							frozenBeanChange = data1.freezed;
+						}
+
+
+						if(data1.createTime){
+		            		var date2 = new Date(data1.createTime);
+		                	createTime = formatDate(date2,'yyyy-MM-dd hh:mm');
+		            	}
+
+		            	let row = {
+		            		companyName : companyName,
+							moneyChange : moneyChange,
+							frozenMoneyChange : frozenMoneyChange,
+							beanChange : beanChange,
+							frozenBeanChange : frozenBeanChange,
+							createTime : createTime,
+							userName : userName
+		            	}
+		            	list.push(row);
+					}
+			　　　　const tHeader = ['公司名称', '金额变动','冻结金额变动','金币变动','冻结金币变动','创建时间','操作人'];
+			　　　　const filterVal = ['companyName', 'moneyChange','frozenMoneyChange','beanChange','frozenBeanChange','createTime','userName'];
+			　　　　const data = this.formatJson(filterVal, list);
+			　　　　export_json_to_excel(tHeader, data, '钱包初始化列表');
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.isSuccess
+                    });
+                }
+            },
+
+             async submitFormUpdate(formName){
+                    this.$refs[formName].validate(async (valid) => {
+                        if (valid) {
+                            const res = await updateCompanyAccountBySystem(this.initAccountdialogform);
+                            if (res.isSuccess == true) {
+                                this.$message({
+                                    type: 'success',
+                                    message: res.result.msg
+                                });
+                                 this.initAccountdialogForm = false;
+                                 this.initloadData();
+                            }else{
+                                this.$message({
+                                    type: 'error',
+                                    message: res.errorMsg
+                                });
+                            }
+                        } else {
+
+                            return false;
+                        }
+                    });
+              },
+
+
+
+            deleteRow(index, rows) {
+                rows.splice(index, 1);
+            },
+            clickRotate(index){
+                console.log(index);
+                this.tableData3[index].member = !this.tableData3[index].member ;
+            },
+            selectCustomer(){
+            	this.initAccountdialogForm = false;
+            	this.dialogCustomerVisible = true;
+            },
+            //
+            handleCurrentItemChange(val) {
+		        this.initAccountdialogform.compantyName = val.nickName;
+		        this.initAccountdialogform.companyId = val.compId;
+		        this.dialogCustomerVisible = false;
+		        this.initAccountdialogForm = true;
+		      },
+		    handleCurrentItemPageChange:function(val) {
+                this.currentPageItem = val;
+                this.initloadCustomerData2();
+           },
+           async selectCompanyData(){
+           		let param ={
+            		pageIndex:1,
+            		pageSize:this.pagesize,
+            		mobile:this.customerform.mobile,
+            		companyName:this.customerform.companyName
+            	}
+                const res = await findCompanysByNameAndMoblie(param);
+                if (res.isSuccess == true) {
+                    this.tableData4 = res.result.data.results;
+                    this.totalCountItem = res.result.data.totalCount;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.isSuccess
+                    });
+                }
+           },
+           async selectCompanyFinanceData(){
+            	this.initloadData();
+           },
+           async handleCurrentChange(val){
+                this.currentPage = val;
+                this.initloadData2();
+            },
+           checkAccountType(val){
+            	if(val == "2"){
+            		this.balanceFlag = false;
+            		this.goldFlag = true;
+            	}else{
+            		this.balanceFlag = true;
+            		this.goldFlag = false;
+            	}
+            },
+            formatVerifyBeanChange:function(row, column){
+            	let data = row.accType;
+            	if(data == "1"){
+            		return row.changeFee;
+            	}else{
+            		return "0";
+            	}
+            },
+            formatVerifyfrozenBeanChange:function(row, column){
+            	let data = row.accType;
+            	if(data == "1"){
+            		return row.freezed;
+            	}else{
+            		return "0";
+            	}
+            },
+            formatVerifygoldChange:function(row, column){
+            	let data = row.accType;
+            	if(data == "2"){
+            		return row.changeFee;
+            	}else{
+            		return "0";
+            	}
+            },
+            formatVerifyfrozenGoldChange:function(row, column){
+            	let data = row.accType;
+            	if(data == "2"){
+            		return row.freezed;
+            	}else{
+            		return "0";
+            	}
+            },
+            //数据格式化
+            formatDate:function(row, column) {
+                let data = row[column.property];
+                if (data == undefined||data=='') {
+                    return "";
+                }
+                var date2 = new Date(data);
+                return (date2.getFullYear()+"-"+date2.getMonth()+"-"+date2.getDay());
+            },
+            initAccountdialogFormClick(){
+            	this.initAccountdialogform={
+                	compantyName:this.initAccountdialogform.compantyName,
+                	accountType:'1',
+                	companyId:this.initAccountdialogform.companyId
+                }
+            	this.initAccountdialogForm = true;
+            },
+            mydateFormat,
+            formatJson(filterVal, jsonData) {
+	　　　　　　return jsonData.map(v => filterVal.map(j => v[j]))
+	　　　　},
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/walletInit';
+</style>

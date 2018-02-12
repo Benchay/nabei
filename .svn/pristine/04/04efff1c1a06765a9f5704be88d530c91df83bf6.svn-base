@@ -1,0 +1,242 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('fastShipping2')">
+                <router-link :to='{path:"/fastShipping2"}'>快速出货</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('indentManagement')">
+                <router-link :to='{path:"/indentManagement"}'>订单管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('takeGoods')">
+                <router-link :to='{path:"/takeGoods"}'>取货码</router-link>
+            </li>
+            <li class="menuIndex" v-if="getMenuAuthFun('sellerSettlement')">
+                <router-link :to='{path:"/sellerSettlement"}'>客户结算</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('SettlementRecordsStall')">
+                <router-link :to='{path:"/SettlementRecordsStall"}'>结算单</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('customerManagement')">
+                <router-link :to='{path:"/customerManagement"}'>客户管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('statisticalStatement')">
+                <router-link :to='{path:"/statisticalStatement"}'>销售统计</router-link>
+            </li>
+        </ul>
+        <div class="sellerSettlement">
+            <div class="details" >
+                <el-col :span="24">
+                    <el-col :span="24">电商卖家名称：{{busiName}}</el-col>
+                    <el-col :span="6">当前总欠款：{{totalFee.toFixed(2)}}</el-col>
+                    <el-col :span="18">
+                        <div  class="flex" v-for="list in info">
+                            <p v-bind:class="[list.state == 0?'style1':list.state ==1?'style1':list.state ==2?'style2':'']" >{{list.state==0?'现结':list.state == 1?'周结':list.state == 2?'月结':''}}</p>
+                            <p>{{list.date}}</p>
+                        </div>
+                    </el-col>
+                    <el-col :span="6">已到期：{{expireFee.toFixed(2)}}</el-col>
+                    <el-col :span="18">未到期：{{undueFee.toFixed(2)}}</el-col>
+                </el-col>
+            </div>
+            <div class="detailsTable" >
+                <p class="tableTop">结算记录：</p>
+                <el-table
+                    :data="tableData6"
+                    style="width: 100%; height: 400px; overflow-y: auto;">
+                    <el-table-column
+                        prop="reciveAcountType"
+                        label="支付类型">
+                        <template scope="scope">
+                            <p>{{scope.row.reciveAcountType==1?'余额':scope.row.reciveAcountType==3?'支付宝':scope.row.reciveAcountType==4?'微信':scope.row.reciveAcountType==5?'银行卡':''}}</p>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="payAcount"
+                        label="支付账户">
+                    </el-table-column>
+                    <el-table-column
+                        prop="actualPayFee"
+                        label="结算金额">
+                        <template scope="scope">{{scope.row.actualPayFee==undefined?0.00:scope.row.actualPayFee.toFixed(2)}}</template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="createTime"
+                        label="结算时间"
+                       :formatter="formatDateInfo">
+                    </el-table-column>
+                    <el-table-column
+                        prop="status"
+                        label="结算状态">
+                        <template scope="scope">
+                            <p>{{scope.row.status == 0? '等待付款':scope.row.status ==1?'付款成功':scope.row.status ==2?'付款失败':scope.row.status ==3?'已关闭':scope.row.status==4?'付款中':''}}</p>
+                        </template>
+                    </el-table-column>
+                </el-table>
+                <el-pagination
+	                small
+	                class="right"
+	                style="margin-top: 20px;"
+	                @size-change="handleSizeChange"
+	                @current-change="handleCurrentChange"
+	                :current-page="currentPage"
+                    :page-sizes="[10, 20, 30, 40,50]"
+	                :page-size="pageSize"
+	                layout="total, sizes,prev, pager, next, jumper"
+	                :total="totalCount">
+	            </el-pagination>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {userInfo} from  '../config/mUtils'
+    import {formatDate} from '../utils/date.js'
+    import {mydateFormat} from '../utils/dataFormater.js'
+    import {queryFinanceRecord,querySettlementOrder,confirmSettlementOrder,querySettlementDay} from '@/api/getData'
+    import {getMenuAuth} from  '../utils/AuthMenu.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                checked:false,
+                info:[],
+                tableData6:[],
+                busiName:'',
+                saleCompanyId:'',
+                totalFee:0,
+                expireFee:0,
+                undueFee:0,
+                settlementDay:'',
+                pageSize:10,
+                currentPage:1,
+                totalCount:0,
+            }
+        },
+        watch:{
+            '$route': function (route) {
+                this.info = [];
+                this.tableData6 = [];
+                this.saleCompanyId = this.$route.query.saleCompanyId;
+                this.totalFee = this.$route.query.totalFee;
+                this.expireFee = this.$route.query.expireFee;
+                if(this.expireFee==undefined){
+                    this.expireFee = 0;
+                }
+                this.undueFee = this.totalFee - this.expireFee;
+                this.busiName = this.$route.query.busiName;
+
+                this.querySettlementDay();//查询结算日
+
+                this.querySettlementOrderInfo();//获取结算单记录
+
+            }
+        },
+        mounted(){
+           this.saleCompanyId = this.$route.query.saleCompanyId;
+           this.totalFee = this.$route.query.totalFee;
+           this.expireFee = this.$route.query.expireFee;
+           if(this.expireFee==undefined){
+               this.expireFee = 0;
+           }
+           this.undueFee = this.totalFee - this.expireFee;
+           this.busiName = this.$route.query.busiName;
+
+            this.querySettlementDay();//查询结算日
+
+           this.querySettlementOrderInfo();//获取结算单记录
+
+        },
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+
+            //查看结算日
+            async querySettlementDay(){
+                let param = {
+                    params:{"companyId":userInfo().companyId,
+                        "settlementCompanyId":this.saleCompanyId},
+                    pageIndex:1,
+                    pageSize:1
+                };
+                const res = await querySettlementDay(param);
+                if(res.isSuccess){
+                    var settlementDay = '';
+                    if(res.result.results[0].settlementType==1){
+                        var day = res.result.results[0].settlementDay;
+                        if(day==1){
+                            settlementDay = '周一';
+                        }else if(day==2){
+                            settlementDay = '周二';
+                        }else if(day==3){
+                            settlementDay = '周三';
+                        }else if(day==4){
+                            settlementDay = '周四';
+                        }else if(day==5){
+                            settlementDay = '周五';
+                        }else if(day==6){
+                            settlementDay = '周六';
+                        }else if(day==7){
+                            settlementDay = '周日';
+                        }
+
+                    }else if(res.result.results[0].settlementType==2){
+                        settlementDay = res.result.results[0].settlementDay + '号';
+                    }
+
+                    let pa = {
+                        state:res.result.results[0].settlementType,
+                        date:settlementDay
+                    };
+                    this.info.push(pa);
+                }
+            },
+
+
+            handleSizeChange(val){
+        	    this.pageSize = val;
+                this.querySettlementOrderInfo();//获取结算单记录
+            },
+
+            handleCurrentChange(val){
+                this.currentPage = val;
+                this.querySettlementOrderInfo();//获取结算单记录
+            },
+
+            //加载结算单记录
+            async querySettlementOrderInfo(){
+                let param = {
+                    "companyId":userInfo().companyId,
+                    "otherSideCompanyId":this.saleCompanyId,
+                    "pageIndex":this.currentPage,
+                    "pageSize":this.pageSize
+                };
+                const res = await querySettlementOrder(param);
+                if(res.isSuccess){
+                    this.tableData6 = res.result.results;
+                    this.totalCount = res.result.totalCount;
+                }
+            },
+            //格式化时间
+            formatDateInfo:function(row,column){
+                let data = row[column.property];
+                if(data==undefined||data==''){
+                    return '';
+                }
+                return formatDate(data*1,'yyyy-MM-dd hh:mm:ss');
+            },
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/sellerSettlement';
+</style>

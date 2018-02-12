@@ -1,0 +1,11 @@
+.stallManage{
+    margin:1px 30px;
+    background: #fff;
+    padding: 20px 40px;
+    color:#333;
+    .stallManageTop>div{
+        width: 180px;
+        margin-right: 10px;
+        margin-bottom: 20px;
+    }
+}

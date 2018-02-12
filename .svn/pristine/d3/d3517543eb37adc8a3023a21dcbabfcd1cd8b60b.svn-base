@@ -1,0 +1,653 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('messageManagement')">
+                <router-link :to='{path:"/messageManagement"}'>消息管理</router-link>
+            </li>
+            <li class="menuIndex3" v-if="getMenuAuthFun('bulletinManagement')">
+                <router-link :to='{path:"/bulletinManagement"}'>公告管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('msgManagement')">
+                <router-link :to='{path:"/msgManagement"}'>短信管理</router-link>
+            </li>
+            <!--<li>-->
+            <!--<router-link :to='{path:"/sessionManagement"}'>会话管理</router-link>-->
+            <!--</li>-->
+        </ul>
+        <div class="bulletinManagement">
+            <div>
+                <div class="bulletinManagementTop">
+                    <div class="" >
+                        <el-date-picker
+                            size="small"
+                            v-model="filters.date.startDate"
+                            type="date"
+                            placeholder="选择开始日期"
+                            @change="handleIconClick"
+                            :picker-options="startDateBefore"
+                            >
+                        </el-date-picker>
+                        -
+                        <el-date-picker
+                            size="small"
+                            v-model="filters.date.endDate"
+                            type="date"
+                            @change="handleIconClick"
+                            placeholder="选择截止日期"
+                            :picker-options="startDateAfter"
+                        >
+                        </el-date-picker>
+                    </div>
+                </div>
+                <div class="bulletinInfoTable" >
+                    <div class="bullerinTop">
+                        <el-button type="primary" @click="addBulletin" size="small">添加公告</el-button>
+                        <el-button type="primary" @click="batchDeleteConfig" style="margin-left:10px" size="small">删除</el-button>
+                    </div>
+                    <el-table
+                        ref="multipleTable"
+                        :data="bulletinVO"
+                        tooltip-effect="dark"
+                        @selection-change="handleSelectionChange"
+                        style="width: 100%"
+                        >
+                        <el-table-column
+                            type="selection"
+                            width="55">
+                        </el-table-column>
+                        <el-table-column
+                            prop="title"
+                            label="公告标题"
+                           >
+                        </el-table-column>
+                        <el-table-column
+                            prop="applicationName"
+                            label="所属系统名称"
+                            >
+                        </el-table-column>
+                        <el-table-column
+                            prop="createTime"
+                            label="起始时间"
+                            :formatter="formatDate"
+                            show-overflow-tooltip>
+                        </el-table-column>
+                        <el-table-column
+                            prop="endTime"
+                            label="截止时间"
+                            :formatter="formatDate"
+                            show-overflow-tooltip>
+                        </el-table-column>
+                        <el-table-column
+                            prop="status"
+                            label="状态"
+                            :formatter="preparedData"
+                            show-overflow-tooltip>
+                        </el-table-column>
+                        <el-table-column
+                            prop="company"
+                            label="操作"
+                            show-overflow-tooltip>
+                            <template scope="scope">
+                                <el-button
+                                    size="small"
+                                    :disabled="scope.row.status==0?false:true"
+                                    @click="publish(scope.$index)">发布</el-button>
+                                <el-button
+                                    size="small"
+                                    @click="showDetail(scope.$index)">查看</el-button>
+                                <el-button
+                                    size="small"
+                                    @click="showEdit(scope.$index)">修改</el-button>
+                                <!--<el-button-->
+                                    <!--size="small"-->
+                                    <!--type="danger"-->
+                                    <!--@click="delUser(scope.$index)">删除</el-button>-->
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </div>
+
+                <el-pagination
+                    small
+                    class="right"
+                    style="margin-top: 20px;"
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :current-page="currentPage"
+                    :page-sizes="[10, 20, 30, 40]"
+                    :page-size="pagesize"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    :total="totalCount">
+                </el-pagination>
+                <a href="javascript:void(0)" @click="exportData" class="export_excle">导出excel</a>
+                <el-dialog title="详情" :visible.sync="dialogFormMember" custom-class="dialogSize" size="small">
+                    <div>
+                        <div class="bulletinDetailTable">
+                            <div class="detail">
+                                <el-col :span="24">
+                                </el-col>
+                                <el-col :span="24" >
+                                    <el-col :span="12" class="flex2">
+                                        <el-col :span="5"><span>公告标题：</span></el-col>
+                                        <el-col :span="14">
+                                            <el-input
+                                                v-model="title">
+                                            </el-input>
+                                        </el-col>
+                                    </el-col>
+                                </el-col>
+
+                                <el-col :span="24" style="padding-top: 20px;">
+                                    <el-col :span="12" class="flex2">
+                                        <el-col :span="5"><span>所属系统：</span></el-col>
+                                        <el-col :span="14">
+                                            <el-input
+                                                v-model="applicationName">
+                                            </el-input>
+                                        </el-col>
+                                    </el-col>
+                                </el-col>
+                                <el-col :span="24" style="padding-top: 20px;">
+                                    <el-col :span="12" class="flex2">
+                                        <el-col :span="5"><span>起始时间：</span></el-col>
+                                        <el-col :span="14">
+                                           <el-input v-model="createTime"></el-input>
+                                        </el-col>
+                                    </el-col>
+                                </el-col>
+                                <el-col :span="24" style="padding-top: 20px;">
+                                    <el-col :span="12" class="flex2">
+                                        <el-col :span="5"><span>截止时间：</span></el-col>
+                                        <el-col :span="14">
+                                            <el-input v-model="endTime"></el-input>
+                                        </el-col>
+                                    </el-col>
+                                </el-col>
+                                <el-col :span="24" style="padding-top: 20px;">
+                                    <el-col :span="12" class="flex2">
+                                        <el-col :span="5"><span>公告内容：</span></el-col>
+                                        <el-col :span="14">
+                                            <el-input
+                                                type="textarea"
+                                                autosize
+                                                v-model="content">
+                                            </el-input>
+                                        </el-col>
+                                    </el-col>
+                                </el-col>
+                                <div slot="footer" class="dialog-footer flex2" style="overflow: hidden;width:100%;padding-top: 20px;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </el-dialog>
+                <el-dialog title="编辑" :visible.sync="dialogEditVisible" custom-class="dialogSize" >
+                    <div class="edit">
+                        <el-col :span="24">
+                        </el-col>
+                        <el-col :span="24" >
+                            <el-col :span="12" class="flex2">
+                                <el-col :span="5"><span>公告标题：</span></el-col>
+                                <el-col :span="14">
+                                    <el-input
+                                        placeholder="请输入公告标题"
+                                        v-model="title">
+                                    </el-input>
+                                </el-col>
+                            </el-col>
+                        </el-col>
+                        <el-col :span="24" class="flex leftList" style="padding-top:10px;">
+                            <el-col :span="12" class="flex2">
+                                <el-col :span="5"><span>所属系统：</span></el-col>
+                                <el-col :span="14">
+                                    <el-select v-model="applicationName" placeholder="请选择所属系统">
+                                       <el-option
+                                           v-for="item in appSystem"
+                                           :key="item.value"
+                                           :label="item.label"
+                                           :value="item.value">
+                                        </el-option>
+                                    </el-select>
+                                </el-col>
+                            </el-col>
+                        </el-col>
+                        <el-col :span="24" style="padding-top: 20px;">
+                            <el-col :span="12" class="flex2">
+                                <el-col :span="5"><span>起始时间：</span></el-col>
+                                <el-col :span="14">
+                                    <el-date-picker
+                                        v-model="filters.date.start"
+                                        type="date"
+                                        placeholder="选择开始日期"
+                                        :picker-options="before"
+                                        :formatter="formatDate" >
+                                    </el-date-picker>
+                                </el-col>
+                            </el-col>
+                        </el-col>
+                        <el-col :span="24" style="padding-top: 20px;">
+                            <el-col :span="12" class="flex2">
+                                <el-col :span="5"><span>截止时间：</span></el-col>
+                                <el-col :span="14">
+                                    <el-date-picker
+                                    v-model="filters.date.end"
+                                    type="date"
+                                    placeholder="选择截止日期"
+                                    :picker-options="after"
+                                    :formatter="formatDate"
+                                    ></el-date-picker>
+                                </el-col>
+                            </el-col>
+                        </el-col>
+                        <el-col :span="24" style="padding-top: 20px;">
+                            <el-col :span="12" class="flex2">
+                                <el-col :span="5"><span>公告内容：</span></el-col>
+                                <el-col :span="14">
+                                    <el-input
+                                        type="textarea"
+                                        autosize
+                                        placeholder="请输入公告内容"
+                                        v-model="content">
+                                    </el-input>
+                                </el-col>
+                            </el-col>
+                        </el-col>
+                        <div slot="footer" class="dialog-footer flex2" style="overflow: hidden;width:100%;padding-top: 20px;">
+                            <el-button type="primary" @click="saveInfo">保存</el-button>
+                            <el-button  @click="dialogEditVisible = false">取消</el-button>
+                        </div>
+                    </div>
+                </el-dialog>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {queryBulletinInfo,publishBulletin,queryBulletinDetail,deleteBulletin,batchDeleteBulletin,queryApplications,updateBulletinInfo} from '@/api/getData'
+    import {mapActions, mapState} from 'vuex'
+    import {formatDate} from '../utils/date.js'
+    import {getLodop}   from '../Lodop/LodopFuncs.js'
+    import {getMenuAuth,haveMenuAuth} from  '../utils/AuthMenu.js'
+    import {export_json_to_excel} from '../vendor/Export2Excel.js'
+    const _XLSX = require('xlsx')
+    const X = typeof XLSX !== 'undefined' ? XLSX : _XLSX;
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                filters:{
+                    date:{
+                        startDate:'',
+                        endDate:'',
+                        start:'',
+                        end:''
+                    }
+                },
+                startDateBefore:{
+                    disabledDate: (time) => {
+                        let beginDateVal = this.filters.date.endDate;
+                        if (beginDateVal) {
+                            return time.getTime() > beginDateVal;
+                        }
+                    }
+                },
+                startDateAfter:{
+                    disabledDate: (time) => {
+                        let beginDateVal = this.filters.date.startDate;
+                        if (beginDateVal) {
+                            return time.getTime() < beginDateVal;
+                        }
+                    }
+                },
+                before:{
+                    disabledDate: (time) => {
+                        let beginDateVal = this.filters.date.end;
+                        if (beginDateVal) {
+                            return time.getTime() > beginDateVal;
+                        }
+                    }
+                },
+                after:{
+                    disabledDate: (time) => {
+                        let beginDateVal = this.filters.date.start;
+                        if (beginDateVal) {
+                            return time.getTime() < beginDateVal;
+                        }
+                    }
+                },
+
+                dialogFormMember:false,
+                dialogEditVisible:false,
+                dialogDelete:false,
+                bulletinVO:[],
+                bulletinDetail:'',
+                title:'',
+                content:'',
+                endTime:'',
+                createTime:'',
+                applicationName:'',
+                //列表数据
+                tableData3:[],
+                pageSize:8,
+                //默认高亮行数据id
+                highlightId: -1,
+
+                //当前页码
+                currentPage: 1,
+
+                //查询的页码
+                start: 1,
+
+                //默认数据总数
+                totalCount: 0,
+                multipleSelection: [],
+                apps:'',
+                appSystem:[],
+                id:''
+            }
+        },
+        mounted(){
+            let param = {
+                "start":this.filters.date.startDate,
+                "end":this.filters.date.endDate,
+                "pageIndex":this.currentPage,
+                "pageSize":this.pageSize
+            };
+            this.loadData(param);
+
+            this.queryApplication();
+        },
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+            },
+            async queryApplication(){
+              const res = await queryApplications();
+              if(res.isSuccess){
+                  let table = res.result.data;
+                  for(let i = 0 ;i<table.length;i++){
+                      let param = {
+                          "label":table[i].name,
+                          "value":table[i].id
+                      };
+                      this.appSystem.push(param);
+                  }
+              }
+            },
+            handleIconClick(){
+                let param = {
+                    "start":this.filters.date.startDate,
+                    "end":this.filters.date.endDate,
+                    "pageIndex":this.currentPage,
+                    "pageSize":this.pageSize
+                };
+                this.loadData(param);
+            },
+            addBulletin(){
+                this.id = '';
+                this.dialogEditVisible = true;
+                this.title = '';
+                this.filters.date.start = '';
+                this.filters.date.end = '';
+                this.content = '';
+                this.applicationName = '';
+            },
+            handleSelectionChange(val) {
+                this.multipleSelection = val;
+            },
+            batchDeleteConfig() {
+                if(this.multipleSelection == undefined || this.multipleSelection.length==0){
+                    this.$message({
+                        type: 'error',
+                        message: '请先勾选要删除的行！'
+                    });
+                    return;
+                }
+                var array = [];
+                this.multipleSelection.forEach((item) => {
+                    array.push(item.id);
+                })
+                if(array.length <1){
+                    this.$message({
+                        type: 'error',
+                        message: '请先勾选要删除的行！'
+                    });
+                    return;
+                }
+                this.$confirm('是否确认删除选中的信息?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    this.batchDelete(array);
+                }).catch(() => {
+
+                });
+            },
+            async batchDelete(array){
+                const res = await batchDeleteBulletin({bulletinIds:array});
+                if(res.isSuccess){
+                    this.$message({
+                        type:'info',
+                        message:res.result.msg
+                    });
+                }else{
+                    this.$message({
+                        type:'info',
+                        message:'删除失败'
+                    });
+                }
+            },
+
+            handleCurrentChange:function(val) {
+                this.currentPage = val;
+                let param = {
+                    "startDate":this.filters.date.startDate,
+                    "endDate":this.filters.date.endDate,
+                    "pageIndex":this.currentPage,
+                    "pageSize":this.pageSize
+                };
+                this.loadData(param);
+            },
+
+            async loadData(param){
+                const res = await queryBulletinInfo(param);
+                if(res.isSuccess){
+                    this.bulletinVO = res.result.data;
+                    this.totalCount = res.result.totalCount;
+                }
+            },
+            async showDetail(index){
+                this.dialogFormMember = true;
+                const res = await queryBulletinDetail({"bulletinId":this.bulletinVO[index].id});
+                if(res.isSuccess){
+                    this.bulletinDetail = res.result.data;
+                    this.title = this.bulletinDetail.title;
+                    this.createTime = this.bulletinDetail.createTime;
+                    this.endTime = this.bulletinDetail.endTime;
+                    this.content = this.bulletinDetail.content;
+                    this.applicationName = this.bulletinDetail.applicationName;
+                }
+            },
+            async publish(index){
+                let param = {
+                    "bulletinId":this.bulletinVO[index].id
+                };
+                const res = await publishBulletin(param);
+                if(res.isSuccess){
+                    this.$message({
+                        type:'info',
+                        message:res.result.msg
+                    });
+                }
+            },
+            async showEdit(index){
+                this.dialogEditVisible = true;
+                const res = await queryBulletinDetail({"bulletinId":this.bulletinVO[index].id});
+                if(res.isSuccess){
+                    this.bulletinDetail = res.result.data;
+                    this.title = this.bulletinDetail.title;
+                    this.filters.date.start = this.bulletinDetail.createTime;
+                    this.filters.date.end = this.bulletinDetail.endTime;
+                    this.content = this.bulletinDetail.content;
+                    this.applicationName = this.bulletinDetail.applicationName;
+                }
+
+                this.id = this.bulletinVO[index].id;
+            },
+
+            async saveInfo(){
+                let param = {
+                    "id":this.id,
+                    "title":this.title,
+                    "createTime":this.filters.date.start,
+                    "endTime":this.filters.date.end,
+                    "content":this.content,
+                    "applicationId":this.applicationName
+                };
+                const result = await updateBulletinInfo({bulletinVO:param});
+                if(result.isSuccess){
+                    if(this.id==''){
+                        this.$message({
+                            type:'info',
+                            message:'保存成功'
+                        });
+                    }else{
+                        this.$message({
+                            type:'info',
+                            message:'更新成功'
+                        });
+                    }
+
+
+                    this.dialogEditVisible = false;
+                }
+            },
+            preparedData:function(row,column){
+                let data = row[column.property];
+                if(data==0){
+                    data = '未发布';
+                }else if(data==1){
+                    data = '已发布';
+                }else if(data==2){
+                    data = "已过期";
+                }
+                return data;
+            },
+//            delUser(val){
+//                this.dialogDelete = true;
+//                this.$confirm('是否强制删除该用户以及用户的所有关联信息?', '提示', {
+//                    confirmButtonText: '确定',
+//                    cancelButtonText: '取消',
+//                    type: 'warning'
+//                }).then(() => {
+//                    this.deleteRow(val);
+//                }).catch(() => {
+//                    this.$message({
+//                        type: 'info',
+//                        message: '已取消删除'
+//                    });
+//                });
+//            },
+            async deleteRow(val){
+                const res = await deleteBulletin({"bulletinId":this.bulletinVO[index].id});
+                if(res.isSuccess){
+                    this.$message({
+                        "type":'info',
+                        "message":res.result.msg
+                    });
+                }
+            },
+            //数据格式化
+            formatDate:function(row, column) {
+                let data = row[column.property];
+                if (data == undefined||data=='') {
+                    return "";
+                }
+                var date2 = new Date(data);
+                return formatDate(date2,'yyyy-MM-dd hh:mm:ss');
+            },
+            
+            //导出文档
+			async exportData() {
+               	let param = {
+	                "start":this.filters.date.startDate,
+	                "end":this.filters.date.endDate,
+	                "pageIndex":1,
+	                "pageSize":this.totalCount
+	            };
+                const res = await queryBulletinInfo(param);
+                const list = [];
+                if (res.isSuccess == true) {
+                    res.result.data.forEach(obj => {
+                    	let title= '' ;//公告标题
+                    	let applicationName = '';//所属系统名称
+                    	let start = '';//起始时间
+                    	let end = '';//截止时间
+                    	let status = '';//状态
+                    	if(obj.title){
+                    		title = obj.title;
+                    	}
+                    	if(obj.applicationName){
+                    		applicationName = obj.applicationName;
+                    	}
+                    	if(obj.createTime){
+                    		start = formatDate(new Date(obj.createTime),'yyyy-MM-dd hh:mm:ss');
+                    	}
+                    	if(obj.endTime){
+                    		end = formatDate(new Date(obj.endTime),'yyyy-MM-dd hh:mm:ss');
+                    	}
+                    	if(obj.status && obj.status == 1){
+		                    status = '已发布';
+		                }else if(obj.status && obj.status == 2){
+		                    status = "已过期";
+		                }else{
+		                	status = '未发布';
+		                }
+                    	let row = {
+		            		title : title,
+							applicationName : applicationName,
+							start : start,
+							end : end,
+							status : status
+		            	}
+		            	list.push(row);
+                    });
+
+                    const tHeader = ['公告标题', '所属系统名称','起始时间','截止时间','状态'];
+			　　　　const filterVal = ['title', 'applicationName','start','end','status'];
+			　　　　const data = this.formatJson(filterVal, list);
+			　　　　export_json_to_excel(tHeader, data, '公告管理列表');
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            
+            formatJson(filterVal, jsonData) {
+		　　　　　　return jsonData.map(v => filterVal.map(j => v[j]));
+		　　　},
+
+        },
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/bulletinManagement';
+</style>

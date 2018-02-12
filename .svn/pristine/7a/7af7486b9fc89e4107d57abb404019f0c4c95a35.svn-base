@@ -1,0 +1,297 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('fastShipping2')">
+                <router-link :to='{path:"/fastShipping2"}'>快速出货</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('indentManagement')">
+                <router-link :to='{path:"/indentManagement"}'>订单管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('takeGoods')">
+                <router-link :to='{path:"/takeGoods"}'>取货码</router-link>
+            </li>
+            <li class="menuIndex" v-if="getMenuAuthFun('sellerSettlement')">
+                <router-link :to='{path:"/sellerSettlement"}'>客户结算</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('SettlementRecordsStall')">
+                <router-link :to='{path:"/SettlementRecordsStall"}'>结算单</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('customerManagement')">
+                <router-link :to='{path:"/customerManagement"}'>客户管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('statisticalStatement')">
+                <router-link :to='{path:"/statisticalStatement"}'>销售统计</router-link>
+            </li>
+        </ul>
+        <div class="sellerSettlement">
+            <div class="sellerTop">
+                <el-select
+                    v-model="otherSideCompanyName"
+                    filterable
+                    remote
+                    reserve-keyword
+                    placeholder="请输入客户名称"
+                    :remote-method="remoteMethod"
+                    :loading="loading"
+                    @change="handleIconClick">
+                    <el-option
+                        v-for="item in options4"
+                        :key="item.sellId"
+                        :label="item.sellName"
+                        :value="item.sellId">
+                    </el-option>
+                </el-select>
+                <el-select v-model="value" placeholder="结算方式" @change="handleIconClick">
+                    <el-option
+                        v-for="item in options"
+                        :key="item.value"
+                        :label="item.label"
+                        :value="item.value">
+                    </el-option>
+                </el-select>
+            </div>
+            <div class="sellerTable">
+                <el-table
+                    :data="tableData3"
+                    style="width: 100%">
+                    <el-table-column
+                        prop="otherSideCompanyName"
+                        label="客户名称"
+                        width="180">
+                    </el-table-column>
+                    <el-table-column
+                        label="结算日期">
+                        <template scope="scope">
+                            <div class="flex2" style="justify-content:flex-start;">
+                                <p v-if="scope.row.settlementDay" v-bind:class="[scope.row.settlementDay.settlementType ==1?'style1':scope.row.settlementDay.settlementType ==2?'style2':'']">{{scope.row.settlementDay.settlementType == 1?'周结':scope.row.settlementDay.settlementType == 2?'月结':''}}</p>
+                                <p v-if="scope.row.settlementDay">{{scope.row.settlementDay.settlementType==1&&scope.row.settlementDay.settlementDay==1?'周一':scope.row.settlementDay.settlementType==1&&scope.row.settlementDay.settlementDay==2?'周二':scope.row.settlementDay.settlementType==1&&scope.row.settlementDay.settlementDay==3?'周三':scope.row.settlementDay.settlementType==1&&scope.row.settlementDay.settlementDay==4?'周四':scope.row.settlementDay.settlementType==1&&scope.row.settlementDay.settlementDay==5?'周五':scope.row.settlementDay.settlementType==1&&scope.row.settlementDay.settlementDay==6?'周六':scope.row.settlementDay.settlementType==1&&scope.row.settlementDay.settlementDay==7?'周日':scope.row.settlementDay.settlementType==2?scope.row.settlementDay.settlementDay + '号':''}}</p>
+                                <p v-else="scope.row.settlementDay">未设置</p>
+                            </div>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="unClosedFee"
+                        label="订单总欠款">
+                        <template scope="scope">{{scope.row.unClosedFee.toFixed(2)}}</template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="toReviceFee"
+                        label="到期订单欠款">
+                        <template scope="scope">{{scope.row.toReviceFee.toFixed(2)}}</template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="ordersNum"
+                        label="未结订单总数">
+                    </el-table-column>
+                    <el-table-column
+                        width="300"
+                        label="操作">
+                        <template scope="scope">
+                            <div class="flex2 sellerOperation" style="justify-content:flex-start;">
+                                <router-link :to='{path:"/sellerSettlementDetailsl",query:{saleCompanyId:scope.row.otherSideCompanyId,unClosedFee:scope.row.unClosedFee,toReviceFee:scope.row.toReviceFee,customName:scope.row.otherSideCompanyName}}'>查看</router-link>
+                                <el-button v-if="haveMenuAuthFun('sellerSettlement',1)" type="text" class="blue2" style="margin-right: 10px;" @click="saleReturnClick(scope.row.otherSideCompanyName,scope.row.otherSideCompanyId,scope.row.backFee)">退款结算</el-button>
+                                <router-link v-if="haveMenuAuthFun('sellerSettlement',1)" :to='{path:"/sellerSettlementImmediately",query:{saleCompanyId:scope.row.otherSideCompanyId,activeName:"first",customName:scope.row.otherSideCompanyName,collectPath:"/sellerSettlement",totalFee:scope.row.unClosedFee,unClosedFee:scope.row.toReviceFee}}'>立即收款</router-link>
+                                <router-link :to='{path:"/sellerSettlementRecord",query:{saleCompanyId:scope.row.otherSideCompanyId,busiName:scope.row.otherSideCompanyName,totalFee:scope.row.unClosedFee,expireFee:scope.row.toReviceFee}}'>结算记录</router-link>
+                            </div>
+                        </template>
+                    </el-table-column>
+                </el-table>
+                <el-pagination
+	                small
+	                class="right"
+	                style="margin-top: 20px;"
+                    @size-change="handleSizeChange"
+	                @current-change="handleCurrentChange"
+	                :current-page="currentPage"
+                    :page-sizes="[10, 20, 30, 40,50]"
+	                :page-size="pageSize"
+	                layout="total,sizes, prev, pager, next, jumper"
+	                :total="totalCount">
+	            </el-pagination>
+                <div style="height:160px;">
+                    &nbsp;
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {loadDebtsBusiness,getDebtInfo,queryStallCustomer} from '@/api/getData'
+    import {userInfo} from  '../config/mUtils'
+    import {formatDate} from '../utils/date.js'
+    import {mydateFormat} from '../utils/dataFormater.js'
+    import {getMenuAuth,haveMenuAuth} from  '../utils/AuthMenu.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                input:'',
+                options: [
+                    {
+                        value:'-1',
+                        label:'全部'
+                    },
+                    {
+                    value: '1',
+                    label: '周结'
+                    }, {
+                    value: '2',
+                    label: '月结'
+                }],
+                value: '',
+                tableData3:[],
+                loading:false,
+                currentPage:1,
+                pageSize:10,
+                totalCount:0,
+                otherSideCompanyName:'',
+                otherSideCompanyId:'',
+                options4:[],
+                str:''
+            }
+        },
+        mounted(){
+            let param = {
+                companyId:userInfo().companyId,
+                pageIndex:this.currentPage,
+                pageSize:this.pageSize,
+                orderType:2
+            };
+            this.loadData(param);
+        },
+        methods: {
+        	haveMenuAuthFun(pathName, mode){
+        		return haveMenuAuth(pathName, mode);
+        	},
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+
+            //组合查询
+            handleIconClick(){
+        	    var list = [];
+        	    this.str = '';
+        	    if(this.value!=undefined&&this.value!=''&&this.value!='-1'){
+        	        let pa ={name:"settlementType",value:this.value};
+        	        list.push(pa);
+                }
+                if(this.otherSideCompanyName!=undefined&&this.otherSideCompanyName!=''){
+        	        let pa = {name:"otherCompanyId",value:this.otherSideCompanyName};
+        	        list.push(pa);
+                }
+                this.str = '{';
+                list.forEach((obj)=>{
+                    this.str = this.str + '"' + obj.name + '":' + '"' + obj.value + '",' ;
+                });
+                this.str = this.str + '"companyId":"' + userInfo().companyId + '",' + '"pageIndex":"' + this.currentPage + '",' + '"pageSize":"' + this.pageSize + '",' + '"orderType":"' + 2 + '"}';
+                var param = JSON.parse(this.str);
+                this.loadData(param);
+            },
+
+            handleSizeChange(val){
+        	    this.pageSize = val;
+                var list = [];
+                this.str = '';
+                if(this.value!=undefined&&this.value!=''){
+                    let pa ={name:"settlementType",value:this.value};
+                    list.push(pa);
+                }
+                if(this.otherSideCompanyName!=undefined&&this.otherSideCompanyName!=''){
+                    let pa = {name:"otherCompanyId",value:this.otherSideCompanyName};
+                    list.push(pa);
+                }
+                this.str = '{';
+                list.forEach((obj)=>{
+                    this.str = this.str + '"' + obj.name + '":' + '"' + obj.value + '",' ;
+                });
+                this.str = this.str + '"companyId":"' + userInfo().companyId + '",' + '"pageIndex":' + this.currentPage + '",' + '"pageSize":"' + this.pageSize + '",' + '"orderType":"' + 2 + '"}';
+                var param = JSON.parse(this.str);
+                this.loadData(param);
+            },
+
+            handleCurrentChange(val){
+                this.currentPage = val;
+                this.str = '';
+                var list = [];
+                if(this.value!=undefined&&this.value!=''){
+                    let pa ={name:"settlementType",value:this.value};
+                    list.push(pa);
+                }
+                if(this.otherSideCompanyName!=undefined&&this.otherSideCompanyName!=''){
+                    let pa = {name:"otherCompanyId",value:this.otherSideCompanyName};
+                    list.push(pa);
+                }
+                this.str = '{';
+                list.forEach((obj)=>{
+                    this.str = this.str + '"' + obj.name + '":' + '"' + obj.value + '",' ;
+                });
+                this.str = this.str + '"companyId":"' + userInfo().companyId + '",' + '"pageIndex":' + this.currentPage + '",' + '"pageSize":"' + this.pageSize + '",' + '"orderType":"' + 2 + '"}';
+                var param = JSON.parse(this.str);
+                this.loadData(param);
+            },
+
+            //数据加载
+            async  loadData(param){
+                const  res = await loadDebtsBusiness(param)
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message:'数据加载成功!'
+                    });
+                    this.tableData3 = res.result.results;
+                    this.totalCount = res.result.totalCount;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            //远程搜索模糊查询电商卖家名称
+            async remoteMethod(query){
+                if(query!=''){
+                    this.loading = true;
+                    let param = {
+                        "companyId":userInfo().companyId,
+                        "sellName":query,
+                        "pageIndex":1,
+                        "pageSize":100
+                    };
+                    const res = await queryStallCustomer(param);
+                    setTimeout(() => {
+                        this.loading = false;
+                        this.options4 = res.result.results;
+                    }, 200);
+                } else {
+                    this.options4 = [];
+                }
+
+            },
+
+            //退款结算
+            saleReturnClick(otherSideCompanyName,otherSideCompanyId,backFee){
+                if(backFee!=undefined&&backFee!=''&&backFee!=0){
+                    this.$router.push({path:"/sellerSettlementDetailsl",query:{type:4,customName:otherSideCompanyName,saleCompanyId:otherSideCompanyId,unClosedFee:backFee,toReviceFee:backFee}});
+                }else{
+                    this.$message({
+                        type:'error',
+                        message:'当前无到期的退货订单'
+                    });
+                }
+            }
+
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/sellerSettlement';
+</style>

@@ -1,0 +1,156 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/fastShipping2"}'>快速出货</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/returnManagement2"}'>快速退货</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/orderPurchaseStall"}'>订单管理</router-link>
+            </li>
+            <li class="menuIndex">
+                <router-link :to='{path:"/sellerSettlement"}'>客户结算</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/customerManagement"}'>客户管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/statisticalStatement"}'>销售统计</router-link>
+            </li>
+        </ul>
+        <div class="sellerSettlement">
+            <div class="details" v-for="list in info">
+                <el-col :span="24">
+                    <el-col :span="24">电商卖家名称：名称名称名称</el-col>
+                    <el-col :span="6">当前总欠款：20000</el-col>
+                    <el-col :span="18">
+                        <div  class="flex">
+                            <p v-bind:class="[list.state ==1?'style1':list.state ==2?'style2':'']">{{list.state == 1?'周结':list.state == 2?'月结':''}}</p>
+                            <p>1号</p>
+                        </div>
+                    </el-col>
+                    <el-col :span="6">已到期：</el-col>
+                    <el-col :span="18">未到期：</el-col>
+                </el-col>
+            </div>
+            <div class="detailsTable">
+                <p class="tableTop">结算记录：</p>
+                <el-table
+                    :data="tableData6"
+                    style="width: 100%">
+                    <el-table-column
+                        prop="payType"
+                        label="支付类型">
+                    </el-table-column>
+                    <el-table-column
+                        prop="account"
+                        label="支付账户">
+                    </el-table-column>
+                    <el-table-column
+                        prop="sum"
+                        label="结算金额">
+                    </el-table-column>
+                    <el-table-column
+                        prop="date"
+                        label="结算时间">
+                    </el-table-column>
+                    <el-table-column
+                        prop="status"
+                        label="结算状态">
+                        <template scope="scope">
+                            <p>{{scope.row.status ==1?'付款成功':scope.row.status ==2?'等待付款':scope.row.status ==3?'付款失败':''}}</p>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {userInfo} from  '../config/mUtils'
+    import {formatDate} from '../utils/date.js'
+    import {mydateFormat} from '../utils/dataFormater.js'
+    import {queryFinanceRecord} from '@/api/getData'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                checked:false,
+                info:[{
+                    state:1,
+                    date:'1号',
+                }],
+                tableData6:[{
+                    id:1,
+                    payType:'支付宝',
+                    account:13479896431,
+                    sum:555,
+                    status:1,
+                    date:'2017-02-11'
+                },{
+                    id:1,
+                    payType:'微信',
+                    account:'163123@163.com',
+                    sum:555,
+                    status:2,
+                    date:'2017-02-11'
+                },{
+                    id:1,
+                    payType:'网银',
+                    account:6222021302315405,
+                    sum:555,
+                    status:3,
+                    date:'2017-02-11'
+                }],
+
+                initData: {
+                    "params": {
+                        "companyId": userInfo().companyId,
+                        "accountType":"3",
+                        "otherCompanyId":"3"
+                    }
+                }
+            }
+        },
+        mounted(){
+           this.loadData(this.initData)
+        },
+        methods: {
+            async loadData(param) {
+                if(!userInfo().companyId)
+                    return ;
+
+                    param.pageSize =  this.pagesize
+                    param.pageIndex = this.currentPage
+                alert(param)
+                const res = await queryFinanceRecord(param);
+                if (res.isSuccess == true) {
+                    this.$message({
+                       type: 'success',
+                       message: '加载数据成功'
+                    });
+                    this.tableData6 = res.result.results;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/sellerSettlement';
+</style>

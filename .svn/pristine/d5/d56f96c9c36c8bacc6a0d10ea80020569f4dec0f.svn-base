@@ -1,0 +1,187 @@
+.manage_page{
+
+}
+.manage-company{
+    margin-top: 10px;
+    padding-left: 30px;
+}
+.manage-content{
+    height:60px;
+    width:100%;
+    background:#fff;
+    /*box-sizing: border-box;*/
+}
+.manage-top-menu>li{
+    float: left;
+    width:90px;
+    height:60px;
+    line-height:60px;
+    margin-right: 15px;
+}
+.manage-logo{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    img{
+        display: block;
+        width: 160px;
+        margin-top: 6px;
+    }
+}
+.topMenuLists,.hand-user{
+    display: flex;
+    align-items: center;
+    color:#333;
+    font-size: 14px;
+    .handOut{
+        margin-left: 10px;
+    }
+}
+.topMenuLists>span{
+    padding: 0 5px;
+}
+.avator{
+    margin-right: 10px;
+}
+.icon{
+    width:20px;
+    height:20px;
+    display: inline-block;
+    background-repeat: no-repeat;
+}
+.icon-home{
+    background-image: url("../image/homepage.png");
+}
+.icon-home1{
+    background-image: url("../image/homepage01.png");
+}
+.icon-procurement{
+    background-image: url("../image/procurement.png");
+}
+.icon-procurement1{
+    background-image: url("../image/lprocurement01.png");
+}
+.icon-finance{
+    background-image:url("../image/finance.png") ;
+}
+.icon-finance1{
+    background-image:url("../image/lfinance01.png") ;
+}
+.icon-dk{
+    background-image:url("../image/dk.png") ;
+}
+.icon-dk1{
+    background-image:url("../image/dk01.png") ;
+}
+.icon-commodity{
+    background-image: url("../image/return.png");
+}
+.icon-commodity1{
+    background-image: url("../image/return01.png");
+}
+.icon-linkman{
+    background-image: url("../image/lcontacts01.png");
+}
+.icon-linkman1{
+    background-image: url("../image/lcontacts01.png");
+}
+.icon-other{
+    background-image: url("../image/systems.png");
+}
+.icon-other1{
+    background-image: url("../image/systems01.png");
+}
+.icon-warehouse{
+    background-image: url("../image/storehouse.png");
+}
+.icon-warehouse1{
+    background-image: url("../image/storehouse01.png");
+}
+.icon-lgoods{
+    background-image: url("../image/goods.png");
+}
+.icon-lgoods1{
+    background-image: url("../image/goods01.png");
+}
+.icon-order{
+    background-image: url("../image/order.png");
+}
+.icon-order1{
+    background-image: url("../image/order01.png");
+}
+.manage-menu{
+    display: flex;
+    align-items: center;
+    width:80%;
+    span{
+        text-indent: 10px;
+        a{
+            color:rgb(191, 203, 217);
+        }
+    }
+}
+
+.iconRight{
+    width: 22px;
+    height:22px;
+    background-image: url("../image/lshrink.png");
+    margin-right: 15px;
+}
+.iconLeft{
+    width: 22px;
+    height:22px;
+    background-image: url("../image/lstretch.png");
+    margin-right:20px;
+}
+.button-left{
+    width:100%;
+    height:40px;
+    padding-top: 10px;
+}
+.manageList{
+    overflow:scroll;
+    max-height: 690px;
+}
+::-webkit-scrollbar
+{
+    width: 0;
+    height: 0;
+}
+//帮助
+.helpPopover{
+    color:#333;
+    .helpFirst,.helpSecond{
+       .tit{
+           background: #d7e9f5;
+           height: 25px;
+           line-height: 25px;
+       }
+        p{
+            padding-left: 10px;
+            height: 30px;
+            line-height: 30px;
+            &:last-child{
+                z-index: 999;
+                text-align: right;
+                a{
+                    color:@blue;
+                }
+            }
+        }
+    }
+    .helpSecond{
+        p{
+            height: 35px;
+            line-height: 35px;
+        }
+        p:last-child{
+            text-align: left;
+            height: 30px;
+            line-height: 30px;
+        }
+    }
+}
+.fontactive{
+    color: #fff;
+}

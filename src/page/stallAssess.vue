@@ -1,0 +1,167 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li class="menuIndex2" v-if="getMenuAuthFun('stallAssess')">
+                <router-link :to='{path:"/stallAssess"}'>档口考核</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('SellerSettlementMethod')">
+                <router-link :to='{path:"/SellerSettlementMethod"}'>卖家结算方式</router-link>
+            </li>
+        </ul>
+        <div class="stallAssess">
+            <div>
+                <el-date-picker
+                    v-model="value1"
+                    type="date"
+                    placeholder="选择日期">
+                </el-date-picker>
+            </div>
+            <div class="shopList">
+                <el-table
+                    ref="multipleTable"
+                    :data="tableData3"
+                    tooltip-effect="dark"
+                    style="width: 100%">
+                    <el-table-column
+                        prop="ranking"
+                        label="排名"
+                        width="120">
+                        <template scope="scope" class="ranking">
+                            <img :src=scope.row.image alt="" v-show="scope.$index<3">
+                            <p v-show="scope.$index>=3">{{scope.row.image}}</p>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="name"
+                        label="档口名称">
+                    </el-table-column>
+                    <el-table-column
+                        prop="graded"
+                        label="评分">
+                    </el-table-column>
+                    <el-table-column
+                        label="星级"
+                        show-overflow-tooltip>
+                        <template scope="scope">
+                            <el-rate
+                                v-model="scope.row.value5"
+                                disabled
+                                text-color="#ff9900">
+                            </el-rate>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        label="操作"
+                        show-overflow-tooltip>
+                        <template scope="scope">
+                            <a href="javascript:void(0);" class="viewDetails" @click="dialogVisible = true">查看详情</a>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+        </div>
+        <el-dialog
+            title="查看详情"
+            :visible.sync="dialogVisible"
+            size="tiny">
+            <visitorPie :pieData='pieData'></visitorPie>
+            <el-table
+                :data="tableData"
+                border
+                style="width: 100%;margin-top: 10px;">
+                <el-table-column
+                    prop="project"
+                    label="考核项目">
+                </el-table-column>
+                <el-table-column
+                    prop="grade"
+                    label="评分">
+                </el-table-column>
+                <el-table-column
+                    prop="practical"
+                    label="实绩考核分">
+                </el-table-column>
+            </el-table>
+        </el-dialog>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import visitorPie from '../components/visitorPie'
+    import {getMenuAuth,haveMenuAuth} from  '../utils/AuthMenu.js'
+    
+    export default {
+        components: {
+            headTop,
+            visitorPie
+        },
+        computed: {
+        },
+        data() {
+            return {
+                pieData: {},
+                dialogVisible:false,
+                value1:'',
+                tableData3: [{
+                    image:require('../image/no_1.png'),
+                    ranking: 1,
+                    graded:90,
+                    name:'我是档口4',
+                    value5:4,
+                },{
+                    image:require('../image/no_2.png'),
+                    ranking: 2,
+                    graded:80,
+                    name:'我是档口4',
+                    value5:3,
+                },{
+                    image:require('../image/no_3.png'),
+                    ranking: 3,
+                    graded:80,
+                    name:'我是档口4',
+                    value5:2,
+                },{
+                    image:4,
+                    ranking: 4,
+                    graded:60,
+                    name:'我是档口4',
+                    value5:1,
+                },],
+                tableData: [{
+                    project: '服务态度',
+                    grade: 20,
+                    practical: 20
+                },{
+                    project: '描述相符',
+                    grade: 20,
+                    practical: 20
+                },{
+                    project: '发货速度',
+                    grade: 20,
+                    practical: 20
+                },{
+                    project: '退货率',
+                    grade: 20,
+                    practical: 20
+                },{
+                    project: '总分',
+                    grade: 100,
+                    practical: 100
+                },]
+            }
+        },
+        methods: {
+			getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/stallAssess';
+</style>

@@ -1,0 +1,318 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/fastShipping2"}'>快速出货</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/returnManagement2"}'>快速退货</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/orderPurchaseStall"}'>订单管理</router-link>
+            </li>
+            <li class="menuIndex">
+                <router-link :to='{path:"/sellerSettlement"}'>客户结算</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/customerManagement"}'>客户管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/statisticalStatement"}'>销售统计</router-link>
+            </li>
+        </ul>
+        <div class="sellerSettlement">
+            <div class="settlementContent">
+                <p class="title">立即结算</p>
+                <el-tabs v-model="activeName" @tab-click="handleClick">
+                    <el-tab-pane label="发起收款" name="first">
+                        <div class="gathering">
+                            <el-col :span="12">
+                                <el-col :span="6" class="listTitle">电商卖家名称：</el-col>
+                                <el-col :span="18" class="tkList">{{customName}}</el-col>
+                            </el-col>
+                            <el-col :span="12" class="flex">
+                                <el-col :span="6" class="listTitle">退款（元）：</el-col>
+                                <el-col :span="18"  class="flex tkList tkList1">
+                                    <p>{{backFee}}</p>
+                                    <el-switch
+                                        v-model="value3"
+                                        class="swich-on"
+                                        on-color="#46cfc5"
+                                        off-color="#ff4949"
+                                        on-text="开"
+                                        off-text="关">
+                                    </el-switch>
+                                    <p>（打开开关，收款自动抵扣退款金额）</p>
+                                </el-col>
+                            </el-col>
+                            <el-col :span="12">
+                                <el-col :span="6" class="listTitle">当前总欠款（元）：</el-col>
+                                <el-col :span="18"  class="tkList">
+                                    <p>{{unClosedFee}}</p>
+                                </el-col>
+                            </el-col>
+                            <el-col :span="12">
+                                <el-col :span="6" class="listTitle">到期欠款（元）：</el-col>
+                                <el-col :span="18"  class="tkList">
+                                    <p>{{toReviceFee}}</p>
+                                </el-col>
+                            </el-col>
+                            <el-col :span="12" class="flex">
+                                <el-col :span="6" class="listTitle"><i>*</i>收款金额：</el-col>
+                                <el-col :span="18"  class="tkList">
+                                    <el-input v-model="toReviceFee" placeholder="请输入" class="input1"></el-input>
+                                </el-col>
+                            </el-col>
+                            <el-col :span="12" class="flex">
+                                <el-col :span="6" class="listTitle">抹平金额：</el-col>
+                                <el-col :span="18"  class="tkList">
+                                    <el-input v-model="smoothFee" placeholder="请输入" class="input1"></el-input>
+                                </el-col>
+                            </el-col>
+                            <el-col :span="24">
+                                <el-col :span="3" class="listTitle">收款说明：</el-col>
+                                <el-col :span="18"  class="tkList">
+                                    <el-input
+                                        type="textarea"
+                                        :autosize="{ minRows: 2, maxRows: 4}"
+                                        placeholder="请输入备注"
+                                        v-model="textarea3">
+                                    </el-input>
+                                </el-col>
+                            </el-col>
+                            <el-col :span="24" class="flex2">
+                                <a href="javascript:void(0)"  @click="handleStart" class="buttonColor">发起</a>
+                                <a href="javascript:void(0)" class="buttonColor2">取消</a>
+                            </el-col>
+                        </div>
+                    </el-tab-pane>
+                    <el-tab-pane label="发起付款" name="second">
+                        <div class="payment">
+                            <el-col :span="12">
+                                <el-col :span="6" class="listTitle">电商卖家名称：</el-col>
+                                <el-col :span="18" class="tkList">哈哈哈哈哈</el-col>
+                            </el-col>
+                            <el-col :span="12" class="flex">
+                            <el-col :span="6" class="listTitle">退款（元）：</el-col>
+                            <el-col :span="18"  class="flex tkList tkList1">
+                                <p>500.00</p>
+                            </el-col>
+                        </el-col>
+                            <el-col :span="24" class="flex">
+                                <el-col :span="3" class="listTitle"><i>*</i>付款金额：</el-col>
+                                <el-col :span="18"  class="tkList">
+                                    <el-input v-model="input" placeholder="请输入" class="input1"></el-input>
+                                </el-col>
+                            </el-col>
+                            <el-col :span="12" class="flex">
+                                <el-col :span="6" class="listTitle"><i>*</i>选择付款类型：</el-col>
+                                <el-col :span="18"  class="tkList">
+                                    <el-select v-model="value" placeholder="请选择" class="tkList2">
+                                        <el-option
+                                            v-for="item in options"
+                                            :key="item.value"
+                                            :label="item.label"
+                                            :value="item.value">
+                                        </el-option>
+                                    </el-select>
+                                </el-col>
+                            </el-col>
+                            <el-col :span="12" class="flex"  v-if="this.value>1">
+                                <el-col :span="6" class="listTitle"><i>*</i>选择付款账户：</el-col>
+                                <el-col :span="18"  class="tkList">
+                                    <el-select v-model="value2" placeholder="请选择" class="tkList2">
+                                        <el-option
+                                            v-for="item in options2"
+                                            :key="item.value"
+                                            :label="item.label"
+                                            :value="item.value">
+                                        </el-option>
+                                    </el-select>
+                                </el-col>
+                            </el-col>
+                            <el-col :span="12" class="flex"  v-if="this.value>1">
+                                <el-col :span="6" class="listTitle"><i>*</i>选择收款账户：</el-col>
+                                <el-col :span="18"  class="tkList">
+                                    <el-select v-model="value2" placeholder="请选择" class="tkList2">
+                                        <el-option
+                                            v-for="item in options2"
+                                            :key="item.value"
+                                            :label="item.label"
+                                            :value="item.value">
+                                        </el-option>
+                                    </el-select>
+                                </el-col>
+                            </el-col>
+                            <el-col :span="24" class="flex" v-if="this.value>1">
+                                <el-col :span="3" class="listTitle">上传凭证：</el-col>
+                                <el-col :span="18"  class="tkList">
+                                    <el-upload
+                                        action="https://jsonplaceholder.typicode.com/posts/"
+                                        list-type="picture-card"
+                                        :on-preview="handlePictureCardPreview"
+                                        :on-remove="handleRemove">
+                                        <i class="el-icon-plus"></i>
+                                    </el-upload>
+                                    <el-dialog v-model="dialogVisible" size="tiny">
+                                        <img width="100%" :src="dialogImageUrl" alt="">
+                                    </el-dialog>
+                                </el-col>
+                            </el-col>
+                            <el-col :span="24">
+                                <el-col :span="3" class="listTitle">收款说明：</el-col>
+                                <el-col :span="18"  class="tkList">
+                                    <el-input
+                                        type="textarea"
+                                        :autosize="{ minRows: 2, maxRows: 4}"
+                                        placeholder="请输入备注"
+                                        v-model="textarea3">
+                                    </el-input>
+                                </el-col>
+                            </el-col>
+                            <el-col :span="24" class="flex2">
+                                <a href="javascript:void(0)" class="buttonColor">发起</a>
+                                <a href="javascript:void(0)" class="buttonColor2">取消</a>
+                            </el-col>
+                        </div>
+                    </el-tab-pane>
+                </el-tabs>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {getDebtInfo} from '@/api/getData'
+    import {userInfo} from  '../config/mUtils'
+    import {formatDate} from '../utils/date.js'
+    import {mydateFormat} from '../utils/dataFormater.js'
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                initData:{
+                    companyId:userInfo().companyId
+                },
+                backFee:'',
+                customName:'',
+                unClosedFee:'',
+                toReviceFee:'',
+                smoothFee:'',
+                textarea3:'',
+                value3:true,
+                activeName:'first',
+                options: [{
+                    value: '1',
+                    label: '余额'
+                }, {
+                    value: '2',
+                    label: '支付宝'
+                }, {
+                    value: '3',
+                    label: '微信'
+                }, {
+                    value: '4',
+                    label: '银行卡'
+                }],
+                value: '1',
+                options2: [{
+                    value: '1',
+                    label: '13465893162'
+                }, {
+                    value: '2',
+                    label: '6222020643216461--王宝强--招商银行'
+                }, {
+                    value: '3',
+                    label: '微信'
+                }],
+                value2: '1',
+                dialogImageUrl: '',
+                dialogVisible: false
+            }
+        },
+        watch: {
+            '$route': function (route) {
+                if(route.path=='/sellerSettlementImmediately'){
+
+                    this.backFee  =  this.$route.query.backFee;
+                    this.unClosedFee  =  this.$route.query.unClosedFee
+                    this.toReviceFee  =  this.$route.query.toReviceFee
+                    this.customName = this.$route.query.customName
+                    this.loadData (this.initData)
+                }
+            }
+        },
+
+        mounted(){
+            this.initData.saleCompanyId  =  this.$route.query.saleCompanyId;
+            this.backFee  =  this.$route.query.backFee;
+            this.unClosedFee  =  this.$route.query.unClosedFee
+            this.toReviceFee  =  this.$route.query.toReviceFee
+            this.customName = this.$route.query.customName
+
+            this.loadData (this.initData)
+        },
+        methods: {
+            handleClick(tab, event) {
+                console.log(tab, event);
+            },
+            handleRemove(file, fileList) {
+                console.log(file, fileList);
+            },
+            handlePictureCardPreview(file) {
+                this.dialogImageUrl = file.url;
+                this.dialogVisible = true;
+            },
+            handleStart(){
+//                private String stockOrders;//勾选的订单id, 使用JSONARRAY格式
+//                private String settlementType;//结算方式 1 单订单结算  2多订单合并
+//                private Double totalDebtFee;//总欠款金额
+//                private Double payFee;//付款金额
+//                private Double fixFee;//抹平金额
+//                private Double actualPayFee;//实际付款金额
+//                private String reciveAcount;//收款账号
+//                private String payAcount;//付款账号
+//                private String memo;//备注
+//                private String  certificate;//凭证
+//                private Integer status;//结算状态   0 已发起 1已打款   2 已确认
+//                private Integer type; //订单类型  1 发起收款  2 发起付款
+//                private String companyId;//公司id
+//                private String otherSideCompanyId;//对方公司id
+//                private Integer isOffLine;//是否线下付款 0否， 1 是线下
+                //获取公司的订单列表
+                stockOrders =[];
+                settlementType=1;
+                payFee=11;
+                fixFee=11;
+                actualPayFee='';
+                reciveAcount='';
+                payAcount='';
+                memo='';
+                type= 1;
+                companyId = userInfo().companyId;
+                otherSideCompanyId = this.saleCompanyId;
+                isOffLine = 0;
+            }
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/sellerSettlement';
+    .el-upload--picture-card {
+        background-color: #fbfdff;
+        border: 1px dashed #c0ccda;
+        border-radius: 6px;
+        box-sizing: border-box;
+        width: 78px;
+        height: 78px;
+        cursor: pointer;
+        line-height: 78px;
+        vertical-align: top;
+    }
+</style>

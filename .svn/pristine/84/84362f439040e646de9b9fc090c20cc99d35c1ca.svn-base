@@ -1,0 +1,334 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/currentInventory"}'>当前库存</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/inventoryDetail"}'>库存变动</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/stocktaking"}'>库存盘点</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/stockTransshipment"}'>库存调拨</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/inventoryWarning"}'>库存预警</router-link>
+            </li>
+            <li class="menuIndex">
+                <router-link :to='{path:"/storeManagement"}'>多仓管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/inventoryInitialize"}'>库存初始化</router-link>
+            </li>
+        </ul>
+        <div class="storeManagement">
+            <div>
+                <a href="javascript:void(0)" class="buttonColor" @click="handleAdd">+新增仓库</a>
+            </div>
+            <div class="store">
+                <el-col :span="list.isStall==1?24:7"  v-for="list in storeList" class="storeOutside">
+                    <el-col :span="list.isStall==1?5:24" class="flex2" :class="[list.isStall ==1 ?'storeDefault':'storeList']"  @click.native="handleEdit(list)">
+                        <img src="../image/storehouse001.png" alt="" v-if="list.isStall ==1" class="storeIcon">
+                        <img src="../image/storehouse002.png" alt="" v-if="list.isStall!=1" class="storeIcon">
+                        <div class="storeListName">{{list.name}}</div>
+                        <img src="../image/rdelete03.png" alt="" @click="handleDel(list.id)" class="deleteImg" v-if="list.isStall !=1">
+                    </el-col>
+                </el-col>
+            </div>
+        </div>
+        <el-dialog
+            title="编辑仓库"
+            :visible.sync="dialogVisible"
+            size="tiny">
+            <div>
+                <div class="flex">
+                    <el-col :span="5">仓库名称：</el-col>
+                    <el-col :span="15"><el-input v-model="input" placeholder="请输入仓库名称"></el-input></el-col>
+                </div>
+                <div class="flex storeLocation">
+                    <el-col :span="5">库位：</el-col>
+                    <el-col :span="15">
+                        <el-tag
+                            class="locationTag"
+                            type="gray"
+                            :key="tag"
+                            v-for="tag in dynamicTags"
+                            :closable="true"
+                            :close-transition="false"
+                            @close="handleClose(tag)">
+                            {{tag.name}}
+                        </el-tag>
+                        <el-input
+                            class="input-new-tag"
+                            v-if="inputVisible"
+                            v-model="inputValue"
+                            ref="saveTagInput"
+                            size="mini"
+                            @keyup.enter.native="handleInputConfirm"
+                            @blur="handleInputConfirm">
+                        </el-input>
+                        <el-button v-else class="button-new-tag" size="small" @click="showInput">+</el-button>
+
+                    </el-col>
+                </div>
+            </div>
+            <span slot="footer" class="dialog-footer flex2">
+                <a href="javascript:void(0)" class="buttonColor" @click="saveWarehouseWithSeatNames(input,dynamicTags)">确 定</a>
+                <a href="javascript:void(0)" class="buttonColor2" @click="dialogVisible = false">取 消</a>
+            </span>
+        </el-dialog>
+        <el-dialog
+            title="删除仓库"
+            :visible.sync="dialogdelete"
+            size="tiny">
+            <div>
+                是否确认删除该仓库？
+            </div>
+            <span slot="footer" class="dialog-footer flex2">
+                <a href="javascript:void(0)" class="buttonColor" @click="delWarehouse()">确 定</a>
+                <a href="javascript:void(0)" class="buttonColor2" @click="dialogdelete = false">取 消</a>
+              </span>
+        </el-dialog>
+        <el-dialog
+            title="新增仓库"
+            :visible.sync="dialogAdd"
+            size="tiny">
+            <div style="padding:0 40px;">
+                <el-input v-model="input1" placeholder="请输入仓库名称..."></el-input>
+
+            </div>
+            <span slot="footer" class="dialog-footer flex2">
+                <a href="javascript:void(0)" class="buttonColor"  @click="saveWarehouse(input1)">确 定</a>
+                <a href="javascript:void(0)" class="buttonColor2" @click="dialogAdd = false">取 消</a>
+              </span>
+        </el-dialog>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {queryStcok,queryWarehouseSeatInfo,queryWarehouseSeat,queryWarehouse,saveWarehouse,saveWarehouseSeat,delWarehouseSeat,delWarehouse,saveWarehouseWithSeatNames} from '@/api/getData'
+    import {userInfo,getStore,setStore} from  '../config/mUtils'
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                dynamicTags: [],
+                inputVisible: false,
+                dialogdelete:false,
+                dialogAdd:false,
+                inputValue: '',
+                dialogVisible:false,
+                input:'',
+                input1:'',
+                storeList:[],
+                companyId: userInfo().companyId,
+                toDelWarehouseId:'',
+                toEditWarehouseId:''
+
+            }
+        },
+        mounted(){
+            this.loadData();
+        },
+        methods: {
+            async handleClose(tag) {
+                let param = {warehouseSeatId:tag.id}
+                let q_param = {"params":{"warehouseSeatId":tag.id}, "pageIndex":1, "pageSize":1}
+                const res =  await  queryStcok(q_param);
+                if(res.isSuccess==true&&res.result.results.length>0){
+                    this.$confirm('删除的库位正在使用，您确定要删除吗?', '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+                          delWarehouseSeat(param);
+                          this.dynamicTags.splice(this.dynamicTags.indexOf(tag), 1);
+                    }).catch(() => {
+
+                    });
+                }else{
+                    const  res_s = await  delWarehouseSeat(param);
+                    this.dynamicTags.splice(this.dynamicTags.indexOf(tag), 1);
+                }
+
+            },
+
+            showInput() {
+                this.inputVisible = true;
+                this.$nextTick(_ => {
+                    this.$refs.saveTagInput.$refs.input.focus();
+                });
+            },
+
+            handleInputConfirm() {
+                let inputValue = this.inputValue;
+                if (inputValue) {
+                    this.dynamicTags.push({name:inputValue});
+                }
+                this.inputVisible = false;
+
+                this.inputValue='';
+            },
+            handleEdit(list){
+                this.dialogVisible = true;
+                this.queryWarehouseSeat(list.id);
+                this.toEditWarehouseId=list.id;
+                this.input = list.name;
+
+            },
+
+            handleDel(id){
+                this.dialogdelete =true;
+                this.toDelWarehouseId=id;
+            },
+            handleAdd(){
+                this.dialogAdd = true;
+                this.input1='';
+                this.toEditWarehouseId='';
+            },
+
+
+            async loadData() {
+             let param =    {
+                    "params": {
+                    "companyId": this.companyId
+                },
+                    "pageInex": 1,
+                    "pageSize": 9999
+                };
+                const res = await queryWarehouse(param);
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: '加载数据成功'
+                    });
+                    this.storeList = res.result.results;
+
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+            async queryWarehouseSeat(warehouseId) {
+                let param =  {
+                    "params": {
+                        "companyId": this.companyId,
+                        "warehouseId": warehouseId
+                    },
+                    "pageIndex": 1,
+                    "pageSize": 9999
+                };
+                const res = await queryWarehouseSeat(param);
+                if (res.isSuccess == true) {
+                    this.dynamicTags = res.result.results;
+
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            async saveWarehouse(name) {
+                if(name.trim()==''){
+                    this.$message({
+                        type: 'error',
+                        message:'仓库名称不能为空！'
+                    });
+                    return
+                }
+                let param = {
+                    "companyId": this.companyId,
+                    //"memo": "主仓库",
+                    "name": name
+                };
+                if(!this.toEditWarehouseId==''){
+                    param.id = this.toEditWarehouseId;
+                    this.dialogVisible = false;
+                    this.toEditWarehouseId='';
+                }
+                const res = await saveWarehouse(param);
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: '新增成功！'
+                    });
+                    this.loadData();
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.result.errorMsg
+                    });
+                }
+                this.dialogAdd = false;
+            },
+
+            async saveWarehouseWithSeatNames(name,seatObjs) {
+                let param = {
+                    "companyId": this.companyId,
+                    "name": name
+                };
+                if(!this.toEditWarehouseId==''){
+                    param.id = this.toEditWarehouseId;
+                    this.dialogVisible = false;
+                    this.toEditWarehouseId='';
+                }
+                param.warehouseSeat=[];
+                if(seatObjs.length>0){
+                    seatObjs.forEach((obj)=>{param.warehouseSeat.push(obj)})
+
+                }
+                const res = await saveWarehouseWithSeatNames(param);
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: '新增成功！'
+                    });
+                    this.loadData();
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.result.errorMsg
+                    });
+                }
+                this.dialogAdd = false;
+            },
+            async delWarehouse() {
+                let param = {
+                    "companyId": this.companyId,
+                    //"memo": "主仓库",
+                    "warehouseId": this.toDelWarehouseId
+                };
+                const res = await delWarehouse(param);
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: '删除成功！'
+                    });
+                    this.loadData();
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+                this.dialogdelete = false
+
+            },
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/storeManagement';
+</style>

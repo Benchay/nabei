@@ -1,0 +1,558 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('logTools')">
+                <router-link :to='{path:"/logTools"}'>日志查看</router-link>
+            </li>
+            <li class="menuIndex" v-if="getMenuAuthFun('MSConfig')">
+                <router-link :to='{path:"/MSConfig"}'>系统配置</router-link>
+            </li>
+        </ul>
+        <div class="MSConfig">
+            <el-tabs v-model="activeName" @tab-click="handleClick">
+                <el-tab-pane label="卖家结算方式设置" name="first">
+                    <div class="firstContent">
+                            <div style="margin-bottom: 15px">
+                                <a href="javascript:void(0)" class="buttonColor" @click="handleBatchDel">批量删除</a>
+                                <a href="javascript:void(0)" class="buttonColor" @click="addSettlementType">添加</a>
+                            </div>
+                            <div class="shopList">
+                                <el-table
+                                    ref="multipleTable"
+                                    :data="tableData3"
+                                    @selection-change="handleSelectionChange"
+                                    tooltip-effect="dark"
+                                    style="width: 100%">
+                                    <el-table-column
+                                        type="selection"
+                                        width="55">
+                                    </el-table-column>
+                                    <el-table-column
+                                        prop="settlementCompanyName"
+                                        label="卖家名称">
+                                    </el-table-column>
+                                    <el-table-column
+                                        prop="method"
+                                        label="结算方式">
+                                        <template scope="scope">
+                                            <div>
+                                                <p :class="[scope.row.settlementType ==1?'style4':scope.row.settlementType ==2?'style3':'']">{{scope.row.settlementType == 1?'周结':scope.row.settlementType == 2?'月结':''}}</p>
+                                            </div>
+                                        </template>
+                                    </el-table-column>
+                                    <el-table-column
+                                        prop="settlementDay"
+                                        label="结算时间">
+                                        <template scope="scope">
+                                            {{scope.row.settlementType == 1?"周"+scope.row.settlementDay:scope.row.settlementType == 2?scope.row.settlementDay+"号":''}}
+                                        </template>
+                                    </el-table-column>
+                                    <el-table-column
+                                        label="操作"
+                                        show-overflow-tooltip>
+                                        <template scope="scope">
+                                            <a href="javascript:void(0);" class="blue2" @click="toModify(scope.row)">修改结算方式</a>
+                                        </template>
+                                    </el-table-column>
+                                </el-table>
+
+                                <el-pagination
+                                    small
+                                    class="right"
+                                    style="margin-top: 20px;"
+                                    @size-change="handleSizeChange"
+                                    @current-change="handleCurrentChange"
+                                    :current-page="currentPage"
+                                    :page-sizes="[10, 20, 30, 40]"
+                                    :page-size="pageSize"
+                                    layout="total, sizes, prev, pager, next, jumper"
+                                    :total="totalCount">
+                                </el-pagination>
+                            </div>
+                        </div>
+                        <el-dialog
+                            title="卖家结算"
+                            :visible.sync="dialogVisible"
+                            size="tiny">
+                            <div class="sellerDialog">
+                                <el-form ref="form" :model="form" label-width="110px">
+                                    <el-form-item label="电商卖家：">
+                                        <div class="flex">
+                                            <el-select
+                                                v-model="form.settlementCompanyId"
+                                                filterable
+                                                remote
+                                                reserve-keyword
+                                                placeholder="请输入电商名称"
+                                                :remote-method="remoteMethod"
+                                                :loading="loading">
+                                                <el-option
+                                                    v-for="item in options4"
+                                                    :key="item.sellId"
+                                                    :label="item.sellName"
+                                                    :value="item.sellId">
+                                                </el-option>
+                                            </el-select>
+                                        </div>
+                                    </el-form-item>
+                                    <el-form-item label="结算方式：">
+                                        <el-select v-model="form.settlementType"  @change="changeValue">
+                                            <el-option
+                                                v-for="item in typeList"
+                                                :key="item.type"
+                                                :label="item.label"
+                                                :value="item.type">
+                                            </el-option>
+                                        </el-select>
+                                    </el-form-item>
+                                    <el-form-item label="结算日期：" v-show="cash">
+                                        <el-select v-model="form.settlementDay">
+                                            <el-option
+                                                v-if="changeWeek"
+                                                v-for="item in options2"
+                                                :key="item.value"
+                                                :label="item.label"
+                                                :value="item.value">
+                                            </el-option>
+                                            <el-option
+                                                v-if="changeMonth"
+                                                v-for="item in options3"
+                                                :key="item.value"
+                                                :label="item.label"
+                                                :value="item.value">
+                                            </el-option>
+                                        </el-select>
+                                    </el-form-item>
+                                </el-form>
+                                <el-label class="MCtips" v-if="this.optType==1">提示：修改后的结算方式或日期，到了该时间点时，对新的订单生效</el-label>
+                            </div>
+                            <span slot="footer" class="dialog-footer flex2">
+                <a href="javascript:void(0)" @click="handleAdd" class="buttonColor">确 定</a>
+                <a href="javascript:void(0)" @click="dialogVisible = false" class="buttonColor2">取 消</a>
+              </span>
+                        </el-dialog>
+                        <el-dialog
+                            title="所有卖家"
+                            :visible.sync="dialogVisible1"
+                            size="tiny">
+                            <div style="margin-top: 20px">
+                                <el-input
+                                    class="startInput"
+                                    placeholder="卖家名称"
+                                    icon="search"
+                                    v-model="settlementCompanyName">
+                                </el-input>
+                                <div class="startRadio">
+                                    <el-radio class="radio" :ref='list.id' v-model="radio" :label="list.id" v-for="list in supplierList">{{list.name}}</el-radio>
+                                </div>
+                            </div>
+                            <span slot="footer" class="dialog-footer flex2">
+                <a href="javascript:void(0)" class="buttonColor" @click="dialogVisible1 = false">确 定</a>
+            </span>
+                        </el-dialog>
+
+                </el-tab-pane>
+                <el-tab-pane label="货号编码规则设置" name="second">
+                    <div class="secondContent">
+                        <div class="secondTop flex2">
+                            <p>三段式编码</p>
+                            <el-input v-model="input21" placeholder="卖家ID" class="secondInput"></el-input>
+                            <span>——</span>
+                            <el-input v-model="input21" placeholder="档口货号" class="secondInput"></el-input>
+                            <span>——</span>
+                            <el-input v-model="input21" placeholder="任意" class="secondInput"></el-input>
+                        </div>
+                        <div class="flex2 secondButton">
+                            <a href="javascript:void(0)" class="buttonColor">保  存</a>
+                        </div>
+                    </div>
+                    <div class="secondTips">
+                       <div>
+                           <el-col :span="24"><el-col :span="2">例子：</el-col>ppg-MG1001-1231</el-col>
+                           <el-col :span="24"><el-col :span="2">说明：</el-col>第一段为固定值，建议选用卖家代码区分；</el-col>
+                           <el-col :span="24"><el-col :span="2">&nbsp;</el-col>第二段为动态值，默认用档口的货号为准；</el-col>
+                           <el-col :span="24"><el-col :span="2">&nbsp;</el-col>第三段未任意值</el-col>
+                           <el-col :span="24"><el-col :span="2">&nbsp;</el-col>编码规则只需设置一次，对所有商品生效。</el-col>
+                       </div>
+                    </div>
+                </el-tab-pane>
+
+            </el-tabs>
+        </div>
+
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import visitorPie from '../components/visitorPie'
+    import {userInfo} from  '../config/mUtils'
+    import {formatDate} from '../utils/date.js'
+    import {mydateFormat} from '../utils/dataFormater.js'
+    import {querySettlementDay,delSettlementDay,saveSettlementDay,queryStallCustomer} from '@/api/getData'
+    import {getMenuAuth} from  '../utils/AuthMenu.js'
+
+    export default {
+        components: {
+            headTop,
+            visitorPie
+        },
+        computed: {
+        },
+        data() {
+            return {
+                input21:'',
+                activeName: 'first',
+                ChangeModel:'',
+                cash:false,
+                dialogVisible:false,
+                dialogVisible1:false,
+                changeWeek:true,
+                changeMonth:false,
+                typeList:[{label:'现结',type:0},{label:'周结',type:1},{label:'月结',type:2}],
+                supplierList:[{
+                    id:1,
+                    name:'供应商1'
+                },{
+                    id:2,
+                    name:'供应商2'
+                },{
+                    id:3,
+                    name:'供应商3'
+                }],
+                radio:1,
+                busiCompId:'',
+                form: {
+                    "id":'',
+                    "companyId": userInfo().companyId,
+                    "settlementCompanyId": "",
+                    "settlementDay": '',
+                    "settlementType": '',
+                    "type": 1
+                },
+                options2: [{
+                    value: '1',
+                    label: '周一'
+                }, {
+                    value: '2',
+                    label: '周二',
+                }, {
+                    value: '3',
+                    label: '周三'
+                }, {
+                    value: '4',
+                    label: '周四'
+                }, {
+                    value: '5',
+                    label: '周五'
+                }, {
+                    value: '6',
+                    label: '周六'
+                }, {
+                    value: '7',
+                    label: '周日'
+                }],
+                options3: [{
+                    value: '1',
+                    label: '1号'
+                }, {
+                    value: '2',
+                    label: '2号',
+                }, {
+                    value: '3',
+                    label: '3号'
+                }, {
+                    value: '4',
+                    label: '4号'
+                }, {
+                    value: '5',
+                    label: '5号'
+                }, {
+                    value: '6',
+                    label: '6号'
+                }, {
+                    value: '7',
+                    label: '7号'
+                }, {
+                    value: '8',
+                    label: '8号'
+                }, {
+                    value: '9',
+                    label: '9号'
+                }, {
+                    value: '10',
+                    label: '10号'
+                }, {
+                    value: '11',
+                    label: '11号'
+                }, {
+                    value: '12',
+                    label: '12号'
+                }, {
+                    value: '13',
+                    label: '13号'
+                }, {
+                    value: '14',
+                    label: '14号'
+                }, {
+                    value: '15',
+                    label: '15号'
+                }, {
+                    value: '16',
+                    label: '16号'
+                }, {
+                    value: '17',
+                    label: '17号'
+                }, {
+                    value: '18',
+                    label: '18号'
+                }, {
+                    value: '19',
+                    label: '19号'
+                }, {
+                    value: '20',
+                    label: '20号'
+                }, {
+                    value: '21',
+                    label: '21号'
+                }, {
+                    value: '22',
+                    label: '22号'
+                }, {
+                    value: '23',
+                    label: '23号'
+                }, {
+                    value: '24',
+                    label: '24号'
+                }, {
+                    value: '25',
+                    label: '25号'
+                }, {
+                    value: '26',
+                    label: '26号'
+                }, {
+                    value: '27',
+                    label: '27号'
+                }, {
+                    value: '28',
+                    label: '28号'
+                }],
+
+                tableData3: [],
+                supplierName:'',
+                initData: {
+                    "params":{
+                        "companyId":userInfo().companyId
+                    },
+                    "pageIndex":1,
+                    "pageSize":10
+                },
+                //多选数组
+                multipleSelection: [],
+                delSucNum:0,
+                //默认每页数据量
+                pageSize: 6,
+                //默认高亮行数据id
+                highlightId: -1,
+                //当前页码
+                currentPage: 1,
+                //查询的页码
+                start: 1,
+                //默认数据总数
+                totalCount: 0,
+                options4:'',
+                loading: false,
+                toSave:'',
+                optType:0,
+            }
+        },
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            handleClick(tab, event) {
+                console.log(tab, event);
+            },
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+            },
+            changeValue(){
+                if(this.form.settlementType == 3){
+                    this.cash = false;
+                }else if(this.form.settlementType == 1){
+                    this.cash = true;
+                    this.changeWeek = true;
+                    this.changeMonth = false;
+                }else if(this.form.settlementType == 2){
+                    this.cash = true;
+                    this.changeWeek = false;
+                    this.changeMonth = true;
+                }
+
+            },
+            addSettlementType(){
+                this.optType = 0;
+                this.dialogVisible = true;
+            },
+            handleAdd(){
+                this.add(this.form);
+                this.dialogVisible = false
+            },
+
+            handleBatchDel(){
+                if(this.multipleSelection.length==0){
+                    this.$message({
+                        type:'error',
+                        message:'您没有选择要删除的数据!'
+                    })
+                    return
+                }
+                this.$confirm('确认删除这几项数据？')
+                    .then(_ => {
+                        this.batchDel()
+                    }).then(_=>{
+                    this.loadData(this.initData)
+
+                })
+                    .catch(_ => {});
+            },
+
+            async add(param){
+
+                if(this.toSave.id!=undefined||this.toSave.id!=''){
+                    param.id = this.toSave.id;
+                }
+                if(this.toSave!=''&&param.settlementDay==this.toSave.settlementDay&&param.settlementType==this.toSave.settlementType&&this.busiCompId==this.toSave.settlementCompanyId){
+                    this.$message({type:'success', message:'数据未修改!'
+                    })
+                    return ;
+                }
+                if(param.companyId == undefined||param.companyId==''){
+                    param.companyId = userInfo().companyId;
+                }
+                if(param.settlementCompanyId==undefined||this.busiCompId==undefined||this.busiCompId==''){
+                    this.$message({type:'error', message:'信息未填写完成，请继续填写!'
+                    })
+                    return ;
+                }
+                param.settlementCompanyId = this.busiCompId;
+                param.type = 1;
+                const  res = await  saveSettlementDay(param);
+                if(res.isSuccess==true){
+                    this.$message({
+                        type:'success',
+                        message:'操作成功!'
+                    })
+                    this.loadData(this.initData)
+                }else{
+                    this.$message({
+                        type:'error',
+                        message:'操作失败!'
+                    })
+                }
+            },
+
+            batchDel(){
+                this.delSucNum =0;
+                this.multipleSelection.forEach((obj)=>this.del(obj.id));
+            },
+
+            async del(param){
+                let requestParam = {
+                    id:param
+                }
+                const  res = await  delSettlementDay(requestParam);
+                if(res.isSuccess==true){
+                    this.delSucNum++;
+                }else{
+
+                }
+            },
+            async loadData(param){
+                const  res = await  querySettlementDay(param);
+                if(res.isSuccess==true){
+                    this.$message({
+                        type:'success',
+                        message:'数据加载成功!'
+                    })
+                    this.tableData3 = res.result.results;
+                    this.totalCount = res.result.totalCount
+                }else{
+
+                }
+
+            },
+            //页码变更
+            handleCurrentChange: function(val) {
+                this.currentPage = val;
+                let  param =  {
+                    "params":{
+                        "companyId":userInfo().companyId
+                    },
+                    "pageIndex":val,
+                    "pageSize":this.pageSize
+                }
+                this.loadData(param);
+            },
+            //多选响应
+            handleSelectionChange: function(val) {
+                this.multipleSelection = val;
+            },
+            async  remoteMethod(query){
+                if(query!=''){
+                    this.loading = true;
+                    let param = {
+                        "sellName":query,
+                        "companyId":userInfo().companyId,
+                        "pageIndex":1,
+                        "pageSize":10
+                    };
+                    const res = await queryStallCustomer(param);
+                    setTimeout(()=>{
+                        this.loading = false;
+                        this.options4 = res.result.results;
+                    },200);
+                }else{
+                    this.options4 = [];
+                }
+            },
+            toModify(val){
+                this.optType = 1;
+                this.toSave = val;
+                this.busiCompId = val.settlementCompanyId;
+                this.options4=[{name:val.settlementCompanyName,id:val.settlementCompanyId}]
+                this.form.settlementCompanyId = this.options4[0].name;
+                this.dialogVisible = true;
+                this.settlementCompanyName = val.settlementCompanyName;
+
+                this.form.settlementType = val.settlementType;
+                if(val.settlementType!=0){
+                    this.cash = true;
+                    this.form.settlementDay = val.settlementDay;
+                }else{
+                    this.cash = false;
+                }
+            },
+        },
+
+        computed : {
+            spanValue : function() {
+                return this.inputValue + '.00';
+            }
+        },
+        mounted(){
+            this.loadData(this.initData);
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/MSConfig';
+    @import '../style/stallAssess';
+</style>

@@ -1,0 +1,15 @@
+.webStoreOrderForPlatform{
+    margin:0 30px;
+    background: #fff;
+    padding: 20px 40px;
+    height:100%;
+}
+.verify-menu-search{
+    margin:0 30px;
+    background: #fff;
+    height: 30px;
+    padding: 20px 0 0 40px;
+}
+.verify-menu-search>div>div{
+    width: 200px;
+}

@@ -1,0 +1,1428 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('verifyManage')">
+                <router-link :to='{path:"/verifyManage"}'>审核管理</router-link>
+            </li>
+            <li  class="menuIndex3" v-if="getMenuAuthFun('rechangeConfig')">
+                <router-link :to='{path:"/rechangeConfig"}'>财务账户配置</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('financeSerial')">
+                <router-link :to='{path:"/financeSerial"}'>财务流水</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('walletInit')">
+                <router-link :to='{path:"/walletInit"}'>钱包初始化</router-link>
+            </li>
+            <!--<li>-->
+            <!--<router-link :to='{path:"/setmealConfig"}'>套餐配置</router-link>-->
+            <!--</li>-->
+        </ul>
+        <div class="rechangeConfig">
+            <div>
+                <el-button type="info" @click="configAccount" size="small">配置账户</el-button>
+                <el-button type="info" @click="batchDeleteConfig" size="small">删除</el-button>
+            </div>
+            <div class="shopList">
+                <el-table
+                    ref="multipleTable"
+                    :data="tableData3"
+                    tooltip-effect="dark"
+                    @selection-change="handleSelectionChange"
+                    style="width: 100%">
+                    <el-table-column
+                        type="selection"
+                        width="55">
+                    </el-table-column>
+                    <el-table-column
+                        prop="accType"
+                        label="账户类型"
+                        width="120"
+                        :formatter="formatAccType">
+                    </el-table-column><el-table-column
+                        prop="consumeType"
+                        label="收支类型"
+                        width="120"
+                        :formatter="formatConsumeType">
+                    </el-table-column>
+                    <el-table-column
+                        prop="account"
+                        label="账号"
+                        :formatter="formatAccount">
+                    </el-table-column>
+                    <el-table-column
+                        prop="accountState"
+                        label="账户状态"
+                        :formatter="formatAccountState">
+                    </el-table-column>
+                    <el-table-column
+                        label="备注">
+                        <template scope="scope">
+                            <div class="flex2" v-show="tableData3[scope.$index].memo.length<8">
+                                <a>{{tableData3[scope.$index].memo}}</a>
+                            </div>
+                            <div class="flex2" v-show="tableData3[scope.$index].memo.length>=8">
+                                <el-tooltip placement="top">
+								  <div slot="content" style="max-width: 300px;">{{tableData3[scope.$index].memo}}</div>
+								  <a>{{tableData3[scope.$index].memo.substring(0,8)}}...</a>
+								</el-tooltip>
+                            </div>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="money"
+                        label="操作"
+                        show-overflow-tooltip>
+                        <template scope="scope">
+                            <a href="javascript:void(0);" class="color4" @click="editdialog(tableData3[scope.$index])">编辑</a>｜
+                            <a href="javascript:void(0);" class="color4" @click="open2(tableData3[scope.$index].id)">删除</a>
+                        </template>
+                    </el-table-column>
+                </el-table>
+                <el-pagination
+                    small
+                    class="right"
+                    style="margin-top: 20px;"
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :current-page="currentPage"
+                    :page-sizes="[10, 20, 30, 40]"
+                    :page-size="pagesize"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    :total="totalCount">
+                </el-pagination>
+	            <a href="javascript:void(0)" class="export_excle" @click="exportloadData">导出excle</a>
+            </div>
+        </div>
+
+
+        <el-dialog title="编辑财务账户" :visible.sync="editDialogForm">
+            <el-form :model="editform" ref="editform">
+            	<el-form-item label="编号：" :label-width="formLabelWidth" hidden="hidden">
+                    <el-input v-model="editform.id" auto-complete="off" class="add-dialog"></el-input>
+                </el-form-item>
+            	<el-row :gutter="20">
+            		<el-col :span="10">
+            			<div class="grid-content bg-purple">
+		                    <el-form-item label="账户类型：" :label-width="formLabelWidth">
+			                    <p auto-complete="off">{{editform.accTypeShow}}</p>
+			                </el-form-item>
+            			</div>
+            		</el-col>
+            		<el-col :span="10">
+            			<div class="grid-content bg-purple">
+            				<el-form-item label="收支类型：" :label-width="formLabelWidth">
+			                    <p auto-complete="off">{{editform.consumeTypeShow}}</p>
+			               </el-form-item>
+            			</div>
+            		</el-col>
+            	</el-row>
+
+            	<el-row :gutter="20">
+            		<el-col :span="10">
+            			<div class="grid-content bg-purple">
+		                    <el-form-item label="账号：" :label-width="formLabelWidth">
+			                    <p auto-complete="off">{{editform.account}}</p>
+			                </el-form-item>
+            			</div>
+            		</el-col>
+            		<el-col :span="10">
+            			<div class="grid-content bg-purple">
+            				<el-form-item label="账户状态：" :label-width="formLabelWidth">
+			                    <el-select v-model="editform.accountState" placeholder="选择收支类型">
+			                        <el-option label="启用" value="1"></el-option>
+			                        <el-option label="禁用" value="2"></el-option>
+			                    </el-select>
+			                </el-form-item>
+            			</div>
+            		</el-col>
+            	</el-row>
+                <el-form-item label="备注：" :label-width="formLabelWidth">
+                    <el-input type="textarea" v-model="editform.memo"></el-input>
+                </el-form-item>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="editDialogForm = false">取 消</el-button>
+                <el-button type="primary" @click="submitFormEdit('editform')">确 定</el-button>
+            </div>
+        </el-dialog>
+
+
+        <el-dialog title="添加财务账户" :visible.sync="configAccountForm">
+            <el-form :model="configAccountform">
+            	<el-row :gutter="20">
+            		<el-col :span="10">
+            			<div class="grid-content bg-purple">
+            				<el-form-item label="账户类型：" :label-width="formLabelWidth">
+			                    <el-select v-model="configAccountform.accType" @change="checkAccountType" placeholder="选择账户类型">
+			                        <el-option label="paypal" value="4"></el-option>
+			                        <el-option label="及时到账" value="5"></el-option>
+			                        <el-option label="网银" value="3"></el-option>
+			                        <el-option label="微信" value="2"></el-option>
+			                        <el-option label="支付宝" value="1"></el-option>
+			                    </el-select>
+		                    </el-form-item>
+            			</div>
+            		</el-col>
+            		<el-col :span="10">
+            			<div class="grid-content bg-purple">
+            				<el-form-item label="收支类型：" :label-width="formLabelWidth">
+			                    <el-select v-model="configAccountform.consumeType" placeholder="选择收支类型">
+			                        <el-option label="付款" value="1"></el-option>
+			                        <el-option label="收款" value="2"></el-option>
+			                    </el-select>
+		                    </el-form-item>
+            			</div>
+            		</el-col>
+            	</el-row>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="configAccountForm = false">取 消</el-button>
+                <el-button type="primary" @click="dialogFormAdd = false">确 定</el-button>
+            </div>
+        </el-dialog>
+
+        <el-dialog title="添加财务账户" :visible.sync="configAccountPaypalForm">
+            <el-form :model="configAccountPaypalform" :rules="configAccountPaypalFormRule" ref="configAccountPaypalform">
+            	<el-form-item label="公司id：" :label-width="formLabelWidth" style="display: none;">
+                    <el-input v-model="configAccountPaypalform.companyId" auto-complete="off" class="add-dialog"></el-input>
+                </el-form-item>
+                <el-row :gutter="20">
+                    <el-col :span="10">
+                        <div class="grid-content bg-purple">
+                            <el-form-item label="账户类型：" :label-width="formLabelWidth">
+                                <el-select v-model="configAccountPaypalform.accType" @change="checkAccountType" placeholder="选择账户类型">
+                                    <el-option label="paypal" value="4"></el-option>
+			                        <el-option label="及时到账" value="5"></el-option>
+			                        <el-option label="网银" value="3"></el-option>
+			                        <el-option label="微信" value="2"></el-option>
+			                        <el-option label="支付宝" value="1"></el-option>
+                                </el-select>
+                            </el-form-item>
+                        </div>
+                    </el-col>
+                    <el-col :span="10">
+                        <div class="grid-content bg-purple">
+                            <el-form-item label="收支类型：" prop="consumeType" :label-width="formLabelWidth">
+                                <el-select v-model="configAccountPaypalform.consumeType" @change="checkConfigAccountPaypalformConsumeType" placeholder="选择收支类型">
+                                    <el-option label="付款" value="1"></el-option>
+                                    <el-option label="收款" value="2"></el-option>
+                                </el-select>
+                            </el-form-item>
+                        </div>
+                    </el-col>
+                </el-row>
+
+                <el-row :gutter="20">
+                    <el-col :span="10">
+                        <div class="grid-content bg-purple">
+                            <el-form-item label="business：" prop="business" :label-width="formLabelWidth">
+                                <el-input v-model="configAccountPaypalform.business" auto-complete="off" class="add-dialog"></el-input>
+                            </el-form-item>
+                        </div>
+                    </el-col>
+                    <el-col :span="10">
+                        <div class="grid-content bg-purple" v-show="configAccountPaypalform_receivables">
+                            <el-form-item label="收款项：" prop="receivables" :label-width="formLabelWidth">
+                                <el-input v-model="configAccountPaypalform.receivables" auto-complete="off" class="add-dialog"></el-input>
+                            </el-form-item>
+                        </div>
+                        <div class="grid-content bg-purple" v-show="configAccountPaypalform_income">
+                            <el-form-item label="付款项：" prop="income" :label-width="formLabelWidth">
+                                <el-input v-model="configAccountPaypalform.income" auto-complete="off" class="add-dialog"></el-input>
+                            </el-form-item>
+                        </div>
+                    </el-col>
+                </el-row>
+                <el-form-item label="收付款备注显示：" prop="receiveMemo" :label-width="formLabelWidth">
+                    <el-input v-model="configAccountPaypalform.receiveMemo" auto-complete="off" class="add-dialog"></el-input>
+                </el-form-item>
+                <el-form-item label="账户状态：" :label-width="formLabelWidth">
+                    <el-select v-model="configAccountPaypalform.accountState" placeholder="选择收支类型">
+                        <el-option label="启用" value="1"></el-option>
+                        <el-option label="禁用" value="2"></el-option>
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="备注：" prop="memo" :label-width="formLabelWidth">
+                    <el-input type="textarea" v-model="configAccountPaypalform.memo"></el-input>
+                </el-form-item>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="configAccountPaypalForm = false">取 消</el-button>
+                <el-button type="primary" @click="configAccountPaypalFormSubmit('configAccountPaypalform')">确 定</el-button>
+            </div>
+        </el-dialog>
+
+        <el-dialog title="添加财务账户" :visible.sync="configAccountCurrentForm">
+            <el-form :model="configAccountCurrentform" :rules="configAccountCurrentFormRule" ref="configAccountCurrentform">
+            	<el-form-item label="公司id：" :label-width="formLabelWidth" style="display: none;">
+                    <el-input v-model="configAccountCurrentform.companyId" auto-complete="off" class="add-dialog"></el-input>
+                </el-form-item>
+                <el-row :gutter="20">
+                    <el-col :span="10">
+                        <div class="grid-content bg-purple">
+                            <el-form-item label="账户类型：" :label-width="formLabelWidth">
+                                <el-select v-model="configAccountCurrentform.accType" @change="checkAccountType" placeholder="选择账户类型">
+                                    <el-option label="paypal" value="4"></el-option>
+			                        <el-option label="及时到账" value="5"></el-option>
+			                        <el-option label="网银" value="3"></el-option>
+			                        <el-option label="微信" value="2"></el-option>
+			                        <el-option label="支付宝" value="1"></el-option>
+                                </el-select>
+                            </el-form-item>
+                        </div>
+                    </el-col>
+                    <el-col :span="10">
+                        <div class="grid-content bg-purple">
+                            <el-form-item label="收支类型：" prop="consumeType" :label-width="formLabelWidth">
+                                <el-select v-model="configAccountCurrentform.consumeType" @change="checkConfigAccountCurrentformConsumeType" placeholder="选择收支类型">
+                                    <el-option label="付款" value="1"></el-option>
+                                    <el-option label="收款" value="2"></el-option>
+                                </el-select>
+                            </el-form-item>
+                        </div>
+                    </el-col>
+                </el-row>
+
+                <el-form-item label="上传支付宝付款码：" :label-width="formLabelWidth" v-show="configAccountCurrentform_pay">
+                    <el-upload
+                      class="avatar-uploader"
+                      action="https://jsonplaceholder.typicode.com/posts/"
+                      :show-file-list="false"
+                      :on-success="handleAvatarSuccess"
+                      :before-upload="beforeAvatarUpload">
+                      <img v-if="imageUrl" :src="imageUrl" class="avatar">
+                      <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+                    </el-upload>
+                </el-form-item>
+                <el-form-item label="支付宝账号：" prop="alibabaAccount" :label-width="formLabelWidth" v-show="configAccountCurrentform_alibabaAccount">
+                    <el-input v-model="configAccountCurrentform.alibabaAccount" auto-complete="off" class="add-dialog"></el-input>
+                </el-form-item>
+                <el-form-item label="账户状态：" :label-width="formLabelWidth">
+                    <el-select v-model="configAccountCurrentform.accountState" placeholder="选择账户状态">
+                        <el-option label="启用" value="1"></el-option>
+                        <el-option label="禁用" value="2"></el-option>
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="备注：" prop="memo" :label-width="formLabelWidth">
+                    <el-input type="textarea" v-model="configAccountCurrentform.memo"></el-input>
+                </el-form-item>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="configAccountCurrentForm = false">取 消</el-button>
+                <el-button type="primary" @click="configAccountCurrentFormSubmit('configAccountCurrentform')">确 定</el-button>
+            </div>
+        </el-dialog>
+
+        <el-dialog title="添加财务账户" :visible.sync="configAccountCyberBankForm">
+            <el-form :model="configAccountCyberBankform" :rules="configAccountCyberBankFormRule" ref="configAccountCyberBankform">
+            	<el-form-item label="公司id：" :label-width="formLabelWidth" style="display: none;">
+                    <el-input v-model="configAccountCyberBankform.companyId" auto-complete="off" class="add-dialog"></el-input>
+                </el-form-item>
+                <el-row :gutter="20">
+                    <el-col :span="10">
+                        <div class="grid-content bg-purple">
+                            <el-form-item label="账户类型：" :label-width="formLabelWidth">
+                                <el-select v-model="configAccountCyberBankform.accType" @change="checkAccountType" placeholder="选择账户类型">
+                                    <el-option label="paypal" value="4"></el-option>
+			                        <el-option label="及时到账" value="5"></el-option>
+			                        <el-option label="网银" value="3"></el-option>
+			                        <el-option label="微信" value="2"></el-option>
+			                        <el-option label="支付宝" value="1"></el-option>
+                                </el-select>
+                            </el-form-item>
+                        </div>
+                    </el-col>
+                    <el-col :span="10">
+                        <div class="grid-content bg-purple">
+                            <el-form-item label="收支类型：" :label-width="formLabelWidth">
+                                <el-select v-model="configAccountCyberBankform.consumeType" placeholder="选择收支类型">
+                                    <el-option label="付款" value="1"></el-option>
+                                    <el-option label="收款" value="2"></el-option>
+                                </el-select>
+                            </el-form-item>
+                        </div>
+                    </el-col>
+                </el-row>
+
+                <el-row :gutter="20">
+                    <el-col :span="10">
+                        <div class="grid-content bg-purple">
+                            <el-form-item label="持卡人：" prop="cardholder" :label-width="formLabelWidth">
+                                <el-input v-model="configAccountCyberBankform.cardholder" auto-complete="off" class="add-dialog"></el-input>
+                            </el-form-item>
+                        </div>
+                    </el-col>
+                    <el-col :span="10">
+                        <div class="grid-content bg-purple">
+                        	<el-form-item label="手机号：" prop="mobile" :label-width="formLabelWidth">
+			                    <el-input v-model="configAccountCyberBankform.mobile" auto-complete="off" class="add-dialog"></el-input>
+			                </el-form-item>
+                        </div>
+                    </el-col>
+                </el-row>
+
+                <el-row :gutter="20">
+                    <el-col :span="10">
+                        <div class="grid-content bg-purple">
+                        	<el-form-item label="开户银行：" prop="bankName" :label-width="formLabelWidth">
+                                <el-select v-model="configAccountCyberBankform.bankName" placeholder="选择开户银行">
+                                    <el-option label="中国农业银行" value="中国农业银行"></el-option>
+                                    <el-option label="中国工商银行" value="中国工商银行"></el-option>
+                                    <el-option label="中国建设银行" value="中国建设银行"></el-option>
+                                    <el-option label="中国银行" value="中国银行"></el-option>
+                                </el-select>
+                            </el-form-item>
+                        </div>
+                    </el-col>
+                    <el-col :span="10">
+                        <div class="grid-content bg-purple">
+                            <el-form-item label="银行卡号：" prop="accoutNumber" :label-width="formLabelWidth">
+                                <el-input v-model="configAccountCyberBankform.accoutNumber" auto-complete="off" class="add-dialog"></el-input>
+                            </el-form-item>
+                        </div>
+                    </el-col>
+                </el-row>
+
+
+                <el-form-item label="账户状态：" :label-width="formLabelWidth">
+                    <el-select v-model="configAccountCyberBankform.accountState" placeholder="选择账户状态">
+                        <el-option label="启用" value="1"></el-option>
+                        <el-option label="禁用" value="2"></el-option>
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="备注：" prop="memo" :label-width="formLabelWidth">
+                    <el-input type="textarea" v-model="configAccountCyberBankform.memo"></el-input>
+                </el-form-item>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="configAccountCyberBankForm = false">取 消</el-button>
+                <el-button type="primary" @click="configAccountCyberBankFormSubmit('configAccountCyberBankform')">确 定</el-button>
+            </div>
+        </el-dialog>
+
+        <el-dialog title="添加财务账户" :visible.sync="configWxAccountForm">
+            <el-form :model="configWxAccountform" :rules="configWxAccountFormRule" ref="configWxAccountform">
+            	<el-form-item label="公司id：" :label-width="formLabelWidth" style="display: none;">
+                    <el-input v-model="configWxAccountform.companyId" auto-complete="off" class="add-dialog"></el-input>
+                </el-form-item>
+                <el-row :gutter="20">
+                    <el-col :span="10">
+                        <div class="grid-content bg-purple">
+                            <el-form-item label="账户类型：" :label-width="formLabelWidth">
+                                <el-select v-model="configWxAccountform.accType" @change="checkAccountType" placeholder="选择账户类型">
+                                    <el-option label="paypal" value="4"></el-option>
+			                        <el-option label="及时到账" value="5"></el-option>
+			                        <el-option label="网银" value="3"></el-option>
+			                        <el-option label="微信" value="2"></el-option>
+			                        <el-option label="支付宝" value="1"></el-option>
+                                </el-select>
+                            </el-form-item>
+                        </div>
+                    </el-col>
+                    <el-col :span="10">
+                        <div class="grid-content bg-purple">
+                            <el-form-item label="收支类型：" :label-width="formLabelWidth">
+                                <el-select v-model="configWxAccountform.consumeType" placeholder="选择收支类型">
+                                    <el-option label="付款" value="1"></el-option>
+                                    <el-option label="收款" value="2"></el-option>
+                                </el-select>
+                            </el-form-item>
+                        </div>
+                    </el-col>
+                </el-row>
+
+                <el-row :gutter="20">
+                    <el-col :span="10">
+                        <div class="grid-content bg-purple">
+                            <el-form-item label="私有key：" prop="private_key" :label-width="formLabelWidth">
+                                <el-input v-model="configWxAccountform.private_key" placeholder="请输入私有key" auto-complete="off" class="add-dialog"></el-input>
+                            </el-form-item>
+                        </div>
+                    </el-col>
+                    <el-col :span="10">
+                        <div class="grid-content bg-purple">
+                            <el-form-item label="公众号ID：" prop="appID" :label-width="formLabelWidth">
+                                <el-input v-model="configWxAccountform.appID" placeholder="请输入公众号ID" auto-complete="off" class="add-dialog"></el-input>
+                            </el-form-item>
+                        </div>
+                    </el-col>
+                </el-row>
+
+                <el-row :gutter="20">
+                    <el-col :span="10">
+                        <div class="grid-content bg-purple">
+                            <el-form-item label="商户ID：" prop="mchID" :label-width="formLabelWidth">
+                                <el-input v-model="configWxAccountform.mchID" placeholder="请输入商户ID" auto-complete="off" class="add-dialog"></el-input>
+                            </el-form-item>
+                        </div>
+                    </el-col>
+                    <el-col :span="10">
+                        <div class="grid-content bg-purple">
+                            <el-form-item label="子商户号：" prop="subMchID" :label-width="formLabelWidth">
+                                <el-input v-model="configWxAccountform.subMchID" placeholder="请输入子商户号" auto-complete="off" class="add-dialog"></el-input>
+                            </el-form-item>
+                        </div>
+                    </el-col>
+                </el-row>
+                <el-form-item label="证书的本地路径：" prop="certLocalPath" :label-width="formLabelWidth">
+                    <el-input v-model="configWxAccountform.certLocalPath" placeholder="请输入证书的本地路径" auto-complete="off" class="add-dialog"></el-input>
+                </el-form-item>
+                <el-form-item label="证书密码：" prop="certPassword" :label-width="formLabelWidth">
+                    <el-input v-model="configWxAccountform.certPassword" placeholder="请输入证书密码" auto-complete="off" class="add-dialog"></el-input>
+                </el-form-item>
+
+                <el-form-item label="商品描述：" prop="productDes" :label-width="formLabelWidth">
+                    <el-input v-model="configWxAccountform.productDes" placeholder="请输入商品描述" auto-complete="off" class="add-dialog"></el-input>
+                </el-form-item>
+
+                <el-row :gutter="20">
+                    <el-form-item label="账户状态：" :label-width="formLabelWidth">
+                        <el-select v-model="configWxAccountform.accountState" placeholder="选择账户状态">
+                            <el-option label="启用" value="1"></el-option>
+                            <el-option label="禁用" value="2"></el-option>
+                        </el-select>
+                    </el-form-item>
+                </el-row>
+                <el-form-item label="备注：" prop="memo" :label-width="formLabelWidth">
+                    <el-input type="textarea" v-model="configWxAccountform.memo"></el-input>
+                </el-form-item>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="configWxAccountForm = false">取 消</el-button>
+                <el-button type="primary" @click="configWxAccountFormSubmit('configWxAccountform')">确 定</el-button>
+            </div>
+        </el-dialog>
+
+        <el-dialog title="添加财务账户" :visible.sync="configAlibabaAccountForm">
+            <el-form :model="configAlibabaAccountform" :rules="configAlibabaAccountFormRule" ref="configAlibabaAccountform">
+            	<el-form-item label="公司id：" :label-width="formLabelWidth" style="display: none;">
+                    <el-input v-model="configAlibabaAccountform.companyId" auto-complete="off" class="add-dialog"></el-input>
+                </el-form-item>
+                <el-row :gutter="20">
+                    <el-col :span="10">
+                        <div class="grid-content bg-purple">
+                            <el-form-item label="账户类型：" :label-width="formLabelWidth">
+                                <el-select v-model="configAlibabaAccountform.accType" @change="checkAccountType" placeholder="选择账户类型">
+                                    <el-option label="paypal" value="4"></el-option>
+			                        <el-option label="及时到账" value="5"></el-option>
+			                        <el-option label="网银" value="3"></el-option>
+			                        <el-option label="微信" value="2"></el-option>
+			                        <el-option label="支付宝" value="1"></el-option>
+                                </el-select>
+                            </el-form-item>
+                        </div>
+                    </el-col>
+                    <el-col :span="10">
+                        <div class="grid-content bg-purple">
+                            <el-form-item label="收支类型：" :label-width="formLabelWidth">
+                                <el-select v-model="configAlibabaAccountform.consumeType" placeholder="选择收支类型">
+                                    <el-option label="付款" value="1"></el-option>
+                                    <el-option label="收款" value="2"></el-option>
+                                </el-select>
+                            </el-form-item>
+                        </div>
+                    </el-col>
+                </el-row>
+
+                <el-row :gutter="20">
+                    <el-col :span="10">
+                        <div class="grid-content bg-purple">
+                            <el-form-item label="合作用户名：" prop="partner" :label-width="formLabelWidth">
+                                <el-input v-model="configAlibabaAccountform.partner" auto-complete="off" class="add-dialog"></el-input>
+                            </el-form-item>
+                        </div>
+                    </el-col>
+                    <el-col :span="10">
+                        <div class="grid-content bg-purple">
+                            <el-form-item label="支付宝账号：" prop="seller_id" :label-width="formLabelWidth">
+                                <el-input v-model="configAlibabaAccountform.seller_id" auto-complete="off" class="add-dialog"></el-input>
+                            </el-form-item>
+                        </div>
+                    </el-col>
+                </el-row>
+
+                <el-row :gutter="20">
+                    <el-col :span="10">
+                        <div class="grid-content bg-purple">
+                            <el-form-item label="商户私钥：" prop="private_key" :label-width="formLabelWidth">
+                                <el-input v-model="configAlibabaAccountform.private_key" auto-complete="off" class="add-dialog"></el-input>
+                            </el-form-item>
+                        </div>
+                    </el-col>
+                    <el-col :span="10">
+                        <div class="grid-content bg-purple">
+                            <el-form-item label="支付宝公钥：" prop="alipay_public_key" :label-width="formLabelWidth">
+                                <el-input v-model="configAlibabaAccountform.alipay_public_key" auto-complete="off" class="add-dialog"></el-input>
+                            </el-form-item>
+                        </div>
+                    </el-col>
+                </el-row>
+
+                <el-row :gutter="20">
+                    <el-col :span="10">
+                        <div class="grid-content bg-purple">
+                            <el-form-item label="异步通知路径：" prop="notify_url" :label-width="formLabelWidth">
+                                <el-input v-model="configAlibabaAccountform.notify_url" placeholder="请输入异步通知路径" auto-complete="off" class="add-dialog"></el-input>
+                            </el-form-item>
+                        </div>
+                    </el-col>
+                    <el-col :span="10">
+                        <div class="grid-content bg-purple">
+                            <el-form-item label="同步通知路径：" prop="return_url" :label-width="formLabelWidth">
+                                <el-input v-model="configAlibabaAccountform.return_url" placeholder="请输入同步通知路径" auto-complete="off" class="add-dialog"></el-input>
+                            </el-form-item>
+                        </div>
+                    </el-col>
+                </el-row>
+                <el-row :gutter="20">
+                    <el-col :span="10">
+                        <div class="grid-content bg-purple">
+                            <el-form-item label="签名方式：" prop="sign_type" :label-width="formLabelWidth">
+                                <el-input v-model="configAlibabaAccountform.sign_type" placeholder="请输入签名方式" auto-complete="off" class="add-dialog"></el-input>
+                            </el-form-item>
+                        </div>
+                    </el-col>
+                    <el-col :span="10">
+                        <div class="grid-content bg-purple">
+                            <el-form-item label="调用的接口名：" prop="service" :label-width="formLabelWidth">
+                                <el-input v-model="configAlibabaAccountform.service" placeholder="请输入调用的接口名" auto-complete="off" class="add-dialog"></el-input>
+                            </el-form-item>
+                        </div>
+                    </el-col>
+                </el-row>
+
+                <el-row :gutter="20">
+                    <el-col :span="10">
+                        <div class="grid-content bg-purple">
+                            <el-form-item label="防钓鱼时间戳 ：" prop="anti_phishing_key" :label-width="formLabelWidth">
+                                <el-input v-model="configAlibabaAccountform.anti_phishing_key" placeholder="请输入防钓鱼时间戳 " auto-complete="off" class="add-dialog"></el-input>
+                            </el-form-item>
+                        </div>
+                    </el-col>
+                    <el-col :span="10">
+                        <div class="grid-content bg-purple">
+                            <el-form-item label="客户端的IP地址：" prop="exter_invoke_ip" :label-width="formLabelWidth">
+                                <el-input v-model="configAlibabaAccountform.exter_invoke_ip" placeholder="请输入客户端的IP地址" auto-complete="off" class="add-dialog"></el-input>
+                            </el-form-item>
+                        </div>
+                    </el-col>
+                </el-row>
+                <el-row :gutter="20">
+                    <el-col :span="10">
+                        <div class="grid-content bg-purple">
+                            <el-form-item label="商品名称 ：" prop="wIdsubject" :label-width="formLabelWidth">
+                                <el-input v-model="configAlibabaAccountform.wIdsubject" placeholder="请输入商品名称 " auto-complete="off" class="add-dialog"></el-input>
+                            </el-form-item>
+                        </div>
+                    </el-col>
+                    <el-col :span="10">
+                        <div class="grid-content bg-purple">
+                            <el-form-item label="账户状态：" :label-width="formLabelWidth">
+                                <el-select v-model="configAlibabaAccountform.accountState" placeholder="选择账户状态">
+                                    <el-option label="启用" value="1"></el-option>
+                                    <el-option label="禁用" value="2"></el-option>
+                                </el-select>
+                            </el-form-item>
+                        </div>
+                    </el-col>
+                </el-row>
+
+                <el-form-item label="商品描述：" prop="wIdbody" :label-width="formLabelWidth">
+                    <el-input v-model="configAlibabaAccountform.wIdbody" placeholder="请输入商品描述" auto-complete="off" class="add-dialog"></el-input>
+                </el-form-item>
+                <el-form-item label="备注：" prop="memo" :label-width="formLabelWidth">
+                    <el-input type="textarea" v-model="configAlibabaAccountform.memo"></el-input>
+                </el-form-item>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="configAlibabaAccountForm = false">取 消</el-button>
+                <el-button type="primary" @click="configAlibabaAccountFormSubmit('configAlibabaAccountform')">确 定</el-button>
+            </div>
+        </el-dialog>
+
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {createPaymentAccount, queryPaymentAccount,updatePaymentAccount,batchdeletePayment} from '@/api/getData'
+    import {userInfo,getStore,setStore} from  '../config/mUtils'
+    import {export_json_to_excel} from '../vendor/Export2Excel.js'
+    import {getMenuAuth} from  '../utils/AuthMenu.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        computed: {
+            classObject: function () {
+                return {
+                    active: this.isActive && !this.error,
+                    'text-danger': this.error && this.error.type === 'fatal',
+                }
+            }
+        },
+        data() {
+        	var validateReceivables = (rule, value, cb) => {
+        		let type = this.configAccountPaypalform.consumeType;
+        		if(type == "2"){
+        			if(!this.configAccountPaypalform.receivables || this.configAccountPaypalform.receivables.trim() == ''){
+        				cb(new Error('收款项不能为空'))
+        			}else{
+        				cb();
+        			}
+        		}else{
+        			cb();
+        		}
+        	}
+
+        	var validateIncome = (rule, value, cb) => {
+        		let type = this.configAccountPaypalform.consumeType;
+        		if(type == "1"){
+        			if(!this.configAccountPaypalform.income || this.configAccountPaypalform.income.trim() == ''){
+        				cb(new Error('付款项不能为空'))
+        			}else{
+        				cb();
+        			}
+        		}else{
+        			cb();
+        		}
+        	}
+        	//校验银行卡号
+        	var validateAccoutNumber = (rule, value, cb) => {
+                var pattern = /([\d]{4})([\d]{4})([\d]{4})([\d]{4})([\d]{0,})?/;
+                if(value.length>19){
+                	cb(new Error('请输入正确的银行卡号'))
+                }else if (!pattern.test(value)) {
+                    cb(new Error('请输入正确的银行卡号'))
+                }else{
+                	cb();
+                }
+            }
+            //校验手机号
+        	var validateMobile = (rule, value, cb) => {
+                var pattern = /^1[34578]\d{9}$/;
+                if(value.length>11){
+                	cb(new Error('请输入正确的手机号'))
+                }else if (!pattern.test(value)) {
+                    cb(new Error('请输入正确的手机号'))
+                }else{
+                	cb();
+                }
+            }
+        	var validateAlibabaAccount = (rule, value, cb) => {
+        		let data = this.configAccountCurrentform.consumeType;
+        		if(data == "2"){
+        			if(!value){
+	        			cb(new Error('请输入支付宝账号'))
+	        		}else{
+	        			cb();
+	        		}
+        		}else{
+        			cb();
+        		}
+        	}
+            return {
+
+                //表单验证
+                configAccountPaypalFormRule: {
+                    business: [
+                        { required: true, message: '请输入business名称', trigger: 'blur' },
+                        { max: 60, message: 'business名称长度不能超过60 个字符', trigger: 'blur' }
+                    ],
+                    receivables:[
+                    	{ validator: validateReceivables, trigger: 'blur' }
+                    ],
+                    income:[
+                    	{ validator: validateIncome, trigger: 'blur' }
+                    ],
+                    receiveMemo:[
+                    	{ max: 50, message: '收付款备注显示长度不能超过50 个字符', trigger: 'blur' }
+                    ],
+                    memo:[
+                    	{ max: 50, message: '备注长度不能超过50 个字符', trigger: 'blur' }
+                    ]
+                },
+                configAccountCurrentFormRule: {
+                	alibabaAccount:[
+                		{ validator: validateAlibabaAccount, trigger: 'blur' }
+                	],
+                	memo:[
+                    	{ max: 50, message: '备注长度不能超过50 个字符', trigger: 'blur' }
+                    ]
+                },
+                //网银表单验证
+                configAccountCyberBankFormRule:{
+                	cardholder:[
+                		{ required: true, message: '请输入持卡人', trigger: 'blur' }
+                	],
+                	accoutNumber:[
+                		{ required: true, message: '请输入银行卡号', trigger: 'blur' },
+                		{ validator: validateAccoutNumber, trigger: 'blur' }
+                	],
+                	mobile:[
+                		{ required: true, message: '请输入手机号', trigger: 'blur' },
+                		{ validator: validateMobile, trigger: 'blur' }
+                	],
+                	bankName:[
+                		{ required: true, message: '请选择开户银行', trigger: 'blur' }
+                	],
+                	memo:[
+                    	{ max: 50, message: '备注长度不能超过50 个字符', trigger: 'blur' }
+                    ]
+                },
+                //微信表单验证
+                configWxAccountFormRule:{
+                	private_key:[
+                		{ required: true, message: '请输入私有key', trigger: 'blur' }
+                	],
+                	appID:[
+                		{ required: true, message: '请输入公众号ID', trigger: 'blur' }
+                	],
+                	mchID:[
+                		{ required: true, message: '请输入商户ID', trigger: 'blur' }
+                	],
+                	subMchID:[
+                		{ required: true, message: '请输入子商户号', trigger: 'blur' }
+                	],
+                	certLocalPath:[
+                		{ required: true, message: '请输入证书的本地路径', trigger: 'blur' }
+                	],
+                	certPassword:[
+                		{ required: true, message: '请输入证书密码', trigger: 'blur' }
+                	],
+                	productDes:[
+                		{ required: true, message: '请输入商品描述', trigger: 'blur' },
+                		{ max: 50, message: '商品描述不能超过50 个字符', trigger: 'blur' }
+                	],
+                	memo:[
+                    	{ max: 50, message: '备注长度不能超过50 个字符', trigger: 'blur' }
+                    ]
+                },
+                configAlibabaAccountFormRule:{
+                	partner:[
+                		{ required: true, message: '请输入合作用户名', trigger: 'blur' }
+                	],
+                	seller_id:[
+                		{ required: true, message: '请输入支付宝账号', trigger: 'blur' }
+                	],
+                	private_key:[
+                		{ required: true, message: '请输入商户私钥', trigger: 'blur' }
+                	],
+                	alipay_public_key:[
+                		{ required: true, message: '请输入支付宝公钥', trigger: 'blur' }
+                	],
+                	notify_url:[
+                		{ required: true, message: '请输入异步通知路径', trigger: 'blur' }
+                	],
+                	return_url:[
+                		{ required: true, message: '请输入同步通知路径', trigger: 'blur' }
+                	],
+                	sign_type:[
+                		{ required: true, message: '请输入签名方式', trigger: 'blur' }
+                	],
+                	service:[
+                		{ required: true, message: '请输入调用的接口名', trigger: 'blur' }
+                	],
+                	anti_phishing_key:[
+                		{ required: true, message: '请输入防钓鱼时间戳', trigger: 'blur' }
+                	],
+                	exter_invoke_ip:[
+                		{ required: true, message: '请输入客户端的IP地址', trigger: 'blur' }
+                	],
+                	wIdsubject:[
+                		{ required: true, message: '请输入商品名称', trigger: 'blur' }
+                	],
+                	wIdbody:[
+                		{ required: true, message: '请输入商品描述', trigger: 'blur' },
+                		{ max: 50, message: '商品描述不能超过50 个字符', trigger: 'blur' }
+                	],
+                	memo:[
+                    	{ max: 50, message: '备注长度不能超过50 个字符', trigger: 'blur' }
+                    ]
+                },
+            	//默认每页数据量
+                pagesize: 5,
+
+                //默认高亮行数据id
+                highlightId: -1,
+
+                //当前页码
+                currentPage: 1,
+
+                //查询的页码
+                start: 1,
+
+                //默认数据总数
+                totalCount: 0,
+                rotate:false,
+                configAccountform:'',
+                configAccountPaypalform:'',
+                configAccountCurrentform:'',
+                configAccountCyberBankform:'',
+                configWxAccountform:'',
+                configAlibabaAccountform:'',
+                configAccountCurrentform_pay:false,
+                configAccountCurrentform_alibabaAccount:true,
+                configAccountPaypalform_receivables:true,
+                configAccountPaypalform_income:false,
+                tableData3: [{}],
+                editDialogForm: false,
+                editform: {
+                    accType: '',
+                    type: '',
+                    account:'',
+                    accountState:'',
+                    message:''
+                },
+                formLabelWidth: '120px',
+                dialogFormCompile: false,
+                configAccountForm: false,
+                configAccountPaypalForm : false,
+                configAccountCurrentForm: false,
+                configAccountCyberBankForm: false,
+                configWxAccountForm: false,
+                configAlibabaAccountForm: false,
+                val:[],
+            }
+        },
+        async mounted(){
+            this.initloadData();
+
+            const s = document.createElement('script');
+			s.type = 'text/javascript';
+			s.src = 'http://oss.sheetjs.com/js-xlsx/xlsx.full.min.js';
+			document.body.appendChild(s);
+        },
+
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            deleteRow(index, rows) {
+                rows.splice(index, 1);
+            },
+            async deleteRow(id) {
+            	let param = [];
+            	param.push(id);
+            	this.batchDelete(param);
+            },
+            clickRotate(index){
+                console.log(index);
+                this.tableData3[index].member = !this.tableData3[index].member ;
+            },
+            editdialog(rows){
+            	let accType = rows.accType;
+            	let account = "";
+            	let accountType = "";
+            	let consumeType = "";
+            	if(accType == 1){
+            		account = rows.seller_id;
+            		accountType = "支付宝";
+            	}else if(accType == 2){
+            		account = rows.mchID;
+            		accountType = "微信";
+            	}else if(accType == 3){
+            		account = rows.accoutNumber;
+            		accountType = "网银";
+            	}else if(accType == 5){
+            		account = rows.alibabaAccount;
+            		accountType = "及时到账";
+            	}else if(accType == 4){
+            		account = rows.business;
+            		accountType = "paypal";
+            	}
+            	if(rows.consumeType == 1){
+            		consumeType = "付款";
+            	}else{
+            		consumeType = "收款";
+            	}
+            	this.editform = {
+            		id:rows.id,
+            		accTypeShow:accountType,
+            		consumeTypeShow:consumeType,
+            		account:rows.account,
+            		accountState:rows.accountState+"",
+            		memo:rows.memo,
+            		account:account
+            	};
+            	this.editDialogForm = true;
+            },
+            configAccount(){
+            	this.configAccountform = {
+            		accType:''
+            	}
+            	this.configAccountForm = true;
+            },
+    //        多选响应
+            handleSelectionChange: function(val) {
+                this.multipleSelection = val;
+            },
+
+            async batchDelete(array){
+                let param = {
+                	ids:array
+                }
+                const res = await batchdeletePayment(param);
+            	if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: res.result.msg
+                    });
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+                if(array.length == this.tableData3.length){
+                	if(this.currentPage>1){
+        				this.currentPage = this.currentPage-1;
+        			}
+        			if(this.totalCount>1){
+        				this.totalCount = this.totalCount-array.length;
+        			}
+                }
+                this.initloadData2();
+            },
+    //        从服务器获取数据
+            async initloadData() {
+                let param ={
+                    "pageSize":this.pagesize,
+                    "pageIndex":1,
+                    "companyId":userInfo().companyId
+                }
+                const res = await queryPaymentAccount(param);
+                if (res.isSuccess == true) {
+                    this.tableData3 = res.result.data.results;
+                    this.totalCount = res.result.data.totalCount;
+                    this.currentPage = res.result.data.pageNo;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+    //        从服务器获取数据
+            async initloadData2() {
+                let param ={
+                    "pageSize":this.pagesize,
+                    "pageIndex":this.currentPage,
+                    "companyId":userInfo().companyId
+                }
+                const res = await queryPaymentAccount(param);
+                if (res.isSuccess == true) {
+                    this.tableData3 = res.result.data.results;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+    //        导出Excel数据
+            async exportloadData() {
+                let param ={
+                    "pageSize":this.pagesize*this.totalCount,
+                    "pageIndex":1,
+                    "companyId":userInfo().companyId
+                }
+                const res = await queryPaymentAccount(param);
+                const list = [];
+                if (res.isSuccess == true) {
+					for(let i=0;i<res.result.data.results.length;i++){
+						let data1 = res.result.data.results[i];
+						let accountType = '';
+						let consumeType = '';
+						let account = '';
+						let status = '';
+						let memo = '';
+
+		                if(data1.accType && data1.accType == 4){
+		                	accountType = "paypal";
+		                	account = data1.business;
+		                }else if(data1.accType && data1.accType == 5){
+		                	accountType = "及时到账";
+		                	account = data1.alibabaAccount;
+		                }else if(data1.accType && data1.accType == 3){
+		                	accountType = "网银";
+		                	account = data1.accoutNumber;
+		                }else if(data1.accType && data1.accType == 2){
+		                	accountType = "微信";
+		                	account = data1.mchID;
+		                }else if(data1.accType && data1.accType == 1){
+		                	accountType = "支付宝";
+		                	account = data1.seller_id;
+		                }
+
+		                if(data1.consumeType && data1.consumeType == 1){
+		                	consumeType = "付款";
+		                }else if(data1.consumeType && data1.consumeType == 2){
+		                	consumeType = "收款";
+		                }
+
+		            	if(data1.accountState && data1.accountState == 1){
+		            		status = "启用";
+		            	}else{
+		            		status = "禁用";
+		            	}
+
+		            	if(data1.memo){
+		            		memo = data1.memo;
+		            	}
+
+		            	let row = {
+		            		accountType : accountType,
+							consumeType : consumeType,
+							account : account,
+							status : status,
+							memo : memo
+		            	}
+		            	list.push(row);
+					}
+			　　　　const tHeader = ['账户类型', '收支类型','账号','账户状态','备注'];
+			　　　　const filterVal = ['accountType', 'consumeType','account','status','memo'];
+			　　　　const data = this.formatJson(filterVal, list);
+			　　　　export_json_to_excel(tHeader, data, '充值配置表');
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            checkAccountType(type){
+            	if(type == "4"){
+            		this.configAccountPaypalform = {
+            			accType:'4',
+            			consumeType:'2',
+            			accountState:'1',
+            			companyId:userInfo().companyId
+            		}
+            		this.configAccountPaypalForm = true;
+            		this.configAccountForm = false;
+		            this.configAccountCurrentForm = false;
+		            this.configAccountCyberBankForm = false;
+		            this.configWxAccountForm = false;
+		            this.configAlibabaAccountForm = false;
+            	}else if(type=="5"){
+            		this.configAccountCurrentform = {
+            			accType:'5',
+            			consumeType:'2',
+            			accountState:'1',
+            			companyId:userInfo().companyId
+            		}
+            		this.configAccountCurrentForm = true;
+            		this.configAccountForm = false;
+	                this.configAccountPaypalForm = false;
+		            this.configAccountCyberBankForm = false;
+		            this.configWxAccountForm = false;
+		            this.configAlibabaAccountForm = false;
+            	}else if(type == "3"){
+            		this.configAccountCyberBankform = {
+            			accType:'3',
+            			consumeType:'2',
+            			accountState:'1',
+            			companyId:userInfo().companyId,
+            			bankName:''
+            		}
+            		this.configAccountCyberBankForm = true;
+            		this.configAccountForm = false;
+            		this.configAccountPaypalForm = false;
+	                this.configAccountCurrentForm = false;
+		            this.configWxAccountForm = false;
+		            this.configAlibabaAccountForm = false;
+            	}else if(type == "2"){
+            		this.configWxAccountform = {
+            			accType:'2',
+            			consumeType:'2',
+            			accountState:'1',
+            			companyId:userInfo().companyId
+            		}
+            		this.configWxAccountForm = true;
+            		this.configAccountForm = false;
+            		this.configAccountPaypalForm = false;
+	                this.configAccountCurrentForm = false;
+		            this.configAccountCyberBankForm = false;
+		            this.configAlibabaAccountForm = false;
+            	}else if(type == "1"){
+            		this.configAlibabaAccountform = {
+            			accType:'1',
+            			consumeType:'2',
+            			accountState:'1',
+            			companyId:userInfo().companyId
+            		}
+            		this.configAlibabaAccountForm = true;
+            		this.configAccountForm = false;
+            		this.configAccountPaypalForm = false;
+	                this.configAccountCurrentForm = false;
+		            this.configAccountCyberBankForm = false;
+		            this.configWxAccountForm = false;
+            	}
+
+
+            },
+            checkConfigAccountCurrentformConsumeType(val){
+            	if(val == "2"){
+            		this.configAccountCurrentform_pay = false;
+            		this.configAccountCurrentform_alibabaAccount = true;
+            	}else{
+            		this.configAccountCurrentform_pay = true;
+            		this.configAccountCurrentform_alibabaAccount = false;
+            	}
+            },
+            checkConfigAccountPaypalformConsumeType(val){
+            	if(val == "2"){
+            		this.configAccountPaypalform_receivables = true;
+            		this.configAccountPaypalform_income = false;
+            	}else{
+            		this.configAccountPaypalform_receivables = false;
+            		this.configAccountPaypalform_income = true;
+            	}
+            },
+    //        添加支付宝账户
+            async configAlibabaAccountFormSubmit(formName){
+            	this.$refs[formName].validate(async (valid) => {
+					if (valid) {
+                        const res = await createPaymentAccount(this.configAlibabaAccountform);
+                        if (res.isSuccess == true) {
+                            this.$message({
+                                type: 'success',
+                                message: res.result.msg
+                            });
+                             this.configAlibabaAccountForm = false;
+                             this.initloadData();
+                        }else{
+                            this.$message({
+                                type: 'error',
+                                message: res.errorMsg
+                            });
+                        }
+					} else {
+
+						return false;
+					}
+				});
+          },
+    //      添加微信账户
+            async configWxAccountFormSubmit(formName){
+            	this.$refs[formName].validate(async (valid) => {
+					if (valid) {
+                        const res = await createPaymentAccount(this.configWxAccountform);
+                        if (res.isSuccess == true) {
+                            this.$message({
+                                type: 'success',
+                                message: res.result.msg
+                            });
+                             this.configWxAccountForm = false;
+                             this.initloadData();
+                        }else{
+                            this.$message({
+                                type: 'error',
+                                message: res.errorMsg
+                            });
+                        }
+					} else {
+
+						return false;
+					}
+				});
+          },
+    //      添加网银账户
+            async configAccountCyberBankFormSubmit(formName){
+            	this.$refs[formName].validate(async (valid) => {
+					if (valid) {
+                        const res = await createPaymentAccount(this.configAccountCyberBankform);
+                        if (res.isSuccess == true) {
+                            this.$message({
+                                type: 'success',
+                                message: res.result.msg
+                            });
+                             this.configAccountCyberBankForm = false;
+                             this.initloadData();
+                        }else{
+                            this.$message({
+                                type: 'error',
+                                message: res.errorMsg
+                            });
+                        }
+					} else {
+
+						return false;
+					}
+				});
+          },
+    //      添加及时到账账户
+            async configAccountCurrentFormSubmit(formName){
+            	this.$refs[formName].validate(async (valid) => {
+					if (valid) {
+                        const res = await createPaymentAccount(this.configAccountCurrentform);
+                        if (res.isSuccess == true) {
+                            this.$message({
+                                type: 'success',
+                                message: res.result.msg
+                            });
+                             this.configAccountCurrentForm = false;
+                             this.initloadData();
+                        }else{
+                            this.$message({
+                                type: 'error',
+                                message: res.errorMsg
+                            });
+                        }
+					} else {
+
+						return false;
+					}
+				});
+          },
+    //      添加paypal账户
+            async configAccountPaypalFormSubmit(formName){
+            	this.$refs[formName].validate(async (valid) => {
+					if (valid) {
+                        const res = await createPaymentAccount(this.configAccountPaypalform);
+                        if (res.isSuccess == true) {
+                            this.$message({
+                                type: 'success',
+                                message: res.result.msg
+                            });
+                             this.configAccountPaypalForm = false;
+                             this.initloadData();
+                        }else{
+                            this.$message({
+                                type: 'error',
+                                message: res.errorMsg
+                            });
+                        }
+					} else {
+
+						return false;
+					}
+				});
+          },
+          async submitFormEdit(formName){
+                this.$refs[formName].validate(async (valid) => {
+                    if (valid) {
+                        const res = await updatePaymentAccount(this.editform);
+                        if (res.isSuccess == true) {
+                            this.$message({
+                                type: 'success',
+                                message: res.result.msg
+                            });
+                             this.editDialogForm = false;
+                             this.initloadData();
+                        }else{
+                            this.$message({
+                                type: 'error',
+                                message: res.errorMsg
+                            });
+                        }
+                    } else {
+
+                        return false;
+                    }
+                });
+          },
+          formatAccType:function(row, column) {
+                let data = row.accType;
+                if(data == 4){
+                	return "paypal";
+                }else if(data == 5){
+                	return "及时到账";
+                }else if(data == 3){
+                	return "网银";
+                }else if(data == 2){
+                	return "微信";
+                }else if(data == 1){
+                	return "支付宝";
+                }
+            },
+            formatConsumeType:function(row, column) {
+                let data = row.consumeType;
+                if(data == 1){
+                	return "付款";
+                }else if(data == 2){
+                	return "收款";
+                }
+            },
+            formatAccount:function(row, column) {
+            	let accType = row.accType;
+            	if(accType == 1){
+            		return row.seller_id;
+            	}else if(accType == 2){
+            		return row.mchID;
+            	}else if(accType == 3){
+            		return row.accoutNumber;
+            	}else if(accType == 5){
+            		return row.alibabaAccount;
+            	}else if(accType == 4){
+            		return row.business;
+            	}
+            },
+            formatAccountState:function(row, column){
+            	let accountState = row.accountState;
+            	if(accountState == 1){
+            		return "启用";
+            	}else{
+            		return "禁用";
+            	}
+            },
+            handleCurrentChange:function(val) {
+                this.currentPage = val;
+                this.initloadData2();
+            },
+            open2(id) {
+		        this.$confirm('是否确认删除该信息?', '提示', {
+		          confirmButtonText: '确定',
+		          cancelButtonText: '取消',
+		          type: 'warning'
+		        }).then(() => {
+		          this.deleteRow(id);
+		        }).catch(() => {
+
+		        });
+		    },
+		    batchDeleteConfig() {
+		    	if(this.multipleSelection == undefined || this.multipleSelection.length==0){
+		    		this.$message({
+                        type: 'error',
+                        message: '请先勾选要删除的账户！'
+                    });
+                    return;
+		    	}
+                var array = [];
+                this.multipleSelection.forEach((item) => {
+                    array.push(item.id);
+                })
+                if(array.length <1){
+                	this.$message({
+                        type: 'error',
+                        message: '请先勾选要删除的账户！'
+                    });
+                    return;
+                }
+		        this.$confirm('是否确认删除选中的信息?', '提示', {
+		          confirmButtonText: '确定',
+		          cancelButtonText: '取消',
+		          type: 'warning'
+		        }).then(() => {
+		          this.batchDelete(array);
+		        }).catch(() => {
+
+		        });
+		    },
+		    formatJson(filterVal, jsonData) {
+	　　　　　　return jsonData.map(v => filterVal.map(j => v[j]))
+	　　　　},
+        }
+
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/rechangeConfig';
+</style>

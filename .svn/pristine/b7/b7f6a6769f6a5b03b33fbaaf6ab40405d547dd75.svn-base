@@ -1,0 +1,117 @@
+<template>
+    <div class="fillcontain">
+        <ul :class="[identity ==1 ?'stallShareMenu':identity ==2 ?'sellerShareMenu':'']">
+            <li>
+                <router-link :to='{path:"/financialManagement"}'>账户总览</router-link>
+            </li>
+            <li class="ListMenu">
+                <router-link :to='{path:"/financialManagement2"}'>财务交易记录</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/accountSetting"}'>账户设置</router-link>
+            </li>
+        </ul>
+        <div class="managementDetail">
+            <div class="detail-top flex">
+                <div class="topLeft flex">
+                    <p>交易记录编号：{{dataResult.financeId}}</p>
+                    <el-button type="info">打印</el-button>
+                </div>
+                <div class="topRight">
+                    <router-link :to='{path:"/financialManagement2"}'>返回</router-link>
+                </div>
+            </div>
+            <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                    <th>账单 #1详情</th>
+                    <th>支出方：{{dataResult.payCompanyName}}</th>
+                    <th>帐号：{{dataResult.payAccoutNumber}}</th>
+                    <th>账户类型：{{dataResult.payAccType}}支付</th>
+                </tr>
+                <tr>
+                   <td colspan="4">交易金额：{{dataResult.fee}}</td>
+                </tr>
+                <tr>
+                    <td>抹平金额：{{dataResult.reduceFee}}</td>
+                    <td colspan="3">付款币种：人名币</td>
+                </tr>
+                <tr>
+                    <th>实际交易总额：￥{{dataResult.fee}}</th>
+                    <th>收款方：{{dataResult.receiveCompanyName}}</th>
+                    <th colspan="2">收款账户：{{dataResult.receiveAccoutNumber}}({{dataResult.receiveAccType}}) <span></span></th>
+                </tr>
+                <tr>
+                    <td colspan="4">交易时间：{{dataResult.createTime}}</td>
+                </tr>
+                <tr>
+                    <td colspan="4">交易状态：{{dataResult.status}}</td>
+                </tr>
+                <tr>
+                    <td colspan="4">交易流水：{{dataResult.flowNo}}</td>
+                </tr>
+                <tr>
+                    <td colspan="4">说明：{{dataResult.memo}}</td>
+                </tr>
+                <tr>
+                    <td colspan="4"  class="detailImage"><p>图片：</p>
+                        <img src="../image/head11.jpg" alt=""><img src="../image/head11.jpg" alt="">
+                    </td>
+                </tr>
+            </table>
+            <a href="javascript:void(0)" class="export_excle">导出excle</a>
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {selectFinanceRecordCert} from '@/api/getData'
+    import {userInfo,getStore} from  '../config/mUtils'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                //              1为档口、2为卖家身份
+                identity:1,
+				financeRecordId:'',
+				dataResult:{}
+            }
+        },
+        watch:{
+//            '$route':function (route) {
+//                this.financeRecordId = this.$route.query.param;
+//                this.loadData();
+//            }
+        },
+        mounted(){
+        	this.financeRecordId = this.$route.query.financeRecordId;
+        	this.loadData();
+        },
+        methods: {
+			async loadData() {
+				let param ={
+            		financeRecordId:this.financeRecordId
+            	}
+                const res = await selectFinanceRecordCert(param);
+                if (res.isSuccess == true) {
+                    this.dataResult = res.result;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.isSuccess
+                    });
+                }
+			}
+        }
+
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/financialManagement';
+</style>

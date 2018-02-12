@@ -1,0 +1,292 @@
+<template>
+    <div class="fillcontain">
+        <ul :class="[identity ==1 ?'stallShareMenu':identity ==2 ?'sellerShareMenu':'']">
+            <li>
+                <router-link :to='{path:"/financialManagement"}'>账户总览</router-link>
+            </li>
+            <li class="ListMenu">
+                <router-link :to='{path:"/financialManagement2"}'>财务交易记录</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/accountSetting"}'>账户设置</router-link>
+            </li>
+        </ul>
+        <div class="papa">
+            <div class="btngroup">
+            <a href="javascript:void(0)" class="buttonColor3">审核通过</a>
+            <a href="javascript:void(0)" class="buttonColor3" @click="centerDialogVisible = true">审核不通过</a>
+            <a href="javascript:void(0)" class="buttonColor3">返回</a>
+            </div>
+            <div class="paydetails">
+                <div class="paydetailsHeader">
+                    <p class="title"><i><img :src="paymentimg" alt=""></i><span>付款成功</span></p>
+                    <p class="failreason">
+                        失败原因 : 失败失败失败是啊失败失败失败是啊失败失败失败是啊失败失败失败是啊失败失败失败是啊
+                    </p>
+                </div>
+                <div class="paydetailsBody">
+                    <div class="paydetailsBodyTop">
+                        <span>档口收款信息</span>
+                        <span>付款信息</span>
+                    </div>
+                    <div class="paydetailsBodyMain">
+                      <div class="flex">
+                          <span>档口名称:</span><span>我是档口的得得的</span>
+                      </div>
+                      <div class="flex">
+                          <span>交易流水号:</span><span>454512121545452134564531</span>
+                      </div>
+                      <div class="flex">
+                          <span>收款时间:</span><span>2017-12-6 09:22</span>
+                      </div>
+                      <div class="flex">
+                          <span>操作人:</span><span>赵蕾蕾</span>
+                      </div>
+                      <div class="flex">
+                          <span>结算金额:</span><span>￥200.00</span>
+                      </div>
+                      <div class="flex">
+                          <span>抹平金额:</span><span>￥20.00</span>
+                      </div>
+                      <div class="flex">
+                          <span>实际付款金额:</span><span>￥160.00</span>
+                      </div>
+                      <div class="flex">
+                          <span>对方付款账号:</span><span>156825825454(支付宝)</span>
+                      </div>
+                      <div class="flex">
+                          <span>收款账号:</span><span>156825825454(支付宝)</span>
+                      </div>
+                      <div class="flex">
+                          <span>截图凭证:</span>
+                         <ul class="list">
+                             <li class="imgwrap" v-for="imgson in father">
+                                 <img :src="imgson.img" alt="" width="100%" height="100%">
+                             </li>
+                         </ul>
+                      </div>
+                      <div class="flex">
+                          <span>付款说明:</span><span>说明说明水电费是打发第三方是打发士大夫第三方打上发顺丰大师傅</span>
+                      </div>
+                    </div>
+                </div>
+            </div>
+            <div class="stalllist">
+                <div class="stalllistTitle">
+                    <div><span>档口名称 : </span><span>213213213213</span><span class="settleway">月结</span></div>
+                    <div><span>采购总金额(元) : </span><span>6000.00</span></div>
+                    <div><span>采购总数量(件) : </span><span>6515</span></div>
+                </div>
+                <el-table
+                    :data="tableData"
+                    height="441"
+                    style="width: 100%;">
+                    <el-table-column
+                        prop="orderCode"
+                        label="订单编号"
+                       >
+                    </el-table-column>
+                    <el-table-column
+                        prop="totalNum"
+                        label="采购数" width="120">
+                            <template scope="scope">
+                            <p style="">{{scope.row.totalNum}}</p>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="totalFee"
+                        label="采购金额" width="150">     
+                        <template scope="scope">
+                            <p>{{scope.row.totalFee}}</p>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="orderTime"
+                        label="下单时间"
+                        :formatter="mydateFormat" width="180">
+                    </el-table-column>
+                    <el-table-column
+                        label="操作"
+                         width="100">
+                        <template scope="scope">
+                            <a @click="dcancle(scope.row.id)" v-if="scope.row.status == 1||scope.row.status == 5"  class="red mr-10">取消订单</a>
+                            <router-link :to='{path:"/orderPurchaseBuyDetails" ,query:{id:scope.row.id}}' class="red">查看详情</router-link>   
+                        </template>
+                    </el-table-column>
+                </el-table>
+                <el-pagination
+                    small
+                    class="right"
+                    style="margin-top: 20px;"
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :current-page="currentPage"
+                    :page-sizes="[10, 20, 30, 40]"
+                    :page-size="pageSize"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    :total="totalCount">
+                </el-pagination>
+            </div>
+        </div>
+        <el-dialog
+            title="审核不通过"
+            size="tiny"
+            :visible.sync="centerDialogVisible"
+            width="30%"
+            center
+            class="auditwarp">
+            <el-input
+            type="textarea"
+            :rows="2"
+            placeholder="请输入内容"
+            v-model="textarea"
+            >
+            </el-input>
+            <span slot="footer" class="dialog-footer">
+                <a class="buttonColor3" @click="centerDialogVisible = false">确 定</a>
+                <a class="buttonColor2"  @click="centerDialogVisible = false">取 消</a>
+            </span>
+        </el-dialog>
+    </div>
+</template>
+
+<script>
+    import {selectFinanceRecordCert,getSettlementOrder,getSettlement} from '@/api/getData'
+    import {userInfo,getStore} from  '../config/mUtils'
+    import {formatDate} from '../utils/date.js'
+    import {isNullObject,getCompanyType} from  '../utils/common'
+
+    export default {
+        data() {
+            return {
+                //              1为档口、2为卖家身份
+                identity:2,
+                tableData:[
+                    {
+                      orderCode:"201785824185986214569844",
+                       totalNum:"984",
+                       totalFee:"1581474",
+                       orderTime:"820159563210",
+                    },
+                    {
+                      orderCode:"201785824185986214569844",
+                       totalNum:"984",
+                       totalFee:"1581474",
+                       orderTime:"820159563210",
+                    },
+                    {
+                      orderCode:"201785824185986214569844",
+                       totalNum:"984",
+                       totalFee:"1581474",
+                       orderTime:"820159563210",
+                    },
+                    {
+                      orderCode:"201785824185986214569844",
+                       totalNum:"984",
+                       totalFee:"1581474",
+                       orderTime:"820159563210",
+                    },
+                    {
+                      orderCode:"201785824185986214569844",
+                       totalNum:"984",
+                       totalFee:"1581474",
+                       orderTime:"820159563210",
+                    },
+                    {
+                      orderCode:"201785824185986214569844",
+                       totalNum:"984",
+                       totalFee:"1581474",
+                       orderTime:"820159563210",
+                    },
+                    {
+                      orderCode:"201785824185986214569844",
+                       totalNum:"984",
+                       totalFee:"1581474",
+                       orderTime:"820159563210",
+                    },
+                    {
+                      orderCode:"201785824185986214569844",
+                       totalNum:"984",
+                       totalFee:"1581474",
+                       orderTime:"820159563210",
+                    },
+                    {
+                      orderCode:"201785824185986214569844",
+                       totalNum:"984",
+                       totalFee:"1581474",
+                       orderTime:"820159563210",
+                    },
+                    {
+                      orderCode:"201785824185986214569844",
+                       totalNum:"984",
+                       totalFee:"1581474",
+                       orderTime:"820159563210",
+                    },
+                ],
+                father:[
+                    {
+                        img:require("../image/111.png")
+                    },
+                    {
+                        img:require("../image/111.png")
+                    },
+                    {
+                        img:require("../image/111.png")
+                    }
+                ],
+                paymentimg:require("../image/moneysuccess.png"),
+                centerDialogVisible: false,
+                textarea: '',
+                //默认每页数据量
+                pageSize: 10,
+
+                //默认高亮行数据id
+                highlightId: -1,
+
+                //当前页码
+                currentPage: 1,
+
+                //查询的页码
+                start: 1,
+
+                //默认数据总数
+                totalCount: 0,
+            }
+        },
+        watch:{
+
+        },
+        mounted(){
+       
+        },
+        methods: {
+              //时间格式化
+            mydateFormat:function(row, column) {
+                var time = row[column.property];
+                if (time == undefined||time=='') {
+                    return "";
+                }
+                let date = new Date(time);
+                return formatDate(date,'yyyy-MM-dd hh:mm');
+            },
+             handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+                this.currentPage = 1;
+                this.pageSize = val;
+                this.initloadData();
+            },
+             handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+                this.currentPage = val;
+                this.initloadData();
+            },
+        }
+
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/financialManagement2';
+</style>

@@ -1,0 +1,310 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('logToolsSeller')">
+                <router-link :to='{path:"/logToolsSeller"}'>日志查看</router-link>
+            </li>
+             <li v-if="getMenuAuthFun('addShop')">
+                <router-link :to='{path:"/addShop"}'>绑定店铺</router-link>
+            </li>
+            <li class="menuIndex2" v-if="getMenuAuthFun('MSConfigSeller')">
+                <router-link :to='{path:"/MSConfigSeller"}'>系统配置</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/siteConfig"}'>地址配置</router-link>
+            </li>
+        </ul>
+        <div class="MSConfigSeller">
+            <el-tabs v-model="activeName" @tab-click="handleClick">
+                <el-tab-pane label="货号编码规则设置" name="second">
+                    <div class="secondContent" style="padding-left: 80px;">
+                        <div class="secondTop flex2" style="justify-content: flex-start;">
+                            <p style="margin-right: 15px;">货号规则（单品）:</p>
+                            <!--<el-input placeholder="前缀" class="secondInput" style="margin-right: 10px;"></el-input>-->
+                            <el-select
+	                            v-model="productCodePrefix"
+	                            filterable
+	                            remote
+	                            reserve-keyword
+	                            placeholder="前缀"
+	                            class="secondInput"
+	                            style="margin-right: 10px;"
+	                            :remote-method="remoteMethod"
+	                            :loading="loading">
+	                            <el-option
+	                                v-for="item in productCodeConfigData"
+	                                :key="item.prefix"
+	                                :label="item.prefix"
+	                                :value="item.prefix">
+	                            </el-option>
+	                        </el-select>
+                            <el-input value="档口编码" class="secondInput tc" disabled=""></el-input>
+                            <span>——</span>
+                            <el-input value="档口商品货号" class="secondInput tc" disabled=""></el-input>
+                        </div>
+                        <p style="padding-left: 135px; margin: 20px 0 30px;">例子：电商A000-C001</p>
+                        <div class="secondTop flex2" style="justify-content: flex-start;">
+                            <p style="margin-right: 15px;">货号规则（SKU）:</p>
+                            <!--<el-input placeholder="前缀" class="secondInput" style="margin-right: 10px;"></el-input>-->
+                            <el-select
+	                            v-model="productCodeSkuPrefix"
+	                            filterable
+	                            remote
+	                            reserve-keyword
+	                            placeholder="前缀"
+	                            class="secondInput"
+	                            style="margin-right: 10px;"
+	                            :remote-method="remoteMethod"
+	                            :loading="loading">
+	                            <el-option
+	                                v-for="item in productCodeConfigData"
+	                                :key="item.prefix"
+	                                :label="item.prefix"
+	                                :value="item.prefix">
+	                            </el-option>
+	                        </el-select>
+                            <el-input value="档口编码" class="secondInput tc" disabled=""></el-input>
+                            <span>——</span>
+                            <el-input value="档口商品货号" class="secondInput tc" disabled=""></el-input>
+                            <span>——</span>
+                            <el-input value="颜色" class="secondInput tc" disabled=""></el-input>
+                            <span>——</span>
+                            <el-input value="尺码" class="secondInput tc" disabled=""></el-input>
+                        </div>
+                        <p style="padding-left: 135px; margin: 20px 0 30px;">例子：电商A000-C001-HEi-2Xl</p>
+                        <div class="flex2 secondButton">
+                            <!-- <a href="javascript:void(0)" class="buttonColor2" style="border: 1px solid #000; background-color: #fff;">返  回</a> -->
+                            <a href="javascript:void(0)" @click="addProductCodeConfig" class="buttonColor3">保  存</a>
+                        </div>
+                    <div class="secondTips">
+                        <div>
+                            <el-col :span="24"><el-col :span="2">说明：</el-col>(默认以上商品编码规则，该规则适用所有商品，如需在档口编码上加前缀的在添加后保存即可)</el-col>
+                            <el-col :span="24"><el-col :span="2">&nbsp;</el-col>1.第一段为自定义值，用户可根据情况自由选择是否填写；</el-col>
+                            <el-col :span="24"><el-col :span="2">&nbsp;</el-col>2.第二段为固定值，默认用档口编码为准；</el-col>
+                            <el-col :span="24"><el-col :span="2">&nbsp;</el-col>3.第三段为固定值，默认用档口的商品货号为准；</el-col>
+                            <el-col :span="24"><el-col :span="2">&nbsp;</el-col>4.SKU编码规则系统默认在单品的编码规则上加颜色和尺码，自动生成；</el-col>
+                            <el-col :span="24"><el-col :span="2">&nbsp;</el-col>5.如果档口的编码有更换，系统会自动更新为新档口的编码。</el-col>
+                        </div>
+                    </div>
+                    </div>
+                </el-tab-pane>
+                <el-tab-pane label="拿货流程配置" name="third">
+                    <div class="goodscontent">
+                        <div class="sidegood">
+                            <div class="sideimgwarp">
+                                <img src="../image/packagea.png" alt="" width="100%" height="100%">
+                            </div>
+                            <p>待拿包裹</p>
+                        </div>
+                        <div class="gooditem">
+                            <div class="mdimgwrap"  @click="needTake = !needTake">
+                                <img src="../image/packagec.png" alt="" v-if="needTake">
+                            </div>
+                            <span class="describetion">包裹拿货</span>
+                            <span class="line" :class="{'active':needTake}"></span>
+                        </div>   
+                        <div class="gooditem">
+                            <div class="mdimgwrap"  @click="needInCar =!needInCar">
+                                <img src="../image/packagec.png" alt="" v-if="needInCar">
+                            </div>
+                            <span class="describetion">包裹装车</span>
+                            <span class="line" :class="{'active':needInCar}"></span>
+                        </div>   
+                        <div class="gooditem">
+                            <div class="mdimgwrap"  @click="needOutCar =!needOutCar">
+                                <img src="../image/packagec.png" alt="" v-if="needOutCar">
+                            </div>
+                            <span class="describetion">包裹卸货</span>
+                            <span class="line" :class="{'active':needOutCar}"></span>
+                        </div>   
+                        <div class="lastitem">
+                            <div class="mdimgwrap" @click="needInStock = !needInStock">
+                                <img src="../image/packagec.png" alt="" v-if="needInStock">
+                            </div>
+                            <span class="describetion">包裹入库</span>
+                        </div>   
+                        <div class="sidegood">
+                            <div class="sideimgwarp">
+                                <img src="../image/packageb.png" alt="">
+                            </div>
+                            <p>仓库</p>
+                        </div>        
+                    </div>
+                    <div class="remarks">
+                        <p class="remarkItem">备注：</p>
+                        <p class="remarkItem">1.用户可以根据自己的拿货方式配置自己的拿货流程，勾选对应流程，包裹将会按流程流动；</p>
+                        <p class="remarkItem">2.系统初始化默认拿货流程为上述完整流程。</p>
+                    </div>
+                    <div class="flex2 btngroup">
+                            <a href="javascript:void(0)" @click="savePackageFlowConfig" class="buttonColor3">保  存</a>
+                        </div>
+                </el-tab-pane>
+            </el-tabs>
+        </div>
+
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {setStore,getStore} from  '../config/mUtils'
+    import {getMenuAuth,haveMenuAuth} from  '../utils/AuthMenu.js'
+    import {queryProductCodeConfig,addProductCodeConfig,getPackageFlowConfig,savePackageFlowConfig} from '@/api/getData'
+    import {userInfo} from  '../config/mUtils'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+          return{
+            roleForm: {
+                    loginname: '',
+                    userId: '',
+                    roleId: '',
+                    compId: '',
+                    userName: ''
+                },
+            needInCar:true,
+            needInStock:true,
+            needOutCar:true,
+            needTake:true,
+            configid:'',
+          	  loading: false,
+              activeName: 'second',
+              productCodePrefix:'',
+              productCodeSkuPrefix:'',
+              productCodeConfigData:[],
+            }
+        },
+        mounted () {
+                var userInfo = getStore("user_info_user");
+                var vjson = JSON.parse(userInfo);
+
+                this.roleForm.userId = vjson.id;
+                this.roleForm.userName = vjson.userName;
+                var currentComp = getStore("curCompany");
+                var vcom = JSON.parse(currentComp);
+                this.roleForm.compId = vcom.id;  
+                this.getPackageFlowConfig()
+        },
+        methods:{
+        	async remoteMethod(query){
+                if(query!=''){
+                    this.loading = true;
+                    let param = {
+                        "prefix":query,
+                        "companyId":userInfo().companyId,
+                        "pageIndex":1,
+                        "pageSize":10
+                    };
+                    this.productCodeConfigData = [];
+                    const res = await queryProductCodeConfig(param);
+                    setTimeout(() => {
+                        this.loading = false;
+                        let flag = false;
+                        res.result.results.forEach(obj => {
+                        	if(obj.prefix && obj.prefix == query){
+                        		flag = true;
+                        	}
+                        	this.productCodeConfigData.push(obj);
+                        });
+                        if(!flag){
+                        	let row = {
+                        		prefix:query
+                        	}
+                        	this.productCodeConfigData.push(row);
+                        }
+                    }, 200);
+                } else {
+                    this.productCodeConfigData = [];
+                }
+            },
+            async addProductCodeConfig(){
+            	let prefix = '';
+            	if(this.productCodePrefix != ''){
+            		prefix = this.productCodePrefix;
+            	}else if(this.productCodeSkuPrefix != ''){
+            		prefix = this.productCodeSkuPrefix;
+            	}
+            	if(prefix == ''){
+            		this.$message({
+                        type: 'error',
+                        message: "前缀不能为空"
+                    });
+                    return;
+            	}
+            	let param = {
+            		prefix:prefix,
+            		companyId:userInfo().companyId
+            	}
+            	const res = await addProductCodeConfig(param);
+                if (res.isSuccess == true) {
+	                    this.$message({
+	                        type: 'success',
+	                        message: res.result.msg
+	                    });
+	                }else{
+	                    this.$message({
+	                        type: 'error',
+	                        message: res.errorMsg
+	                    });
+	                }
+            },
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            handleClick(tab, event) {
+                console.log(tab, event);
+            },
+            async getPackageFlowConfig(){
+                let param = {
+                    companyId:this.roleForm.compId
+                }
+                const res = await getPackageFlowConfig(param);
+                if(res.isSuccess){
+                    this.needInCar = res.result.needInCar;
+                 this.needInStock = res.result.needInStock;
+                 this.needOutCar = res.result.needOutCar;
+                 this.needTake = res.result.needTake;
+                 this.configid = res.result.id
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+	                });
+                }
+            },
+            async savePackageFlowConfig(){
+                let param = {
+                    id:this.configid,
+                    companyId:this.roleForm.compId,
+                    needInStock: this.needInStock,
+                    needInCar: this.needInCar,
+                    needTake: this.needTake,
+                    needOutCar: this.needOutCar,
+                }
+                console.log(param);
+                const res = await savePackageFlowConfig(param);
+                if(res.isSuccess){
+                         this.$message({
+	                        type: 'success',
+	                        message: "保存成功"
+	                    });
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+	                });
+                }
+            }
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/MSConfig';
+</style>

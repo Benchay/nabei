@@ -1,0 +1,229 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/fastShipping2"}'>快速出货</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/returnManagement2"}'>快速退货</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/orderPurchaseStall"}'>订单管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/sellerSettlement"}'>客户结算</router-link>
+            </li>
+            <li class="menuIndex">
+                <router-link :to='{path:"/customerManagement"}'>客户管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/statisticalStatement"}'>销售统计</router-link>
+            </li>
+        </ul>
+        <div class="customerManagement">
+            <div class="customerTop flex left">
+                <el-input v-model="compNameSerche" placeholder="公司名称搜索" size="small" :on-icon-click="handleIconClick"  icon="search" ></el-input>
+                <el-input v-model="roleNameSerche" placeholder="角色搜索" size="small" :on-icon-click="handleIconClick"  icon="search" ></el-input>
+                <el-input v-model="userNameSerche" placeholder="联系人搜索" size="small" :on-icon-click="handleIconClick"  icon="search" ></el-input>
+                <el-input v-model="mobileSerche" placeholder="联系电话搜索" size="small" :on-icon-click="handleIconClick"  icon="search" ></el-input>
+            </div>
+            <div class="customerTable">
+                <el-table
+                    :data="tableData"
+                    style="width: 100%">
+                    <el-table-column
+                        type="selection"
+                        width="55">
+                    </el-table-column>
+                    <el-table-column
+                        prop="compName"
+                        label="公司名称"
+                        width="180">
+                    </el-table-column>
+                    <el-table-column
+                        prop="roleName"
+                        label="角色">
+                    </el-table-column>
+                    <el-table-column
+                        prop="userName"
+                        label="姓名">
+                    </el-table-column>
+                    <el-table-column
+                        prop="mobile"
+                        label="联系电话">
+                    </el-table-column>
+                    <el-table-column
+                        prop="remark"
+                        width="350"
+                        label="备注">
+                    </el-table-column>
+                </el-table>
+            </div>
+            <el-pagination
+                small
+                class="right"
+                style="margin-top: 20px;"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :current-page="currentPage"
+                :page-sizes="[10, 20, 30, 40]"
+                :page-size="pagesize"
+                layout="total, sizes, prev, pager, next, jumper"
+                :total="totalCount">
+            </el-pagination>
+            <a href="javascript:void(0)" class="export_excle">导出excel</a>
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {mapActions, mapState} from 'vuex'
+    import {queryAllContacts,loadUserInIds} from '@/api/getData'
+    import {setStore,getStore} from  '../config/mUtils'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                roleForm: {
+                    userId: '',
+                    roleId: '',
+                    compId:''
+                },
+                ids:[],
+                pagesize: 10,
+                //默认高亮行数据id
+                highlightId: -1,
+                //当前页码
+                currentPage: 1,
+                //查询的页码
+                start: 1,
+                //默认数据总数
+                totalCount: 0,
+
+                compNameSerche:'',
+                roleNameSerche:'',
+                userNameSerche:'',
+                mobileSerche:'',
+                tableData: []
+            }
+        },
+        mounted(){
+            var userInfo=getStore("userInfo");
+            var vjson = JSON.parse(userInfo);
+            //console.log(userInfo);
+            this.roleForm.userId=vjson.id;
+            var currentComp=getStore("curCompany");
+            var vcom = JSON.parse(currentComp);
+            this.roleForm.compId=vcom.id;
+            //测试代码
+            //this.roleForm.compId='2';
+            //console.log(this.roleForm.userId);
+            this.loadInit();
+        },
+        methods: {
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+            },
+            handleIconClick(){
+                let  param = {
+                    "userId":this.roleForm.userId,
+                    "pageSize": this.pagesize,
+                    "pageIndex": this.currentPage,
+                    "compName":this.compNameSerche,
+                    "roleName":this.roleNameSerche,
+                    "userName":this.userNameSerche,
+                    "mobile":this.mobileSerche,
+                };
+                this.loadDataWithCondition(param);
+            },
+            loadInit(){
+                this.currentPage = 1;
+                let  param = {
+                    "userId":this.roleForm.userId,
+                    "pageSize": this.pagesize,
+                    "pageIndex": this.currentPage
+                };
+                this.loadDataWithCondition(param);
+            },
+            async loadDataWithCondition(param) {
+                var userId=param.userId;
+                const res = await queryAllContacts({userId:userId});
+
+                if (res.isSuccess == true) {
+                    var ids=this.getUserIds(res.result.data);
+                    var  param2 = param;
+                    param2.ids=ids;
+                    const res1=await loadUserInIds(param2);
+                    if (res1.isSuccess == true){
+                        //this.tableData = res1.result.data;
+                        this.totalCount = res1.result.totalCount;
+                        this.tableData=this.linkParaRemark(res.result.data,res1.result.data);
+                    }else{
+                        this.$message({
+                            type: 'error',
+                            message: res.errorMsg
+                        });
+                    }
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            getUserIds(data){
+                if(data==null || data.length <1) return '';
+                var ids='';
+                for(var i=0; i<data.length; i++) {
+                    var resultData = data[i];
+                    if(i<(data.length-1)){
+                        ids=ids +resultData.linkUserId +",";
+                    }else if(i==(data.length-1)){
+                        ids=ids +resultData.linkUserId ;
+                    }
+                }
+                return ids;
+            },
+            //拼接备注
+            linkParaRemark(linkData,usrData){
+                for(var i=0; i<usrData.length; i++) {
+                    var resultData = usrData[i];
+                    for(var j=0;j<linkData.length;j++){
+                        var resultData0 = linkData[j];
+                        if(resultData0.linkUserId == resultData.userId){
+                            usrData[i].remark=resultData0.remark;
+                            break;
+                        }
+                    }
+                }
+                return usrData;
+            },
+            handleCurrentChange: function(val) {
+                this.currentPage = val;
+                var role={"compId":this.roleForm.compId};
+                if(this.queryName !=null && this.queryName!=""){
+                    role={"compId":this.roleForm.compId,"name":this.queryName};
+                }
+                let  param = {
+                    "userId":this.roleForm.userId,
+                    "pageSize": this.pagesize,
+                    "pageIndex": this.currentPage
+                };
+                this.loadDataWithCondition(param);
+            },
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/customerManagement';
+</style>

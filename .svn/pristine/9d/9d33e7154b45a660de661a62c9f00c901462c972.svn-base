@@ -1,0 +1,222 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/returnManagement2"}'>快速退货</router-link>
+            </li>
+            <li class="menuIndex">
+                <router-link :to='{path:"/sellReturn"}'>销售退货</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/returnManagement2"}'>退货统计</router-link>
+            </li>
+        </ul>
+        <div class="returns-content">
+            <div class="returnsAll">
+                <div class="right">
+                    <router-link :to='{path:"/sellReturn"}' class="comeBack">返回</router-link>
+                </div>
+                <div class="left">
+                    <a href="javascript:void(0)" class="buttonColor" @click="dialog = true" v-if="status==0">立即入库</a>
+                </div>
+                <div class="orderDetails"  style="margin: 40px 0 0;">
+                    <div class="flex detailsLeft">
+                        <img src="../image/111.png" alt="">
+                        <div>
+                            <p>订单编号：</p>
+                            <p>商家名称：</p>
+                            <p>配货时间：</p>
+                        </div>
+                    </div>
+                    <div  class="detailsCenter">
+                        <p>总采购数：</p>
+                        <p>总采购金额：<span class="title">￥123</span></p>
+                    </div>
+                    <div class="flex detailsRight">
+                        <a href="javascript:void(0)" @click="dialog1 = true">
+                            <div>
+                                <p class="blue2">订单动态</p>
+                                <!--待入库 已完成 两种状态-->
+                                <p>（待入库）</p>
+                            </div>
+                        </a>
+                        <router-link :to='{path:"/indentManagementCompleteAccount"}'>
+                            <div>
+                                <p class="blue2">财务结算</p>
+                                <!--(已结算)（未结算）两种状态-->
+                                <p>（未结算）</p>
+                            </div>
+                        </router-link>
+                    </div>
+                </div>
+                <div class="returnsRemark">
+                    退货原因：商品质量问题！
+                </div>
+                <div class="returnsTable">
+                    <el-table
+                        height="360"
+                        :data="tableData"
+                        style="width: 100%">
+                        <el-table-column
+                            v-if="status==0"
+                            type="selection"
+                            width="55">
+                        </el-table-column>
+                        <el-table-column
+                            label="主图/货号">
+                            <template scope="scope">
+                                <div class="flex2">
+                                    <img src="../image/111.png" alt=""  class="tableImg">
+                                    <p>MG110</p>
+                                </div>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            prop="productName"
+                            width="180"
+                            label="商品名称">
+                        </el-table-column>
+                        <el-table-column
+                            prop="color"
+                            label="颜色">
+                        </el-table-column>
+                        <el-table-column
+                            prop="size"
+                            label="尺码">
+                        </el-table-column>
+                        <el-table-column
+                            prop=""
+                            label="退货价">
+                        </el-table-column>
+                        <el-table-column
+                        prop="amount"
+                        label="退货/已退/未退数量">
+                        <template scope="scope">
+                        <p>25/<span class="blue2">30</span></p>
+                        </template>
+                        </el-table-column>
+                        <el-table-column
+                            prop="number"
+                            label="入库数量">
+                            <template scope="scope">
+                                <!--已入库-->
+                                <p v-if="status !=0">{{scope.row.number}}</p>
+                                <!--未入库-->
+                                <el-input v-if="status ==0" v-model="input" placeholder=""></el-input>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </div>
+                <el-pagination
+                    small
+                    class="right"
+                    style="margin-top: 20px;"
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :current-page="currentPage4"
+                    :page-sizes="[100, 200, 300, 400]"
+                    :page-size="100"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    :total="400">
+                </el-pagination>
+                <a href="javascript:void(0)" class="export_excle left">导出excel</a>
+            </div>
+            <el-dialog
+                title="确认退货"
+                :visible.sync="dialog"
+                size="tiny">
+                <div class="flex3 affirmDialog">
+                    <p>确认退货数量/金额：<span class="blue2">5800/￥380000</span></p>
+                    <p style="color:#999;">*拒绝退货数量/金额：5800/￥380000</p>
+                    <p class="flex"><img src="../image/queren.png" alt="">确定退货商品立即入库吗？</p>
+                </div>
+                <span slot="footer" class="dialog-footer flex2">
+                <a href="javascript:void(0)" class="buttonColor" @click="dialog = false">确 定</a>
+                <a href="javascript:void(0)" class="buttonColor2" @click="dialog = false">取 消</a>
+              </span>
+            </el-dialog>
+            <el-dialog
+                title="订单动态"
+                :visible.sync="dialog1"
+                size="small">
+                <div class="dynamic">
+                    <el-col :span="12">档口名称：</el-col>
+                    <el-col :span="12">待确认</el-col>
+                    <el-col :span="12">订单编号：</el-col>
+                </div>
+                <el-col class="dynamicList">
+                    <div class="track-rcol">
+                        <div class="track-list">
+                            <ul>
+                                <li class="flex">
+                                    <i class="node-icon"></i>
+                                    <span class="time">2017-12-29 18:07:15</span>
+                                    <div class="txt">
+                                        <p>退货已完成</p>
+                                    </div>
+                                </li>
+                                <li>
+                                <i class="node-icon"></i>
+                                <span class="time">2016-03-10 18:07:15</span>
+                                <div class="txt">
+                                <p>运输中</p>
+                                </div>
+                                </li>
+                                <li>
+                                <i class="node-icon"></i>
+                                <span class="time">2016-03-10 18:07:15</span>
+                                <div class="txt">
+                                <p>待装车</p>
+                                <p>装车人：张晓梅</p>
+                                <p>联系电话：13465211349</p>
+                                </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </el-col>
+            </el-dialog>
+        </div>
+    </div>
+</template>
+<script>
+    import headTop from '../components/headTop'
+    import {queryOrderInfo,queryStallOrderDetail} from '@/api/getData'
+    import {formatDate} from '../utils/date.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                currentPage4: 4,
+                dialog:false,
+                //0为待入库 1为已完成
+                status:0,
+                tableData: [{}],
+                pageSize:10,
+                currentPage:1,
+                input:'',
+                dialog1:false,
+            }
+        },
+        mounted(){
+
+        },
+
+        methods: {
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+            },
+        }
+    }
+</script>
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/salesReturn';
+</style>

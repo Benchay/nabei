@@ -1,0 +1,523 @@
+body, div, span, header, footer, nav, section, aside, article, ul, dl, dt, dd, a, p, h1, h2, h3, h4,h5, h6, i, b, textarea, button, input, select, figure, figcaption {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+    font-style: normal;
+    text-decoration: none;
+    border: none;
+    font-family: "Microsoft Yahei",sans-serif;
+    -webkit-tap-highlight-color:transparent;
+    -webkit-font-smoothing: antialiased;
+    &:focus {
+        outline: none;
+    }
+}
+
+/*定义滚动条高宽及背景 高宽分别对应横竖滚动条的尺寸*/
+::-webkit-scrollbar
+{
+    width: 4px;
+    height: 0px;
+    background-color: #F5F5F5;
+}
+
+/*定义滚动条轨道 内阴影+圆角*/
+::-webkit-scrollbar-track
+{
+    -webkit-box-shadow: inset 0 0 1px rgba(0,0,0,0);
+    border-radius: 10px;
+    background-color: #F5F5F5;
+}
+
+/*定义滑块 内阴影+圆角*/
+::-webkit-scrollbar-thumb
+{
+    border-radius: 10px;
+    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
+    background-color: #f4f4f4;
+}
+
+input[type="button"], input[type="submit"], input[type="search"], input[type="reset"] {
+    -webkit-appearance: none;
+}
+
+textarea { -webkit-appearance: none;}
+
+html,body{
+    height: 100%;
+    width: 100%;
+}
+
+.fillcontain{
+    height: 100%;
+    width: 100%;
+    background: #f4f4f4;
+    overflow: hidden;
+}
+.clear:after{
+    content: '';
+    display: block;
+    clear: both;
+}
+
+.clear{
+    zoom:1;
+}
+
+.back_img{
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+}
+
+.margin{
+    margin: 0 auto;
+}
+
+.left{
+    float: left;
+}
+
+.right{
+    float: right;
+}
+
+.hide{
+    display: none;
+}
+
+.show{
+    display: block;
+}
+
+.ellipsis{
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.flex{
+    display: flex;
+    align-items: center;
+}
+.flex2{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.flex3{
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+}
+@orange:#ee6120;
+@red:#da444f;
+@blue:#19b2fe;
+@blue2:#46cfc5;
+td{
+    font-size: 12px;
+}
+.overflow{
+    width:100%;
+    display:block;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;}
+//档口统一样式
+.menu{
+    box-sizing: border-box;
+    height:48px;
+    margin-left: 30px;
+    li{
+        a{
+            border:1px solid #d8d8d8;
+            width:140px;
+            display: inline-block;
+            line-height: 48px;
+            text-align: center;
+            font-size: 16px;
+            float: left;
+            color:#333;
+            border-left: none;
+        }
+    }
+    li:first-child a{
+        border-left:1px solid #d8d8d8;
+    }
+    .menuIndex{
+        a{
+            border:1px solid @blue2;
+            color:@blue2;
+            background: #fff;
+            border-bottom: none;
+        }
+    }
+    .menuIndex:first-child a{
+        border-left:1px solid @blue2;
+    }
+    .menuIndex2{
+        a{
+            border:1px solid @red;
+            color:@red;
+            background: #fff;
+            border-bottom: none;
+        }
+    }
+    .menuIndex2:first-child a{
+        border-left:1px solid @red;
+    }
+    .menuIndex3{
+        a{
+            border:1px solid @blue;
+            color:@blue;
+            background: #fff;
+            border-bottom: none;
+        }
+    }
+    .menuIndex3:first-child a{
+        border-left:1px solid @blue;
+    }
+}
+.export_excle{
+    margin: 20px 0;
+    margin-left: 10px;
+    font-size: 14px;
+    display: inline-block;
+    color:@blue2;
+}
+.export_excle1{
+    margin: 20px 0;
+    margin-left: 10px;
+    font-size: 14px;
+    display: inline-block;
+    color:@red;
+}
+.bottomText{
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    font-size: 12px;
+    //background: #fff;
+}
+.buttonColor{
+    padding: 7px 17px;
+    border-radius: 5px;
+    color:#fff;
+    background: @blue2;
+    border: none;
+    font-size: 12px;
+    margin-right: 10px;
+}
+//取消按钮
+.buttonColor2{
+    padding: 7px 17px;
+    border-radius: 5px;
+    color:#333;
+    background:#d7d7d7;
+    font-size: 12px;
+    margin-right: 10px;
+}
+.radioGreen{
+    .el-radio-button__orig-radio:checked + .el-radio-button__inner {
+        color: #fff;
+        background-color: @blue2;
+        border-color: @blue2;
+        box-shadow: -1px 0 0 0 @blue2;
+    }
+    .el-radio-button__inner:hover{
+        color:@blue2;
+    }
+    .el-radio__input.is-checked .el-radio__inner {
+        border-color:@blue2;
+        background:@blue2;
+    }
+    .el-radio__inner:hover {
+        border-color: @blue2;
+    }
+}
+.comeBack{
+    color:@blue2;
+    border-bottom: 1px solid @blue2;
+    font-size: 12px;
+}
+.blue2{
+    color:@blue2;
+}
+.blue{
+    color:@blue;
+}
+//卖家统一样式
+.buttonColor3{
+    padding: 7px 17px;
+    border-radius: 5px;
+    color:#fff;
+    background: @red;
+    border: none;
+    font-size: 12px;
+    margin-right:10px;
+}
+.red{
+    color:@red;
+}
+.radioRed{
+    .el-radio-button__orig-radio:checked + .el-radio-button__inner {
+        color: #fff;
+        background-color: @red;
+        border-color: @red;
+        box-shadow: -1px 0 0 0 @red;
+    }
+    .el-radio-button__inner:hover{
+        color:@red;
+    }
+    .el-radio__input.is-checked .el-radio__inner {
+        border-color:@red;
+        background:@red;
+    }
+    .el-radio__inner:hover {
+        border-color: @red;
+    }
+}
+
+.comeBack2{
+    color:@red;
+    border-bottom: 1px solid @red;
+    font-size: 12px;
+}
+//运营平台统一样式
+.buttonColor5{
+    padding: 7px 17px;
+    border-radius: 5px;
+    color:#fff;
+    background: @blue;
+    border: none;
+    font-size: 12px;
+    margin-right:10px;
+}
+//分页
+.el-pager li.active{
+    border-color: #ccc;
+    background-color: #ccc;
+    color: #fff;
+    cursor: default;
+}
+//财务、基础资料、员工管理、角色管理 公共部分样式分类显示
+//档口
+.stallShareMenu{
+    box-sizing: border-box;
+    height:48px;
+    margin-left: 30px;
+    li{
+        a{
+            border:1px solid #d8d8d8;
+            width:140px;
+            display: inline-block;
+            line-height: 48px;
+            text-align: center;
+            font-size: 16px;
+            float: left;
+            color:#333;
+            border-left: none;
+        }
+    }
+    li:first-child a{
+        border-left:1px solid #d8d8d8;
+    }
+    .ListMenu{
+        a{
+            border:1px solid @blue2;
+            color:@blue2;
+            background: #fff;
+            border-bottom: none;
+        }
+    }
+    .ListMenu:first-child a{
+        border-left:1px solid @blue2;
+    }
+    .buttonColor11{
+        padding: 7px 17px;
+        border-radius: 5px;
+        color:#fff;
+        background: @blue2;
+        border: none;
+        font-size: 12px;
+        margin-right:10px;
+    }
+    .radioColor{
+        .el-radio-button__orig-radio:checked + .el-radio-button__inner {
+            color: #fff;
+            background-color: @blue2;
+            border-color: @blue2;
+            box-shadow: -1px 0 0 0 @blue2;
+        }
+        .el-radio-button__inner:hover{
+            color:@blue2;
+        }
+        .el-radio__input.is-checked .el-radio__inner {
+            border-color:@blue2;
+            background:@blue2;
+        }
+        .el-radio__inner:hover {
+            border-color: @blue2;
+        }
+    }
+}
+.stallContent{
+    .buttonColorFM{
+        background: @blue2;
+        border:1px solid @blue2;
+        color:#fff;
+        font-size: 12px;
+    }
+
+    .colorFM{
+        color:@blue2;
+    }
+    .export_excleFM{
+        margin: 20px 0;
+        margin-left: 10px;
+        font-size: 14px;
+        display: inline-block;
+        color:@blue2;
+    }
+}
+.sellerShareMenu{
+    box-sizing: border-box;
+    height:48px;
+    margin-left: 30px;
+    li{
+        a{
+            border:1px solid #d8d8d8;
+            width:140px;
+            display: inline-block;
+            line-height: 48px;
+            text-align: center;
+            font-size: 16px;
+            float: left;
+            color:#333;
+            border-left: none;
+        }
+    }
+    li:first-child a{
+        border-left:1px solid #d8d8d8;
+    }
+    .ListMenu{
+        a{
+            border:1px solid @red;
+            color:@red;
+            background: #fff;
+            border-bottom: none;
+        }
+    }
+    .ListMenu:first-child a{
+        border-left:1px solid @red;
+    }
+    .buttonColor11{
+        padding: 7px 17px;
+        border-radius: 5px;
+        color:#fff;
+        background: @red;
+        border: none;
+        font-size: 12px;
+        margin-right:10px;
+    }
+    .radioColor{
+        .el-radio-button__orig-radio:checked + .el-radio-button__inner {
+            color: #fff;
+            background-color: @red;
+            border-color: @red;
+            box-shadow: -1px 0 0 0 @red;
+        }
+        .el-radio-button__inner:hover{
+            color:@red;
+        }
+        .el-radio__input.is-checked .el-radio__inner {
+            border-color:@red;
+            background:@red;
+        }
+        .el-radio__inner:hover {
+            border-color: @red;
+        }
+    }
+}
+.sellerContent{
+    .buttonColorFM{
+        background: @red;
+        border:1px solid @red;
+        color:#fff;
+        font-size: 12px;
+    }
+    .colorFM{
+        color:@red;
+    }
+    .export_excleFM{
+        margin: 20px 0;
+        margin-left: 10px;
+        font-size: 14px;
+        display: inline-block;
+        color: @red;
+    }
+}
+//运营平台样式
+.platformShareMenu{
+    box-sizing: border-box;
+    height:48px;
+    margin-left: 30px;
+    li{
+        a{
+            border:1px solid #d8d8d8;
+            width:140px;
+            display: inline-block;
+            line-height: 48px;
+            text-align: center;
+            font-size: 16px;
+            float: left;
+            color:#333;
+            border-left: none;
+        }
+    }
+    li:first-child a{
+        border-left:1px solid #d8d8d8;
+    }
+    .ListMenu{
+        a{
+            border:1px solid rgb(68,154,234);
+            color:rgb(68,154,234);
+            background: #fff;
+            border-bottom: none;
+        }
+    }
+    .ListMenu:first-child a{
+        border-left:1px solid rgb(68,154,234);
+    }
+    .buttonColor11{
+        padding: 7px 17px;
+        border-radius: 5px;
+        color:#fff;
+        background: rgb(68,154,234);
+        border: none;
+        font-size: 12px;
+        margin-right:10px;
+    }
+    .radioColor{
+        .el-radio-button__orig-radio:checked + .el-radio-button__inner {
+            color: #fff;
+            background-color: rgb(68,154,234);
+            border-color: rgb(68,154,234);
+            box-shadow: -1px 0 0 0 rgb(68,154,234);
+        }
+        .el-radio-button__inner:hover{
+            color:rgb(68,154,234);
+        }
+        .el-radio__input.is-checked .el-radio__inner {
+            border-color:rgb(68,154,234);
+            background:rgb(68,154,234);
+        }
+        .el-radio__inner:hover {
+            border-color: rgb(68,154,234);
+        }
+    }
+ }
+//财务取消
+.buttonCancel{
+    border:1px solid #666;
+    color:#666;
+    box-sizing: border-box;
+}

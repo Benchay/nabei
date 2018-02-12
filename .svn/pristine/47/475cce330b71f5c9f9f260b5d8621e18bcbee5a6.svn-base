@@ -1,0 +1,240 @@
+.financialManagement{
+    margin:1px 30px;
+    background: #fff;
+    padding: 20px 40px;
+    .overviewLists{
+        li{
+            width:30%;
+            height:110px;
+            float: left;
+            border-radius: 4px;
+            box-shadow: 1px 1px 3px #ccc;
+            border:1px solid #ddd;
+            margin-right: 5px;
+            font-size:12px;
+            padding: 15px 30px;
+            color:#333;
+            margin-bottom: 20px;
+            .overvoewMoney{
+                justify-content: center;
+                margin: 20px 0;
+            }
+            div{
+
+                .bigMoney{
+                    font-size: 20px;
+                    margin-right: 50px;
+                }
+                a{
+                    color:#fff;
+                    margin-left: 5px;
+                }
+            }
+            .el-button{
+                width:60px;
+                height:28px;
+                font-size:12px;
+                margin-left: 8px;
+            }
+            .otherAccount{
+                margin-top:8px ;
+                .payType{
+                    width:60px;
+                    padding-left: 20px;
+                }
+                .manage{
+                    color:@blue;
+                }
+            }
+            .listTitle{
+                font-size: 16px;
+            }
+        }
+    }
+    .earlyWarning{
+        padding: 0 40px;
+        height:100px;
+        border:1px solid #ddd;
+        font-size: 14px;
+        .revamp{
+            margin-left: 50px;
+        }
+        .swich-on{
+            margin: 0 100px 0 50px;
+            width:50px;
+        }
+    }
+    .tradingRecord{
+        .dinanciaSearch{
+            width:200px;
+        }
+        .incomingsAndOutgoings{
+            position: relative;
+            ul{
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                li{
+                    width:300px;
+                    height:40px;
+                    margin: 0 0 20px;
+                    border-radius: 2px;
+                    color:#333;
+                    justify-content: center;
+                    font-size: 16px;
+                    p{
+                        display: inline-block;
+                    }
+
+                }
+                .incomings,.outgoings{
+                    span{
+                        color:@orange;
+                        font-size: 25px;
+                        margin:0 5px 0 10px;
+                    }
+                }
+            }
+            .TouchBalance{
+                position: absolute;
+                right:0;
+                top:0;
+                .TouchBalance1{
+                    margin-top: 20px;
+                }
+            }
+        }
+        .daybook{
+            .router-detail{
+                color:@blue;
+            }
+        }
+    }
+    //交易记录
+    .tradingRecord{
+        margin: 20px 0 0;
+        .table{
+            border:1px solid #ddd;
+            width:100%;
+            tr{
+                height:36px;
+            }
+            th{
+                border-bottom: 1px solid #dddddd;
+                text-align: left;
+                background: #e6f3fc;
+                padding: 0 20px;
+                font-size: 14px;
+            }
+            td{
+                padding: 0 40px;
+            }
+            .tableTd{
+                text-align: right;
+            }
+        }
+    }
+    .Recentecords{
+        span{
+            float: left;
+        }
+        ul{
+            float: left;
+            li{
+                float: left;
+                padding: 0 6px;
+                border-right: 1px solid #999;
+                a{
+                    color:@blue;
+                }
+            }
+            li:last-child{
+                border-right: none;
+            }
+        }
+    }
+}
+//余额交易记录-详情
+.detailMenu{
+    background: #f4f4f4;
+    height:50px;
+    margin-left: 30px;
+}
+.detailMenu>li>a{
+    display: inline-block;
+    line-height: 50px;
+    width:160px;
+    text-align: center;
+    font-size: 16px;
+    float: left;
+    color:#333;
+}
+.detailMenu>li:last-child a{
+    background: #da444f;
+    color:#fff;
+}
+.managementDetail{
+    margin:0 30px;
+    background: #fff;
+    padding: 10px 40px;
+    .detail-top{
+        justify-content: space-between;
+        font-size: 14px;
+        button{
+            width: 80px;
+            height:35px;
+            margin-left: 50px;
+        }
+        .topRight{
+            a{
+                color:@blue;
+                border-bottom: 1px solid @blue;
+            }
+        }
+    }
+    table{
+          margin:10px  0;
+          color:#333;
+          border: 1px solid #ddd;
+          tr{
+              height:45px;
+          }
+          th{
+              font-size: 14px;
+              background: #eee;
+              text-align: left;
+              font-weight: 500;
+              padding-left: 20px;
+          }
+          td{
+              font-size: 12px;
+              padding-left: 20px;
+          }
+        .detailImage{
+            padding-top: 10px;
+            img{
+                width:110px;
+                border:1px solid #ddd;
+                margin:10px;
+            }
+        }
+      }
+}
+.modifyform{
+    span{
+        width: 100px;
+    }
+    input{
+        width: 200px;
+
+    }
+}
+
+.detail-btn{
+    color: #FFFFFF;
+    background-color: #20a0ff;
+    border-radius: 10px;
+    padding: 6px;
+    padding-left: 8px;
+    padding-right: 8px;
+}

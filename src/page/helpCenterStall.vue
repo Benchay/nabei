@@ -1,0 +1,144 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li class="menuIndex">
+                <a href="javascript:void(0)">帮助中心</a>
+            </li>
+        </ul>
+        <div class="helpCenter">
+            <el-col :span="24" class="helpTabs radioGreen">
+                <el-radio-group v-model="radio" size="large" @change="changeTab">
+                    <el-radio-button label="1"> 用户管理相关 </el-radio-button>
+                    <el-radio-button label="2"> 商品管理相关 </el-radio-button>
+                    <el-radio-button label="3"> 销售管理相关 </el-radio-button>
+                    <el-radio-button label="4"> 财务管理相关 </el-radio-button>
+                    <el-radio-button label="5"> 仓库管理相关 </el-radio-button>
+                </el-radio-group>
+            </el-col>
+            <div class="Q&A" style="overflow:hidden;width:100%;" v-if="stallQA == 1">
+                <el-collapse v-model="activeName" accordion>
+                    <el-collapse-item title="如何设置员工权限？" name="1">
+                        <div>第一步 【角色管理】-可以添加不同角色，然后给不同角色分配不同的权限;</div>
+                        <div>第二步 【员工管理】添加员工、分配角色;</div>
+                    </el-collapse-item>
+                    <el-collapse-item title="忘记登录密码，怎么修改？" name="2">
+                        <div>进入【个人中心】--【基本资料】，可修改用户登录密码</div>
+                    </el-collapse-item>
+                </el-collapse>
+            </div>
+            <div class="Q&A" style="overflow:hidden;width:100%;" v-if="stallQA == 2">
+                <el-collapse v-model="activeName2" accordion>
+                    <el-collapse-item title="如何添加新商品？" name="1">
+                        <div>一、功能概述</div>
+                        <div> 档口向工厂采购时，可在【采购管理】中，记录每次的采购商品，目前采购入库的方式支持手动添加采购商品 和excel导入采购清单。</div>
+                        <div>二、操作说明</div>
+                        <div>（1）手动添加采购商品</div>
+                        <div>【采购管理】-【采购入库】点击开始采购，选择采购供应商名称，输入采购的商品货号，若系统中查到未有该货号的商品，则先进入【商品管理】中，添加改商品信息，再进行采购
+                            填写好需要采购的商品信息后，加入采购清单，核对无误即可点击保存。</div>
+                        <div style="border:1px solid #ccc;display: inline-block;">
+                            <img src="../image/bg_sp01.png" alt="">
+                        </div>
+                    </el-collapse-item>
+                    <el-collapse-item title="商品如何分类？" name="2">
+                        <div>1、进入【商品管理】，勾选需要的商品，点击分类至，将商品分类到对应的类别中；</div>
+                        <div>2、若系统中未有对应的分类，先进入【商品分类】，添加分类，再进入【商品管理】，勾选需要的商品，点击分类至，将商品分类到对应的类别中；</div>
+                    </el-collapse-item>
+                </el-collapse>
+            </div>
+            <div class="Q&A" style="overflow:hidden;width:100%;" v-if="stallQA == 3">
+                <el-collapse v-model="activeName3" accordion>
+                    <el-collapse-item title="如何查看订单物流？" name="1">
+                        <div>【订单管理】，点击想要查看的订单，点击订单动态，查看当前的物流状况即可。</div>
+                    </el-collapse-item>
+                    <el-collapse-item title="卖家结算日期可修改吗？" name="2">
+                        <div>卖家在不同档口下可拥有不同的结算日期，该结算日期只能由对应的档口进行修改，并且需要结清对应档口下已到期的订单金额，方可联系档口修改结算日期。</div>
+                    </el-collapse-item>
+                </el-collapse>
+            </div>
+            <div class="Q&A" style="overflow:hidden;width:100%;" v-if="stallQA == 4">
+                <el-collapse v-model="activeName4" accordion>
+                    <el-collapse-item title="支付方式有哪些？" name="1">
+                        <div>财务支付方式分为线上支付及线下支付，线上支付为余额支付，线下支付分为微信、支付宝、银行卡、现金</div>
+                    </el-collapse-item>
+                    <el-collapse-item title="支付密码如何修改？" name="2">
+                        <div>进入【财务管理】-【安全中心】，找到修改支付密码进行修改即可。</div>
+                    </el-collapse-item>
+                </el-collapse>
+            </div>
+            <div class="Q&A" style="overflow:hidden;width:100%;" v-if="stallQA == 5">
+                <el-collapse v-model="activeName5" accordion>
+                    <el-collapse-item title="仓库管理概念介绍？" name="1">
+                        <div>仓库分成了2个维度 ［仓库］- ［仓位］，入库的最小单位是仓位，仓位名称可由用户任意定义，一种商品只能放置一个仓位，一个仓位可以放置多种商品。用户成功注册账号后，系统会自动分配一个档口仓库作为主仓给用户，该仓库不可删除，主要负责档口商品的对外销售，默认都是通过该主仓进行操作。档口可以手动添加
+                            其他仓库，在工作区可以切换仓库管理，切换后对工作区的仓库管理各个功能（当前库存、盘点、库存明细、调拨、入库）仍然有效。
+                        </div>
+                        <div>
+                            系统目前对仓库管理有以下7种功能：查看当前库存、查看库存变动、库存盘点、库存变动、库存调拨、多仓管理、库存初始化
+                        </div>
+                    </el-collapse-item>
+                    <el-collapse-item title="如何进行库存初始化？" name="2">
+                        <div> 一、功能概述</div>
+                        <div>库存初始化，主要用于对商品库存进行初始化，该功能只能使用一次。目前支持手工添加商品初始化和导入excel初始化。</div>
+                        <div> 二、操作说明</div>
+                        <div>（1）手工添加商品初始化</div>
+                        <div>［仓库管理］- ［库存初始化］，点击添加商品，输入需要初始化的商品信息，填写初始化库存及初始化单价。</div>
+                    </el-collapse-item>
+                    <el-collapse-item title="库存盘点怎么操作？" name="3">
+                        <div>1、功能概述</div>
+                        <div>列表显示的是每次盘点的记录数据，包括盘点数、盈亏数、盈亏金额、盘点时间、盘点人等。</div>
+                        <div>盘点状态分为已完成、未完成。未完成：盘点人在盘点过程中被中断，未保存盘点清单，则系统会自动将此次的盘点记录保存为草稿，盘点人后续仍可以继续盘点。</div>
+                        <div>目前系统支持手动添加商品盘点及导入excel表两种方式。</div>
+                        <div>2、操作方法</div>
+                        <div>（1）手动添加商品盘点</div>
+                        <div>【仓库管理】-【库存盘点】 点击开始盘点，输入商品货号，选择盘点商品，输入盘点的数量后，加入到盘点清单中，可多次添加。已盘点的商品全部添加进入盘点清单后，可点击结束盘点。</div>
+                        <div style="border:1px solid #ccc;display: inline-block;">
+                            <img src="../image/bg_pd.png" alt="">
+                        </div>
+                    </el-collapse-item>
+                    <el-collapse-item title="库存调拨的作用是什么？" name="4">
+                        <div>列表显示的是每次调拨的记录数据，可点击查看详情，查看每次调拨的商品详细数据。</div>
+                        <div>
+                            盘点状态分为已签收、未待签收。调拨规则：库存调拨从调出仓库确认调出后，库存数就要减，调入仓库未签收前，库存数不计入任何一个仓库，属于调拨中，签收后库存再加入调入仓库。目前系统支持手动添加商品盘点及导入excel表两种方式。
+                        </div>
+                    </el-collapse-item>
+                    <el-collapse-item title="库存预警怎么操作？" name="5">
+                        <div> 列表显示的是已经预警的商品信息。可在操作中修改已预警商品的预警值，商品则状态变成未预警
+                            【系统管理】-【库存预警值设置】 设置所有商品的默认预警值，默认预警值设定成功后，所有未进行过预警值设置的商品预警值更改，已设置过预警值的商品预警值不变。
+                        </div>
+                    </el-collapse-item>
+                </el-collapse>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+
+    export default {
+        components: {
+        },
+        data() {
+            return {
+                radio:1,
+                activeName: '1',
+                activeName2:'1',
+                activeName3:'1',
+                activeName4:'1',
+                activeName5:'1',
+                stallQA:1,
+
+            }
+        },
+        methods: {
+            changeTab(index){
+                console.log(index)
+                this.stallQA = index;
+            }
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/helpCenter';
+</style>

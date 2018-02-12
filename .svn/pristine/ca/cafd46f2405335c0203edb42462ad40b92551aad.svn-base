@@ -1,0 +1,265 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('stallManage')">
+                <router-link :to='{path:"/stallManage"}'>档口管理</router-link>
+            </li>
+            <li class="menuIndex2" v-if="getMenuAuthFun('stallSettlement')">
+                <router-link :to='{path:"/stallSettlement"}'>档口结算</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('SettlementRecords')">
+                <router-link :to='{path:"/SettlementRecords"}'>结算单</router-link>
+            </li>
+        </ul>
+        <div class="sellerSettlement">
+            <div class="sellerTop">
+                <el-select
+                    v-model="otherSideCompanyName"
+                    filterable
+                    remote
+                    reserve-keyword
+                    placeholder="请输入档口名称"
+                    :remote-method="remoteMethod"
+                    :loading="loading"
+                    @change="handleIconClickName">
+                    <el-option
+                        v-for="item in options4"
+                        :key="item.stallCompanyId"
+                        :label="item.name"
+                        :value="item.stallCompanyId">
+                    </el-option>
+                </el-select>
+                <el-select v-model="value" placeholder="结算方式" @change="changeSettlementType">
+                    <el-option
+                        v-for="item in options"
+                        :key="item.value"
+                        :label="item.label"
+                        :value="item.value">
+                    </el-option>
+                </el-select>
+            </div>
+            <div class="sellerTable">
+                <el-table
+                    :data="tableData3"
+                    style="width: 100%">
+                    <el-table-column
+                        prop="otherSideCompanyName"
+                        label="档口名称"
+                        width="180">
+                    </el-table-column>
+                    <el-table-column
+                        label="结算日期">
+                        <template scope="scope">
+                            <div class="flex">
+                                <p v-if="scope.row.settlementDay" v-bind:class="[scope.row.settlementDay.type ==1?'style1':scope.row.settlementDay.type ==1 ==2?'style2':'']">{{scope.row.settlementDay.type == 1?'周结':scope.row.settlementDay.type == 2?'月结':''}}</p>
+                                <p v-if="scope.row.settlementDay">{{scope.row.settlementDay.settlementDay}}</p>
+                                <p v-else="scope.row.settlementDay">未设置</p>
+                            </div>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="unClosedFee"
+                        label="订单总欠款">
+                    </el-table-column>
+                    <el-table-column
+                        prop="toReviceFee"
+                        label="到期订单欠款">
+                    </el-table-column>
+                    <el-table-column
+                        prop="ordersNum"
+                        label="未结订单总数">
+                    </el-table-column>
+                    <el-table-column
+                        prop="overdueDays"
+                        label="到期时间">
+                        <template scope="scope">{{scope.row.overdueDays==0?'最后结算日':scope.row.overdueDays<0?'距离最后结算日'+ Math.abs(scope.row.overdueDays) + '天':scope.row.overdueDays > 0 ?'已逾期'+scope.row.overdueDays + '天':''}}</template>
+                    </el-table-column>
+                    <el-table-column
+                        width="280"
+                        label="操作">
+                        <template scope="scope">
+                            <div class="flex2 stallOperation">
+                                <router-link :to='{path:"/stallSettlementDetails",query:{type:1,otherSideCompanyName:scope.row.otherSideCompanyName,otherSideCompanyId:scope.row.otherSideCompanyId,unClosedFee:scope.row.unClosedFee,toReviceFee:scope.row.toReviceFee,settlementDay:scope.row.settlementDay,settlementType:scope.row.settlementType}}'>查看</router-link>
+                                <el-button type="text" class="red" style="margin-right: 10px;" @click="saleReturnClick(scope.row.otherSideCompanyName,scope.row.otherSideCompanyId,scope.row.backFee,scope.row.settlementDay,scope.row.settlementType)">退货结算</el-button>
+                                <router-link :to='{path:"/stallSettlementImmediately",query:{otherSideCompanyName:scope.row.otherSideCompanyName,saleCompanyId:scope.row.otherSideCompanyId,type:22,unClosedFee:scope.row.unClosedFee}}'>立即付款</router-link>
+                                <router-link :to='{path:"/stallSettlementRecord",query:{otherSideCompanyName:scope.row.otherSideCompanyName,otherSideCompanyId:scope.row.otherSideCompanyId,unClosedFee:scope.row.unClosedFee,toReviceFee:scope.row.toReviceFee,settlementDay:scope.row.settlementDay,settlementType:scope.row.settlementType}}'>结算记录</router-link>
+                            </div>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+            <el-pagination
+                small
+                class="right"
+                style="margin-top: 20px;"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :current-page="currentPage"
+                :page-sizes="[10, 20, 30, 40]"
+                :page-size="pageSize"
+                layout="total, sizes, prev, pager, next, jumper"
+                :total="totalCount">
+            </el-pagination>
+            <a href="javascript:void(0)" class="export_excle" @click="exportTableData">导出excel</a>
+
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {loadDebtsBusiness,queryVmStall} from '@/api/getData'
+    import {userInfo} from '../config/mUtils.js'
+    import {getMenuAuth} from  '../utils/AuthMenu.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                input:'',
+                options: [{
+                    value: '1',
+                    label: '周结'
+                }, {
+                    value: '2',
+                    label: '月结'
+                }],
+                value: '',
+                tableData3:[],
+                currentPage:1,
+                pageSize:10,
+                totalCount:0,
+                otherSideCompanyId:'',
+                options4:[],
+                loading:false,
+                otherSideCompanyName:'',
+
+            }
+        },
+        watch:{
+            '$route': function (route) {
+                if(route.path=='/stallSettlement'){
+                    this.$route.go(0);
+                }
+            }
+        },
+        mounted(){
+            let param = {
+                "companyId":userInfo().companyId,
+                "pageIndex":this.currentPage,
+                "pageSize":this.pageSize,
+                "orderType":1
+            };
+            this.loadStallOrder(param);
+        },
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            //加载欠款商家列表
+            async loadStallOrder(param){
+                const  res = await loadDebtsBusiness(param);
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message:'数据加载成功!'
+                    });
+                    this.tableData3 = res.result.results;
+                    this.totalCount = res.result.totalCount;
+                    this.otherSideCompanyId = res.result.results.otherSideCompanyId;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            //远程搜索模糊查询档口名称
+            async remoteMethod(query){
+                if(query!=''){
+                    this.loading = true;
+                    let param = {
+                        "companyId":userInfo().companyId,
+                        "stallName":query,
+                        "pageIndex":1,
+                        "pageSize":100
+                    };
+                    const res = await queryVmStall(param);
+                    setTimeout(() => {
+                        this.loading = false;
+                        this.options4 = res.result.results;
+                    }, 200);
+                } else {
+                    this.options4 = [];
+                }
+
+            },
+            //档口名称搜索
+            handleIconClickName(){
+                let param ={
+                    "otherCompanyId":this.otherSideCompanyName,
+                    "companyId":userInfo().companyId,
+                    "pageIndex":this.currentPage,
+                    "pageSize":this.pageSize,
+                    "orderType":1
+                };
+                this.loadStallOrder(param);
+            },
+            //按结算方式查找
+            changeSettlementType(){
+                let param = {
+                    "settlementType":this.value,
+                    "companyId":userInfo().companyId,
+                    "pageIndex":this.currentPage,
+                    "pageSize":this.pageSize,
+                    "orderType":1
+                };
+                this.loadStallOrder(param);
+            },
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+                this.pageSize = val;
+                let param = {
+                    "companyId":userInfo().companyId,
+                    "pageIndex":this.currentPage,
+                    "pageSize":this.pageSize,
+                    "orderType":1
+                };
+                this.loadStallOrder(param);
+            },
+
+            //退货结算
+            saleReturnClick(otherSideCompanyName,otherSideCompanyId,backFee,settlementDay,settlementType){
+                if(backFee!=undefined&&backFee!=''&&backFee!=0){
+                    this.$router.push({path:"/stallSettlementDetails",query:{type:3,otherSideCompanyName:otherSideCompanyName,otherSideCompanyId:otherSideCompanyId,unClosedFee:backFee,settlementDay:settlementDay,settlementType:settlementType}});
+                }else{
+                    this.$message({
+                        type:'error',
+                        message:'当前无退货订单'
+                    });
+                }
+            },
+
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+                this.currentPage = val;
+                let param = {
+                    "companyId":userInfo().companyId,
+                    "pageIndex":this.currentPage,
+                    "pageSize":this.pageSize,
+                    "orderType":1
+                };
+                this.loadStallOrder(param);
+            },
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/sellerSettlement';
+</style>

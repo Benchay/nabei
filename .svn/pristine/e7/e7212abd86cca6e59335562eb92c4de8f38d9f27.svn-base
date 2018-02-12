@@ -1,0 +1,2133 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li  class="menuIndex2">
+                <a href="javascript:void(0);">商品管理</a>
+            </li>
+        </ul>
+        <div class="commodityMnagement">
+            <div class="left commodityTop">
+                <el-input
+                    placeholder="商品货号搜索"
+                    icon="search"
+                    size="small"
+                    v-model="searchProductCode"
+                    :on-icon-click="initloadData">
+                </el-input>
+                <el-input
+                    placeholder="档口名称搜索"
+                    icon="search"
+                    size="small"
+                    v-model="searchStallName"
+                    :on-icon-click="initloadData">
+                </el-input>
+            </div>
+            <div class="left commodityButton">
+                <a href="javascript:void(0)" class="buttonColor3" @click="addProductClick">+添加新商品</a>
+                <a href="javascript:void(0)" class="buttonColor3" @click="batchDeleteConfig">批量删除</a>
+                <a href="javascript:void(0)" class="buttonColor3" @click="dialogImport = true">导入商品</a>
+                <a href="javascript:void(0)" class="buttonColor3" @click="synchronousGoods">同步商品</a>
+                 <el-select v-model="productSaleState" placeholder="分类至" @change="initloadData" style="width: 100px;" size="small">
+                    <el-option label="全部" value=""></el-option>
+                    <el-option label="档口在售" value="1"></el-option>
+                    <el-option label="档口下架" value="0"></el-option>
+                </el-select>
+            </div>
+            <div class="commodityList">
+                <el-table
+                    ref="multipleTable"
+                    :data="tableData"
+                    tooltip-effect="dark"
+                    @selection-change="handleSelectionChange"
+                    style="width: 100%">
+                    <el-table-column
+                        type="selection"
+                        width="50">
+                    </el-table-column>
+                    <el-table-column
+                        width="200"
+                        label="主图/货号">
+                        <template scope="scope">
+                            <div>
+                                <el-popover
+                                    v-if="scope.row.imgUrl_main !=''"
+                                    ref="popover1"
+                                    placement="right"
+                                    width="210"
+                                    trigger="hover">
+                                    <div class="flex2">
+                                        <img :src="scope.row.imgUrl_main" alt=""  style="width:200px;height: 200px;">
+                                    </div>
+                                </el-popover>
+                            </div>
+                            <div  class="flex" style="padding: 3px;">
+                                <div>
+                                    <img src="../image/correlate.png" alt="" v-show="scope.row.relevanceFlag">
+                                </div>
+                                <img v-if="scope.row.imgUrl_main != ''" class="masterDrawing" :src="scope.row.imgUrl_main" alt="" v-popover:popover1>
+                                <img v-else class="masterDrawing" src="../image/product_default.png" alt="" v-popover:popover1>
+                                <p @click="queryProductUrl(scope.row.id)">{{tableData[scope.$index].productCode}}</p>
+                                <sup style="margin-left: 15px;" v-if="scope.row.saleState == 2"><img src="../image/downed.png" alt=""></sup>
+                            </div>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="title"
+                        width="180"
+                        label="商品名称">
+                    </el-table-column>
+                    <el-table-column
+                        prop="stallName"
+                        width="130"
+                        label="档口">
+                    </el-table-column>
+                    <el-table-column
+                        prop="colours"
+                        label="颜色">
+                    </el-table-column>
+                    <el-table-column
+                        prop="sizes"
+                        label="尺码">
+                    </el-table-column>
+                    <!-- <el-table-column
+                        prop="stockNum"
+                        label="总库存">
+                    </el-table-column> -->
+                    <el-table-column
+                        prop="sellPrice"
+                        label="批发价"
+                        :formatter="priceFormat">
+                    </el-table-column>
+                    <el-table-column
+                        prop="comeType"
+                        label="商品来源"
+                        :formatter="formatComeType">
+                    </el-table-column>
+                    <el-table-column
+                        width="200"
+                        label="操作">
+                        <template scope="scope">
+                            <div class="operation">
+                                <img src="../image/rdelete.png" title="删除" @click="deleteProductClick(tableData[scope.$index].id,scope.row.relevanceFlag)">
+                                <img src="../image/correlate01.png" title="关联" @click="relevanceProductClick(tableData[scope.$index])">
+                                <img src="../image/rcompile.png" title="编辑"  @click="updateProductClick(tableData[scope.$index])">
+                                <img src="../image/print.png" title="打印"  @click="print(scope.row)">
+                            </div>
+                        </template>
+                    </el-table-column>
+                </el-table>
+                <el-pagination
+                    small
+                    class="right"
+                    style="margin-top: 20px;"
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :current-page="currentPage"
+                    :page-sizes="[10, 20, 30, 40,50]"
+                    :page-size="pageSize"
+                    layout="total,sizes, prev, pager, next, jumper"
+                    :total="totalCount">
+                </el-pagination>
+                <a href="javascript:void(0)" class="export_excle1" @click="exportloadData">导出excel</a>
+            </div>
+            <div style="height:160px;">
+                &nbsp;
+            </div>
+        </div>
+        <el-dialog title="修改商品" :visible.sync="dialogAmend"  size="small" custom-class="dialogAdd2" style="top:-5%;">
+            <div>
+                <div class="flex2">
+                    <p class="DialogTitle">档口名称：</p>
+                    <el-select v-model="vmStallId" @change="checkStallClick" :disabled="true" placeholder="选择档口" class="addInput">
+                        <el-option
+                            v-for="item in stallData"
+                            :key="item.id"
+                            :label="item.name"
+                            :value="item.id">
+                        </el-option>
+                    </el-select>
+                </div>
+                <!--真档口不能修改-->
+                <div v-if="false">
+                    <div class="dialogSearch">
+                        <el-input
+                            placeholder="搜索货号..."
+                            icon="search"
+                            v-model="stallCode"
+                            size="small"
+                            :on-icon-click="handleIconClick"
+                            class="search1">
+                        </el-input>
+                    </div>
+                    <div class="dialogTable2">
+                        <el-table
+                            max-height="350"
+                            :data="tableData6"
+                            style="width: 100%">
+                            <el-table-column
+                                type="selection"
+                                width="55">
+                            </el-table-column>
+                            <el-table-column
+                                prop=""
+                                label="主图/档口货号"
+                                width="180">
+                            </el-table-column>
+                            <el-table-column
+                                prop="name"
+                                label="批发价/(元)"
+                                width="180">
+                            </el-table-column>
+                            <el-table-column
+                                prop="color"
+                                label="颜色">
+                            </el-table-column>
+                            <el-table-column
+                                prop="size"
+                                label="尺码">
+                            </el-table-column>
+                        </el-table>
+                    </div>
+                </div>
+                <!--假档口-->
+                <div v-if="true">
+                	<div class="flex2 addList">
+                        <p class="DialogTitle">商品名称：</p>
+                        <el-input placeholder="请输入商品名称" v-model="stallProductName" class="addInput"></el-input>
+                    </div>
+                    <div class="flex2 addList">
+                        <p class="DialogTitle">档口货号：</p>
+                        <el-input v-if="productCodeValid == 2" placeholder="请输入档口货号" v-model="stallProductCode" class="addInput"></el-input>
+                        <el-input v-else placeholder="请输入档口货号" :disabled="true" v-model="stallProductCode" class="addInput"></el-input>
+
+                    </div>
+                    <div class="flex2 addList">
+                        <p class="DialogTitle">商品货号：</p>
+                        {{productCodePrefix + "-" + stallProductCode}}
+                    </div>
+                    <div class="flex2 addList">
+                        <p class="DialogTitle">单价：</p>
+                        <el-input placeholder="请输入单价数额" :disabled="!productUpdateFlag" v-model="stallProductPrice" class="addInput"></el-input>
+                    </div>
+                    <div class="flex2 addList">
+                        <p class="DialogTitle">商品主图：</p>
+                        <div class="addInput">
+                            <!--<el-upload
+                                name = "uploadFile"
+                                class="avatar-uploader"
+                                action="/cws/uploadFile"
+                                :show-file-list="false"
+                                :on-success="handleAvatarSuccess"
+                                :before-upload="beforeAvatarUpload">
+                                <img v-if="dialogImgVisible" :src="imgUrl_main" class="avatar">
+                                <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+                            </el-upload>-->
+                            <el-upload
+								action="/cws/uploadFile"
+								name = "uploadFile"
+								:headers = "{token:getStore('token')}"
+								list-type="picture-card"
+								limit="2"
+								:file-list="uploadFileList"
+								:on-remove="handleRemove"
+								:on-success="handleAvatarSuccess"
+								:before-upload="beforeAvatarUpload">
+								<i class="el-icon-plus avatar-uploader-icon"></i>
+							</el-upload>
+                        </div>
+                    </div>
+                    <div class="flex2 addList">
+                        <p class="DialogTitle">颜色：</p>
+                        <div class="addInput">
+                            <el-tag
+                                :key="tag"
+                                v-for="tag in colours"
+                                :closable="true"
+                                :close-transition="false"
+                                @close="handleColorClose(tag)"
+                                style="margin-right: 5px"
+                            >
+                                {{tag}}
+                            </el-tag>
+                            <el-input
+                                class="input-new-tag"
+                                v-if="inputColorVisible"
+                                v-model="colorTag"
+                                ref="saveColorTagInput"
+                                size="mini"
+                                @keyup.enter.native="handleInputColorConfirm"
+                                @blur="handleInputColorConfirm"
+                            >
+                            </el-input>
+                            <el-button v-else class="button-new-tag" size="small" @click="showColorInput">+ </el-button>
+                        </div>
+                    </div>
+                    <div class="flex2 addList">
+                        <p class="DialogTitle">尺码：</p>
+                        <div class="addInput">
+                            <el-tag
+                                :key="tag"
+                                v-for="tag in sizes"
+                                :closable="true"
+                                :close-transition="false"
+                                @close="handleSizeClose(tag)"
+                                style="margin-right: 5px"
+                            >
+                                {{tag}}
+                            </el-tag>
+                            <el-input
+                                class="input-new-tag"
+                                v-if="inputSizeVisible"
+                                v-model="sizeTag"
+                                ref="saveSizeTagInput"
+                                size="mini"
+                                @keyup.enter.native="handleInputSizeConfirm"
+                                @blur="handleInputSizeConfirm"
+                            >
+                            </el-input>
+                            <el-button v-else class="button-new-tag" size="small" @click="showSizeInput">+ </el-button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div slot="footer" class="dialog-footer" v-if="productUpdateFlag">
+                <a href="javascript:void(0)" @click="updateNewProduct" class="buttonColor3">确 定</a>
+                <a href="javascript:void(0)" @click="dialogAmend = false" class="buttonColor2">取 消</a>
+            </div>
+        </el-dialog>
+        <el-dialog title="添加新商品" :visible.sync="dialogAdd"  size="small" custom-class="dialogAdd2" style="top:-5%;">
+            <div>
+                <div class="flex2">
+                    <p class="DialogTitle">档口名称：</p>
+                    <el-select v-model="vmStallId" @change="checkStallClick" placeholder="选择档口" class="addInput">
+                        <el-option
+                            v-for="item in stallData"
+                            :key="item.id"
+                            :label="item.name"
+                            :value="item.id">
+                        </el-option>
+                    </el-select>
+                </div>
+                <!--真档口-->
+                <div v-if="whether">
+                    <div class="dialogSearch">
+                        <el-input
+                            placeholder="搜索货号..."
+                            icon="search"
+                            v-model="stallCode"
+                            size="small"
+                            :on-icon-click="initFirstProdctPage"
+                            class="search1">
+                        </el-input>
+                    </div>
+                    <div class="dialogTable2">
+                        <el-table
+                            max-height="350"
+                            :data="addProductData"
+                            ref="multipleTable"
+                    		tooltip-effect="dark"
+                    		@selection-change="handleProductSelectionChange">
+                            <el-table-column
+                                type="selection"
+                                width="55">
+                            </el-table-column>
+                            <el-table-column
+                                label="主图/档口货号"
+                                width="180">
+                                <template scope="scope">
+	                                <div class="flex">
+                                        <img style="width: 50px; height: 50px;" class="masterDrawing" :src="scope.row.imgUrl_main" alt="" v-popover:popover>
+                                        <p>{{scope.row.productCode}}</p>
+                                    </div>
+		                        </template>
+                            </el-table-column>
+                            <el-table-column
+                                prop="sellPrice"
+                                label="批发价/(元)"
+                                width="180">
+                            </el-table-column>
+                            <el-table-column
+                                prop="colours"
+                                label="颜色">
+                            </el-table-column>
+                            <el-table-column
+                                prop="sizes"
+                                label="尺码">
+                            </el-table-column>
+                        </el-table>
+                        <el-pagination
+			                small
+			                class="right"
+			                style="margin-top: 20px;"
+			                @size-change="handleSizeChange"
+			                @current-change="handleProductCurrentChange"
+			                :current-page="productCurrentPage"
+			                :page-size="productPageSize"
+			                layout="total, prev, pager, next, jumper"
+			                :total="productTotalCount">
+			            </el-pagination>
+                    </div>
+                </div>
+                <!--假档口-->
+                <div v-if="!whether">
+                	<div class="flex2 addList">
+                        <p class="DialogTitle">商品名称：</p>
+                        <el-input placeholder="请输入商品名称" v-model="stallProductName" class="addInput"></el-input>
+                    </div>
+                    <div class="flex2 addList">
+                        <p class="DialogTitle">档口货号：</p>
+                        <el-input placeholder="请输入档口货号" v-model="stallProductCode" class="addInput"></el-input>
+                    </div>
+                    <div class="flex2 addList">
+                        <p class="DialogTitle">商品货号：</p>
+                        {{productCodePrefix + "-" + stallProductCode}}
+                    </div>
+                    <div class="flex2 addList">
+                        <p class="DialogTitle">单价：</p>
+                        <el-input placeholder="请输入单价数额" v-model="stallProductPrice" class="addInput"></el-input>
+                    </div>
+                    <div class="flex2 addList">
+                        <p class="DialogTitle">商品主图：</p>
+                        <div class="addInput">
+                            <!--<el-upload
+                                name = "uploadFile"
+                                class="avatar-uploader"
+                                action="/cws/uploadFile"
+                                :show-file-list="false"
+                                :on-success="handleAvatarSuccess"
+                                :before-upload="beforeAvatarUpload">
+                                <img v-if="dialogImgVisible" :src="imgUrl_main" class="avatar">
+                                <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+                            </el-upload>-->
+                            <el-upload
+								action="/cws/uploadFile"
+								name = "uploadFile"
+								:headers = "{token:getStore('token')}"
+								list-type="picture-card"
+								class="uploadFileDialog"
+								:file-list="uploadFileList"
+								:on-remove="handleRemove"
+								:on-success="handleAvatarSuccess"
+								:before-upload="beforeAvatarUpload">
+								<i class="el-icon-plus avatar-uploader-icon"></i>
+							</el-upload>
+                        </div>
+                    </div>
+                    <div class="flex2 addList">
+                        <p class="DialogTitle">颜色：</p>
+                        <div class="addInput">
+                            <el-tag
+                                :key="tag"
+                                v-for="tag in colours"
+                                :closable="true"
+                                :close-transition="false"
+                                @close="handleColorClose(tag)"
+                                style="margin-right: 5px"
+                            >
+                                {{tag}}
+                            </el-tag>
+                            <el-input
+                                class="input-new-tag"
+                                v-if="inputColorVisible"
+                                v-model="colorTag"
+                                ref="saveColorTagInput"
+                                size="mini"
+                                @keyup.enter.native="handleInputColorConfirm"
+                                @blur="handleInputColorConfirm"
+                            >
+                            </el-input>
+                            <el-button v-else class="button-new-tag" size="small" @click="showColorInput">+ </el-button>
+                        </div>
+                    </div>
+                    <div class="flex2 addList">
+                        <p class="DialogTitle">尺码：</p>
+                        <div class="addInput">
+                            <el-tag
+                                :key="tag"
+                                v-for="tag in sizes"
+                                :closable="true"
+                                :close-transition="false"
+                                @close="handleSizeClose(tag)"
+                                style="margin-right: 5px"
+                            >
+                                {{tag}}
+                            </el-tag>
+                            <el-input
+                                class="input-new-tag"
+                                v-if="inputSizeVisible"
+                                v-model="sizeTag"
+                                ref="saveSizeTagInput"
+                                size="mini"
+                                @keyup.enter.native="handleInputSizeConfirm"
+                                @blur="handleInputSizeConfirm"
+                            >
+                            </el-input>
+                            <el-button v-else class="button-new-tag" size="small" @click="showSizeInput">+ </el-button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div slot="footer" class="dialog-footer">
+                <a href="javascript:void(0)" @click="addNewProduct" class="buttonColor3">保 存</a>
+                <a href="javascript:void(0)" @click="dialogAdd = false" class="buttonColor2">取 消</a>
+            </div>
+        </el-dialog>
+        <el-dialog
+            title="关联货号"
+            :visible.sync="dialogRelevance"
+            size="small">
+            <div>
+                <el-table
+                    :data="tableData4"
+                    style="width: 100%">
+                    <el-table-column
+                        prop="productCode"
+                        label="当前商品货号">
+                    </el-table-column>
+                    <el-table-column
+                        prop="stall"
+                        label="档口/货号">
+                        <template scope="scope">
+                            {{scope.row.stallName}}/{{scope.row.productCode}}
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="price"
+                        label="单价">
+                    </el-table-column>
+                </el-table>
+                <p class="settingRelevance">设置关联货号：</p>
+                <el-table
+                    height="250"
+                    :data="tableData5"
+                    style="width: 100%">
+                    <el-table-column
+                        prop="itemNo"
+                        label="关联商品货号">
+                        <template scope="scope">
+                            <el-input
+                                placeholder=""
+                                style="width: 110px;"
+                                v-model="tableData5[scope.$index].productCode">
+                            </el-input>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="stallName"
+                        label="档口">
+                    </el-table-column>
+                    <el-table-column
+                        prop="price"
+                        label="单价">
+                    </el-table-column>
+                    <el-table-column
+                        label="操作">
+                        <template scope="scope">
+                            <img src="../image/delete02.png" @click="deleteRelevanceProduct(scope.$index)" alt="">
+                        </template>
+                    </el-table-column>
+                </el-table>
+                <a href="javascript:void(0)" @click="addRelevanceProductVariant" class="continueAdd right">+继续添加</a>
+            </div>
+            <div slot="footer" class="dialog-footer">
+                <a href="javascript:void(0)" @click="saveRelevanceProduct" class="buttonColor3">保 存</a>
+                <a href="javascript:void(0)" @click="dialogRelevance = false" class="buttonColor2">取 消</a>
+            </div>
+        </el-dialog>
+        <el-dialog
+            title="导入商品"
+            :visible.sync="dialogImport"
+            size="tiny">
+            <div class="dialogImport">
+                <div class="importFirst">
+                    <div class="flex">
+                        <p>选择文件上传：</p>
+						<p>{{uploadFileName}}</p>
+                    </div>
+                    <div class="flex3" style="align-items: flex-start">
+                        <div class="uploatName flex">
+                        </div>
+                    </div>
+                    <div class="uploatButton">
+                        <input type="file" accept=".xls" @change="uploatFile" id="uploatfile" v-if="accomplish">
+                        <div class="flex2 importUploat">
+                            <img src="../image/Download01.png" alt="">
+                            <p>上传文件</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="importTips">
+                    支持扩展名：.xlsx,.xls
+                </div>
+                <div class="importDownload">
+                    <a href="http://cws.nabei.net:8103/stock/fileTemplate/sellerProduct.xls" class="flex2">下载模版</a>
+                </div>
+            </div>
+            <span slot="footer" class="dialog-footer flex2">
+                <a href="javascript:void(0)" class="buttonColor3" @click="importf">确 定</a>
+                <a href="javascript:void(0)" class="buttonColor2" @click="dialogImport = false">取 消</a>
+              </span>
+        </el-dialog>
+
+        <el-dialog
+            title="打印商品"
+            size="small"
+            :visible.sync="printDialog">
+           <div class="printDialog">
+               <div class="list">
+                   <el-col :span="3">
+                       货号：
+                   </el-col>
+                   <el-col :span="20">
+                      {{printProductCode}}
+                   </el-col>
+               </div>
+               <div class="list">
+                <el-col :span="3">
+                    打印类型：
+                </el-col>
+                <el-col :span="12" class="radioRed printRadio">
+                    <el-radio class="radio" v-model="printRadio" label="1">SKU条形码</el-radio>
+                    <el-radio class="radio" v-model="printRadio" label="2">合格证</el-radio>
+                </el-col>
+                <el-col :span="3">
+                    条码规格：
+                </el-col>
+                <el-col :span="6" class="flex">
+                	<el-select v-if="printRadio =='1' " v-model="printSkuType" style="width: 150px;" placeholder="选择类别" class="dropdown-menu" size="small">
+	                    <el-option label="80*50mm" value="80*50"></el-option>
+	                    <el-option label="60*40mm" value="60*40"></el-option>
+	                    <el-option label="100*70mm" value="100*70"></el-option>
+	                </el-select>
+                </el-col>
+            </div>
+               <div class="list" v-if="printRadio =='1' ">
+                   <el-col :span="3">
+                       编码规则：
+                   </el-col>
+                   <el-col :span="12" class="flex">
+                      <!--<el-input placeholder="前缀(选填)" v-model="printProductCodePrefix" class="printInput" size="small"></el-input>-->
+                      <el-select v-model="printProductCodePrefix" style="width: 150px; margin-right: 10px;" placeholder="请选择" size="small" class="selectad">
+                        <el-option
+                        v-for="item in productCodeConfigData"
+                        :label="item.prefix"
+                        :value="item.prefix">
+                        </el-option>
+                    </el-select>
+                       <p>{{printProductCode}} - 颜色 - 尺码</p>
+                   </el-col>
+                   <el-col :span="3">
+                       条码标题：
+                   </el-col>
+                   <el-col :span="6" class="flex">
+                      <el-input placeholder="请填写条码标题" v-model="printProductBarText" class="printInput" size="small"></el-input>
+                   </el-col>
+               </div>
+               <div class="printTable">
+                   <el-table
+                       height="300"
+                       :data="this.printRow.productVariant"
+                       border
+                       style="width: 100%">
+                       <el-table-column
+                           prop="colour"
+                           label="颜色">
+                       </el-table-column>
+                       <el-table-column
+                           prop="size"
+                           label="尺码"
+                           width="180">
+                       </el-table-column>
+                       <el-table-column
+                           label="商品条码"
+                           width="180">
+                           <template scope="scope">
+                               	{{printProductCodePrefix+scope.row.productCode}}-{{scope.row.colour}}-{{scope.row.size}}
+                           </template>
+                       </el-table-column>
+                       <el-table-column
+                           prop="number"
+                           label="数量">
+                           <template scope="scope">
+                               <el-input v-model="scope.row.printNum" @change="inputPrintNum" onkeypress="return event.keyCode>=48&&event.keyCode<=57"></el-input>
+                           </template>
+                       </el-table-column>
+                       <el-table-column
+                           prop=""
+                           label="操作">
+                           <template scope="scope">
+                               <div class="flex2">
+                                   <img src="../image/delete02.png" alt="">
+                               </div>
+                           </template>
+                       </el-table-column>
+                   </el-table>
+                   <div align="right">合计：{{totalPrintNum}}&nbsp;张</div>
+               </div>
+           </div>
+
+            <span slot="footer" class="dialog-footer flex2">
+                <a href="javascript:void(0)" class="buttonColor3" @click="groupPreviewPrint">预 览</a>
+                <a href="javascript:void(0)" @click="printDirect" class="buttonColor3">打 印</a>
+                <a href="javascript:void(0)" @click="printDialog = false" class="buttonColor2">取 消</a>
+            </span>
+        </el-dialog>
+        <el-dialog
+            title=""
+            size="small"
+            custom-class="previewDialog"
+            style="top:-10%;"
+            :visible.sync="previewDialog">
+            <div  v-if="printRadio =='1' ">
+				<preview :title="printRow.title"  :barCode="printRow.barCode" :detail="printRow.detail" :dateTime="printRow.dateTime"></preview>
+            </div>
+            <div  v-if="printRadio =='2' ">
+                <certification></certification>
+            </div>
+
+        </el-dialog>
+
+        <el-dialog
+            title=""
+            :visible.sync="productUrlDialog"
+            size="tiny"
+            custom-class="dialogSignIn">
+            <div v-for="(item,index) in productUrlData" align="center">
+                <a href="javascript:void(0)" class="buttonSignIn" target="_blank" :href="item.detailUrl">商品连接{{index+1}}</a><br /><br />
+            </div>
+        </el-dialog>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {querySellerProduct,createSellerProduct,batchCreateSellerProduct,updateSellerProduct,setSellerProductRelation,
+    	querySellerProductsByRelationId,batchDeleteSellerProduct,queryVmStall,
+    	batchImportSellerProduct,queryProductCodeConfig,queryProductUrl,syncWebStoreProduct} from '@/api/getData'
+    import {userInfo,getStore} from  '../config/mUtils'
+    import {formatDate} from '../utils/date.js'
+    import {priceFormat} from '../utils/formater.js'
+    import {export_json_to_excel} from '../vendor/Export2Excel.js'
+    import preview from '../components/preview'
+    import certification from '../components/certification'
+    import {lodopPrintPreview,lodopPrintDesign,groupPrint,groupPrintPreview,groupPrintPreviewHGZ,groupPrintHGZ} from '../utils/print.js'
+    const _XLSX = require('xlsx')
+    const X = typeof XLSX !== 'undefined' ? XLSX : _XLSX;
+
+    export default {
+        components: {
+            headTop,
+        },
+        computed: {
+            classObject: function () {
+                return {
+                    active: this.isActive && !this.error,
+                    'text-danger': this.error && this.error.type === 'fatal',
+                }
+            }
+        },
+        data() {
+            return {
+            	uploadFileLimitFlag:true,
+
+            	uploadFileList:[],
+
+            	productCodeValid:1,
+
+            	searchProductCode:'',//搜索商品货号
+
+            	searchStallName:'',//搜索档口名称
+
+            	tableData: [],//商品列表数据
+
+                pageSize: 10,//默认每页数据量
+
+                currentPage: 1,//当前页码
+
+                totalCount:0,//数据总数
+
+                stallData:[],//档口列表数据
+
+                whether:false,//是否是真实档口   true为真实档口   false为虚拟档口
+
+                vmStallId:'',//选择的虚拟档口ID
+
+                vmStallCompanyId:'',//选择的虚拟档口对应的公司
+
+                stallName:'',//档口名称
+
+                stallId:'',//真实档口id
+
+                stallCode:'',//选择真实档口时，输入的档口来匹配商品
+
+                productCodePrefix:'',//商品货号前缀(档口编码)
+
+                addProductData:[],//临时商品列表--添加商品
+
+                stallProductCode:'',//假档口输入的档口货号
+
+                stallProductName:'',//假档口输入的商品名称
+
+                stallProductPrice:'',//选择假档口输入的单价
+
+                colorTag:'',//选择假档口时颜色值
+
+                sizeTag:'',//选择假档口时尺码值
+
+                colours:[],//所有的颜色值
+
+                sizes:[],//所有的尺码值
+
+                inputColorVisible:false,//添加颜色规则的输入框
+
+                inputSizeVisible: false,//添加尺码规则的输入框
+
+                dialogImport:false,//导入商品弹窗显示
+
+                importExcelData:'',//导入数据
+
+                importFaileData:[],//导入失败数据
+
+                uploadFileName:'',//上传文件名称
+
+                accomplish:true,
+
+                printRow:{},
+
+                printProductCodePrefix:'',
+
+                previewProductVariant:[],
+
+                printDialog:false,
+
+                printProductCode:'',
+
+                printRadio:"1",
+                
+                printSkuType:'80*50',
+
+                printProductBarText:'',
+
+                totalPrintNum:0,
+
+                previewDialog:false,
+
+                productCodeConfigData:[],
+
+                productUrlData:[],
+
+                productUrlDialog:false,
+
+                /***------搜索真实档口商品时，分页信息-------***/
+               productPageSize: 10,
+
+               productCurrentPage:1,
+
+               productTotalCount:0,
+
+               productUpdateFlag:false,//商品是否可以修改
+
+                imgUrl_main:'',//产品主图
+
+                dialogImgVisible:false,
+
+
+                //系统是否有货号
+                productCodeFlag:false,
+
+                //临时货号列表--添加商品
+                productCodeData:[],
+
+                addFormStallId:'',
+
+                editProductId:'',//修改商品时商品id
+
+                input:'',
+
+                dialogAmend:false,
+                dialogAdd:false,
+                dialogRelevance:false,
+                popover:false,
+
+                tableData4:[{itemNo:'MG110',stall:'档口名称11',sum:25}],
+                tableData5:[{}],//关联货号
+                tableData6: [],
+                productSaleState:'',
+            }
+        },
+        watch:{
+        	'$route':function (route) {
+        		this.totalPrintNum = 0;
+        		this.initloadData();
+        		this.initloadVmStallData();
+        		this.initProductCodeConfigData();
+        	}
+        },
+        mounted(){
+            this.initloadData();
+            this.initloadVmStallData();
+            this.initProductCodeConfigData();
+        },
+        methods: {
+
+            //从服务器获取数据
+            async initloadData() {
+                this.tableData = [];
+                let param ={
+                    companyId:userInfo().companyId,
+                    pageIndex:this.currentPage,
+                    pageSize:this.pageSize,
+                    stallName:this.searchStallName,
+                    productCode:this.searchProductCode,
+                    saleState:this.productSaleState
+                }
+                const res = await querySellerProduct(param);
+                if (res.isSuccess == true) {
+                    this.tableData = res.result.results;
+                    this.tableData.forEach(obj => {
+                    	var reg = new RegExp('_' , "g")
+                    	if(obj.colours){
+                    		obj.colours = obj.colours.replace(reg,"/");
+                    	}
+                    	if(obj.sizes){
+                    		obj.sizes = obj.sizes.replace(reg,"/");
+                    	}
+                    });
+                    this.totalCount =  res.result.totalCount;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+            //从服务器获取数据
+            async initProductCodeConfigData() {
+                let param ={
+                    companyId:userInfo().companyId,
+                    pageIndex:1,
+                    pageSize:10
+                }
+                const res = await queryProductCodeConfig(param);
+                if (res.isSuccess == true) {
+                    this.productCodeConfigData = res.result.results;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+            //从服务器获取数据
+            async initloadVmStallData() {
+                this.tableData = [];
+                let param ={
+                    companyId:userInfo().companyId,
+                    pageIndex:1,
+                    pageSize:1000
+                }
+                const res = await queryVmStall(param);
+                if (res.isSuccess == true) {
+                    this.stallData = res.result.results;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+            async initloadData2() {
+                this.tableData = [];
+                let param ={
+                    companyId:userInfo().companyId,
+                    pageIndex:this.currentPage,
+                    pageSize:this.pageSize,
+                    stallName:this.searchStallName,
+                    productCode:this.searchProductCode
+                }
+                const res = await querySellerProduct(param);
+                if (res.isSuccess == true) {
+                    this.tableData = res.result.results;
+                    this.tableData.forEach(obj => {
+                    	var reg = new RegExp('_' , "g")
+                    	if(obj.colours){
+                    		obj.colours = obj.colours.replace(reg,"/");
+                    	}
+                    	if(obj.sizes){
+                    		obj.sizes = obj.sizes.replace(reg,"/");
+                    	}
+                    });
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+            initFirstProdctPage(){
+            	this.productCurrentPage = 1;
+            	this.initloadProductCodeData();
+            },
+
+
+            //从服务器获取数据(根据档口加载货号信息)---添加商品
+            async initloadProductCodeData() {
+                this.productCodeData = [];
+                let param ={
+                	pageSize:this.productPageSize,
+                	pageIndex:this.productCurrentPage,
+                    companyId:this.vmStallCompanyId,
+                    productCode:this.stallCode,
+                    type:"2",
+                    sellCompanyId:userInfo().companyId
+                }
+                const res = await querySellerProduct(param);
+                if (res.isSuccess == true) {
+                    this.addProductData = res.result.results;
+                    this.addProductData.forEach(obj => {
+                    	var reg = new RegExp('_' , "g")
+                    	if(obj.colours){
+                    		obj.colours = obj.colours.replace(reg,"/");
+                    	}
+                    	if(obj.sizes){
+                    		obj.sizes = obj.sizes.replace(reg,"/");
+                    	}
+                    });
+                    this.productTotalCount = res.result.totalCount;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+
+            deleteRow(index, rows) {
+                rows.splice(index, 1);
+            },
+
+            handleIconClick(ev) {
+                this.initloadProductCodeData();
+            },
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+                this.currentPage = 1;
+                this.pageSize = val;
+                this.initloadData();
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+                this.currentPage = val;
+                this.initloadData();
+            },
+            //添加商品列表中，切换页面
+            handleProductCurrentChange(val){
+            	this.productCurrentPage = val;
+            	this.initloadProductCodeData();
+            },
+            beforeAvatarUpload(file) {
+                const isJPG = file.type === 'image/jpeg';
+                const isPNG = file.type === 'image/png';
+                const isLt2M = file.size / 1024 / 1024 < 2;
+                if (!isJPG && !isPNG) {
+                    this.$message.error('上传头像图片只能是 JPG或PNG 格式!');
+                }
+                if (!isLt2M) {
+                    this.$message.error('上传头像图片大小不能超过 2MB!');
+                }
+                return (isJPG||isPNG) && isLt2M;
+            },
+            handleAvatarSuccess(res, file) {
+                this.dialogImgVisible = true;
+            	let url = "http://proxy.tintop.cn:26880/"+res.result;
+            	this.uploadFileList.push({url:url});
+            	if(this.uploadFileList.length>=3){
+            		this.uploadFileLimitFlag = false;
+            		var elems = document.getElementsByClassName('el-upload--picture-card');
+					for (var i=0;i<elems.length;i+=1){
+					  elems[i].style.display = 'none';
+					}
+            	}
+            },
+
+            handleRemove(file, uploadFileList) {
+            	let tempUploadFileList = [];
+            	this.uploadFileList.forEach(obj => {
+            		if(obj.url && obj.url != file.url){
+            			tempUploadFileList.push(obj);
+            		}
+            	});
+            	this.uploadFileList = tempUploadFileList;
+            	if(this.uploadFileList.length < 3){
+            		this.uploadFileLimitFlag = true;
+            		var elems = document.getElementsByClassName('el-upload--picture-card');
+					for (var i=0;i<elems.length;i+=1){
+					  elems[i].style.display = 'block';
+					}
+            	}
+            },
+
+            async addNewProduct(){
+            	//判断是否是真实档口
+            	if(this.whether){
+            		if(this.multipleProductSelection == undefined || this.multipleProductSelection.length==0){
+	                    this.$message({
+	                        type: 'error',
+	                        message: '请先勾选要添加的商品！'
+	                    });
+	                    return;
+	                }
+            		let array = [];
+            		this.multipleProductSelection.forEach((item) => {
+	                    array.push(item.id);
+	                })
+            		if(array.length<1){
+            			this.$message({
+	                        type: 'error',
+	                        message: '请先勾选要添加的商品！'
+	                    });
+	                    return;
+            		}
+            		let param = {
+            			companyId:userInfo().companyId,
+            			stallProductIds:array
+            		}
+            		const res = await batchCreateSellerProduct(param);
+	                if (res.isSuccess == true) {
+	                    this.$message({
+	                        type: 'success',
+	                        message: res.result.msg
+	                    });
+	                    this.dialogAdd = false;
+	                    this.initloadData();
+	                }else{
+	                    this.$message({
+	                        type: 'error',
+	                        message: res.errorMsg
+	                    });
+	                }
+            	}else{
+            		if(this.stallProductName == ''){
+            			this.$message({
+                            type: 'error',
+                            message: "商品名称不能为空"
+                        });
+                        return;
+            		}
+            		if(this.stallProductName.length>30){
+            			this.$message({
+                            type: 'error',
+                            message: "商品名称不能超过30个字符"
+                        });
+                        return;
+            		}
+            		if(this.stallProductCode == ''){
+            			this.$message({
+                            type: 'error',
+                            message: "档口货号不能为空"
+                        });
+                        return;
+            		}
+            		if(this.stallProductPrice == ''){
+            			this.$message({
+                            type: 'error',
+                            message: "商品单价不能为空"
+                        });
+                        return;
+            		}
+            		var pricePattern = /^(-?\d+)(\.\d+)?$/;
+                	var pricePattern2 = /^-?\d+\.?\d{0,2}$/;
+                	if (!pricePattern.test(this.stallProductPrice)) {
+                        this.$message({
+                            type: 'error',
+                            message: "商品单价只能输入数字"
+                        });
+                        return;
+                    }else if(!pricePattern2.test(this.stallProductPrice)){
+                        this.$message({
+                            type: 'error',
+                            message: "商品单价不能超过两位小数"
+                        });
+                        return;
+                    }else if(this.stallProductPrice<=0){
+                        this.$message({
+                            type: 'error',
+                            message: "商品单价只能输入正数"
+                        });
+                        return;
+                    }
+                    let productVariant = [];
+                    this.colours.forEach(obj1 => {
+            			this.sizes.forEach(obj2 => {
+            				let row = {
+            					colour:obj1,
+            					size:obj2
+            				}
+            				productVariant.push(row);
+            			})
+            		});
+            		if(productVariant.length<1){
+            			this.$message({
+                            type: 'error',
+                            message: "商品规格不能为空"
+                        });
+                        return;
+            		}
+            		let param = {
+            			productCode:this.productCodePrefix+"-"+this.stallProductCode,
+            			companyId:userInfo().companyId,
+            			price:this.stallProductPrice,
+            			productVariant:productVariant,
+            			stallName:this.stallName,
+            			imgUrl_main:this.imgUrl_main,
+            			title:this.stallProductName
+            		}
+            		for(var i=0;i<this.uploadFileList.length;i++){
+	            		if(i == 0){
+	            			param.imgUrl_main = this.uploadFileList[i].url;
+	            		}else if(i == 1){
+	            			param.imgUrl_1 = this.uploadFileList[i].url;
+	            		}else if(i == 2){
+	            			param.imgUrl_2 = this.uploadFileList[i].url;
+	            		}
+	            	}
+            		const res = await createSellerProduct(param);
+	                if (res.isSuccess == true) {
+	                    this.$message({
+	                        type: 'success',
+	                        message: res.result.msg
+	                    });
+	                    this.dialogAdd = false;
+	                    this.initloadData();
+	                    // this.tableData.push()
+	                }else{
+	                    this.$message({
+	                        type: 'error',
+	                        message: res.errorMsg
+	                    });
+	                }
+            	}
+
+            },
+
+
+            addRelevanceProductVariant(){
+                let row = {
+
+                };
+                this.tableData5.push(row);
+            },
+
+
+            deleteRelevanceProduct(index){
+                this.tableData5.splice(index,1);
+            },
+
+            updateProductClick(row){
+            	this.uploadFileList = [];
+                this.stallName = row.stallName;
+                this.stallProductPrice = row.sellPrice;
+                this.productCodePrefix = row.codePrefix;
+                this.stallProductCode = row.stallCode;
+                this.editProductId = row.id;
+                this.stallProductName = row.title;
+                this.dialogImgVisible = true;
+                this.whether = false;
+
+                this.colours = [];
+                this.sizes = [];
+                if(row.productCodeValid){
+                	this.productCodeValid = row.productCodeValid;
+                }else{
+                	this.productCodeValid = 1;
+                }
+
+                if(row.imgUrl_main && row.imgUrl_main != ''){
+                	this.uploadFileList.push({url:row.imgUrl_main});
+                }
+
+                if(row.imgUrl_1 && row.imgUrl_1 != ''){
+                	this.uploadFileList.push({url:row.imgUrl_1});
+                }
+
+                if(row.imgUrl_2 && row.imgUrl_2 != ''){
+                	this.uploadFileList.push({url:row.imgUrl_2});
+                }
+
+                if(this.uploadFileList.length>=3){
+            		this.uploadFileLimitFlag = false;
+            		var elems = document.getElementsByClassName('el-upload--picture-card');
+					for (var i=0;i<elems.length;i+=1){
+					  elems[i].style.display = 'none';
+					}
+            	}
+
+                this.stallData.forEach((obj) => {
+                    if(obj.status == 1 && obj.id == row.vmStallId){
+                        this.whether = true;
+                    }
+                });
+
+
+                if(row.colours && row.colours != ''){
+                	row.colours.split("/").forEach(obj => {
+	                	this.colours.push(obj);
+	                })
+                }
+                if(row.sizes && row.sizes != ''){
+                	row.sizes.split("/").forEach(obj2 => {
+	                	this.sizes.push(obj2);
+	                })
+                }
+                if(this.whether){
+                    this.productUpdateFlag = false;
+                }else{
+                	this.productUpdateFlag = true;
+                }
+                if(row.vmStallId){
+                	this.vmStallId = row.vmStallId;
+                }
+
+                this.dialogAmend = true;
+            },
+
+            relevanceProductClick(row){
+                this.tableData4 = [];
+                this.tableData5 = [];
+                let record = {
+                    productId:row.id,
+                    productCode:row.productCode,
+                    stallName:row.stallName,
+                    price:row.sellPrice
+                }
+                this.tableData4.push(record);
+                this.loadRelevanceProduct(row.id);
+                this.dialogRelevance = true;
+            },
+
+            addProductClick(){
+            	this.productCodePrefix = '';
+            	this.stallProductCode = '';
+            	this.colours = [];
+            	this.sizes = [];
+                this.stallName = '';//档口名称
+                this.uploadFileList = [];
+                this.stallProductName = '';
+                this.stallProductPrice = '';
+//                系统是否有档口信息
+                this.whether = false;
+
+                //系统是否有货号
+                this.productCodeFlag = false;
+
+                this.vmStallId = '';
+
+                //临时货号列表--添加商品
+                this.productCodeData = [];
+
+                this.productCodeRadio = '';
+
+                this.addFormStallId = '';
+
+                this.imgUrl_main = '';
+
+                this.dialogAdd = true;
+            },
+
+            async updateNewProduct(){
+            	if(this.stallProductName == ''){
+        			this.$message({
+                        type: 'error',
+                        message: "商品名称不能为空"
+                    });
+                    return;
+        		}
+        		if(this.stallProductName.length>30){
+        			this.$message({
+                        type: 'error',
+                        message: "商品名称不能超过30个字符"
+                    });
+                    return;
+        		}
+            	if(this.stallProductCode == ''){
+                    this.$message({
+                        type: 'error',
+                        message: "档口货号不能为空"
+                    });
+                    return;
+                }
+                if(this.stallProductPrice == ''){
+                    this.$message({
+                        type: 'error',
+                        message: "商品单价不能为空"
+                    });
+                    return;
+                }
+
+        		var pricePattern = /^(-?\d+)(\.\d+)?$/;
+            	var pricePattern2 = /^-?\d+\.?\d{0,2}$/;
+            	if (!pricePattern.test(this.stallProductPrice)) {
+                    this.$message({
+                        type: 'error',
+                        message: "商品单价只能输入数字"
+                    });
+                    return;
+                }else if(!pricePattern2.test(this.stallProductPrice)){
+                    this.$message({
+                        type: 'error',
+                        message: "商品单价不能超过两位小数"
+                    });
+                    return;
+                }else if(this.stallProductPrice<=0){
+                    this.$message({
+                        type: 'error',
+                        message: "商品单价只能输入正数"
+                    });
+                    return;
+                }
+
+                let productVariant = [];
+                this.colours.forEach(obj1 => {
+        			this.sizes.forEach(obj2 => {
+        				let row = {
+        					colour:obj1,
+        					size:obj2
+        				}
+        				productVariant.push(row);
+        			})
+        		});
+
+        		if(productVariant.length<1){
+        			this.$message({
+                        type: 'error',
+                        message: "商品规格不能为空"
+                    });
+                    return;
+        		}
+
+                let param = {
+                    productId:this.editProductId,
+                    stallName:this.stallName,
+                    productCode:this.productCodePrefix+"-"+this.stallProductCode,
+                    price:this.stallProductPrice,
+                    productVariant:productVariant,
+                    companyId:userInfo().companyId,
+                }
+                for(var i=0;i<this.uploadFileList.length;i++){
+	            		if(i == 0){
+	            			param.imgUrl_main = this.uploadFileList[i].url;
+	            		}else if(i == 1){
+	            			param.imgUrl_1 = this.uploadFileList[i].url;
+	            		}else if(i == 2){
+	            			param.imgUrl_2 = this.uploadFileList[i].url;
+	            		}
+	            	}
+                const res = await updateSellerProduct(param);
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: res.result.msg
+                    });
+                    this.initloadData();
+                    this.dialogAmend = false;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+            async saveRelevanceProduct(){
+                let productId = '';
+                let relationProductCodes = [];
+                if(this.tableData4.length>0){
+                    productId = this.tableData4[0].productId;
+                }
+                this.tableData5.forEach((obj) => {
+                    if(obj.productCode){
+                        relationProductCodes.push(obj.productCode);
+                    }
+                });
+
+                let param = {
+                    productId:productId,
+                    relationProductCodes:relationProductCodes
+                }
+                const res = await setSellerProductRelation(param);
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: res.result.msg
+                    });
+                    this.initloadData();
+                    this.dialogRelevance = false;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+            async loadRelevanceProduct(productId){
+                this.tableData5 = [];
+                let param = {
+                    productId:productId
+                }
+                const res = await querySellerProductsByRelationId(param);
+                if (res.isSuccess == true) {
+                    if(res.result.length>0){
+                        this.tableData5 = res.result;
+                    }else{
+                        this.tableData5.push({});
+                    }
+
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+            async batchDeleteProductForSeller(array){
+                let param = {
+                    productIds:array
+                }
+                const res = await batchDeleteSellerProduct(param);
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: res.result.msg
+                    });
+                    this.initloadData();
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+            deleteProductClick(productId,flag){
+                let msg = '';
+                if(flag != null && flag){
+                    msg = '已关联其他商品，删除之后关联失效，确认删除吗?';
+                }else{
+                    msg = '是否确认删除选中的信息?';
+                }
+                let array = [productId];
+                this.$confirm(msg, '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    this.batchDeleteProductForSeller(array);
+                }).catch(() => {
+
+                });
+            },
+
+            //多选响应
+            handleSelectionChange: function(val) {
+                this.multipleSelection = val;
+            },
+
+            //多选响应
+            handleProductSelectionChange: function(val) {
+            	this.multipleProductSelection = val;
+            },
+
+            batchDeleteConfig() {
+                if(this.multipleSelection == undefined || this.multipleSelection.length==0){
+                    this.$message({
+                        type: 'error',
+                        message: '请先勾选要删除的商品！'
+                    });
+                    return;
+                }
+                var array = [];
+                this.multipleSelection.forEach((item) => {
+                    array.push(item.id);
+                })
+                if(array.length <1){
+                    this.$message({
+                        type: 'error',
+                        message: '请先勾选要删除的商品！'
+                    });
+                    return;
+                }
+                this.$confirm('是否确认删除选中的商品?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    this.batchDeleteProductForSeller(array);
+                }).catch(() => {
+
+                });
+            },
+
+            checkStallClick(){
+            	this.productCodePrefix = '';
+            	let stallState = '';
+                this.vmStallCompanyId = '';
+                this.vmStallName = '';
+                this.stallName = '';
+                this.stallId = '';
+            	this.stallData.forEach((obj) =>{
+                    if(this.vmStallId == obj.id){
+                        stallState = obj.status;
+                        if(obj.stallCompanyId){
+                            this.vmStallCompanyId = obj.stallCompanyId;
+                        }
+                        if(obj.stallCode){
+                            this.productCodePrefix = obj.stallCode;
+                        }
+                        if(obj.name){
+                            this.stallName = obj.name;
+                        }
+                        if(obj.status == 1 && obj.stallId){
+		                    this.stallId = obj.stallId;
+		                }
+                    }
+                });
+
+                if(stallState == 1){
+                    this.whether = true;
+                }else{
+                    this.whether = false;
+                }
+                if(this.whether && this.vmStallCompanyId != ''){
+                	this.productCurrentPage = 1;
+                    this.initloadProductCodeData();
+                }
+            },
+
+            //	删除商品颜色
+            handleColorClose(tag) {
+                this.colours.splice(this.colours.indexOf(tag), 1);
+            },
+
+            //	删除商品尺码
+            handleSizeClose(tag) {
+                this.sizes.splice(this.sizes.indexOf(tag), 1);
+            },
+
+            showSizeInput() {
+                this.inputSizeVisible = true;
+                this.$nextTick(_ => {
+                    this.$refs.saveSizeTagInput.$refs.input.focus();
+                });
+            },
+
+            showColorInput() {
+            	this.inputColorVisible = true;
+                this.$nextTick(_ => {
+                    this.$refs.saveColorTagInput.$refs.input.focus();
+                });
+            },
+
+            handleInputColorConfirm() {
+                if (this.colorTag) {
+                    this.colours.push(this.colorTag);
+                }
+                this.inputColorVisible = false;
+                this.colorTag = '';
+            },
+
+            handleInputSizeConfirm() {
+                if (this.sizeTag) {
+                    this.sizes.push(this.sizeTag);
+                }
+                this.inputSizeVisible = false;
+                this.sizeTag = '';
+            },
+
+            async importf(){
+            	if(this.uploadFileName == ""){
+            		this.$message({
+                        type: 'error',
+                        message: "请先选择上传的文件"
+                    });
+                    return;
+            	}
+                this.dialogImport = false;
+				this.importExcelData = '';
+				this.importFaileData = [];
+				let obj = document.getElementById("uploatfile");
+				var wb;//读取完成的数据
+            	var rABS = false; //是否将文件读取为二进制字符串
+            	if(!obj.files) {
+                    return;
+                }
+                var f = obj.files[0];
+                var reader = new FileReader();
+                reader.onload =(e) =>{
+                    var data = e.target.result;
+                    if(rABS) {
+                        wb = X.read(btoa(fixdata(data)), {//手动转化
+                            type: 'base64'
+                        });
+                    } else {
+                        wb = X.read(data, {
+                            type: 'binary'
+                        });
+                    }
+
+                    //wb.SheetNames[0]是获取Sheets中第一个Sheet的名字
+                    //wb.Sheets[Sheet名]获取第一个Sheet的数据
+                    this.importExcelData = JSON.stringify( X.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]) );
+                    this.importFileData();
+                };
+                if(rABS) {
+                    reader.readAsArrayBuffer(f);
+                } else {
+                    reader.readAsBinaryString(f);
+                }
+			},
+
+			uploatFile(){
+				let obj = document.getElementById("uploatfile").value;
+				let array = obj.split("\\");
+				if(array.length>0){
+					this.uploadFileName = array[array.length-1];
+				}else{
+					this.uploadFileName = "";
+				}
+			},
+
+			async importFileData(){
+				let param = {
+	                	jsonStr:this.importExcelData,
+	                	companyId:userInfo().companyId
+	               }
+               const res = await batchImportSellerProduct(param);
+               let obj = document.getElementById("uploatfile");
+               obj.value = '';
+            	if (res.isSuccess == true) {
+            		this.uploadFileName = "";
+                    this.initloadData();
+                    if(res.result.data && res.result.data.length>0){
+                       this.importFaileData = res.result.data;
+                       this.exportFaileExcel();
+                    }else{
+                        this.$message({
+                            type: 'success',
+                            message: res.result.msg
+                        });
+                    }
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+			},
+            //同步商品
+            async synchronousGoods(){
+                let param={
+                    companyId:userInfo().companyId,
+                    startDate:'',
+                    endDate:''
+                }
+                const res = await syncWebStoreProduct(param);
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: res.result.msg
+                    });
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+			formatJson(filterVal, jsonData) {
+		　　　　　　return jsonData.map(v => filterVal.map(j => v[j]));
+		　　　},
+
+			//导出文档
+			async exportloadData() {
+                let param ={
+                    companyId:userInfo().companyId,
+                    pageIndex:this.currentPage,
+                    pageSize:this.pageSize,
+                    stallName:this.searchStallName,
+                    productCode:this.searchProductCode
+                }
+                const res = await querySellerProduct(param);
+                const list = [];
+                if (res.isSuccess == true) {
+                    res.result.results.forEach(obj => {
+                    	let title= '' ;//商品名称
+                    	let productCode = '';//商品货号
+                    	let stallName = '';//档口名称
+                    	let colours = '';//颜色
+                    	let sizes = '';//尺码
+                    	let sellPrice = '';//批发价
+                    	let imgUrl_main = '';//产品主图
+                    	if(obj.title){
+                    		title = obj.title;
+                    	}
+                    	if(obj.productCode){
+                    		productCode = obj.productCode;
+                    	}
+                    	if(obj.stallName){
+                    		stallName = obj.stallName;
+                    	}
+                    	var reg = new RegExp('_' , "g")
+                    	if(obj.colours){
+                    		colours = obj.colours.replace(reg,"/");
+                    	}
+                    	if(obj.sizes){
+                    		sizes = obj.sizes.replace(reg,"/");
+                    	}
+                    	if(obj.sellPrice){
+                    		sellPrice = obj.sellPrice;
+                    	}
+                    	if(obj.imgUrl_main){
+                    		imgUrl_main = obj.imgUrl_main;
+                    	}
+                    	let row = {
+		            		title : title,
+							productCode : productCode,
+							stallName : stallName,
+							colours : colours,
+							sizes : sizes,
+							sellPrice : sellPrice,
+							imgUrl_main : imgUrl_main
+		            	}
+		            	list.push(row);
+                    });
+
+                    const tHeader = ['商品名称', '商品货号','档口','颜色','尺码','批发价','主图'];
+			　　　　const filterVal = ['title', 'productCode','stallName','colours','sizes','sellPrice','imgUrl_main'];
+			　　　　const data = this.formatJson(filterVal, list);
+			　　　　export_json_to_excel(tHeader, data, '卖家商品表');
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+
+			async exportFaileExcel() {		//导出excel
+            	if(this.importFaileData.length>0){
+            		const tHeader = ['商品名称','商品货号', '商品主图(链接)','档口编码','档口货号',"颜色","尺码","单价","备注"];
+			　　　  const filterVal = ['title','productCode', 'imgUrl_main','stallNo','stallCode','colours','sizes','sellPrice','msg'];
+			　　　  const list = this.importFaileData;
+			　　　  const data = this.formatJson(filterVal, list);
+			　　　  export_json_to_excel(tHeader, data, '卖家导入商品失败数据');
+            	}
+			},
+
+			//打印
+            print(row){
+            	this.totalPrintNum = 0;
+            	this.printRow = row;
+            	this.printProductCode = row.productCode;
+            	this.printProductBarText = row.companyName;
+            	/*this.printProductCodePrefix = '';
+            	this.printProductBarText = '';*/
+            	this.printRow.productVariant.forEach(obj => {
+            		if(obj.printNum){
+            			obj.printNum = '';
+            		}
+            	});
+                this.printDialog = true;
+            },
+
+            //打印预览
+            groupPreviewPrint(){
+            	this.printRow.dateTime = formatDate(new Date(),'yyyy-MM-dd hh:mm');
+            	let params = [];
+            	if(this.printRadio == 1){//条形码
+            		if(this.printProductCodePrefix != '' && this.printProductCodePrefix.length>4){
+            			this.$message({
+                            type: 'error',
+                            message: "前缀不能超过4个字符"
+                        });
+                        return;
+            		}
+            		if(this.printProductBarText == ''){
+            			this.$message({
+                            type: 'error',
+                            message: "请先输入条码标题"
+                        });
+                        return;
+            		}
+            		if(this.printProductBarText.length>12){
+            			this.$message({
+                            type: 'error',
+                            message: "条码标题不能超过12个字符"
+                        });
+                        return;
+            		}
+            		let printSkuConfig = this.printSkuType.split("*");
+            		let printWidth = "800";
+            		let printHeight = "500";
+            		if(printSkuConfig.length>1){
+            			printWidth = printSkuConfig[0]*10;
+            			printHeight = printSkuConfig[1]*10;
+            		}
+            		this.printRow.productVariant.forEach(obj => {
+	            		let barText = this.printProductCodePrefix+this.printRow.productCode+"-"+obj.colour+"-"+obj.size;
+	            		let row = {
+	            			title:this.printProductBarText,
+	            			barCode:obj.barcode,
+	            			detail:obj.colour+";"+obj.size,
+	            			dateTime:this.printRow.dateTime,
+	            			printNum:obj.printNum,
+	            			barText:barText
+	            		}
+	            		if(obj.printNum != '' && obj.printNum>0){
+	            			params.push(row);
+	            		}
+	            	});
+	            	if(params.length == 0){
+	            		this.$message({
+                            type: 'error',
+                            message: "请输入要打印的条码数量"
+                        });
+                        return;
+	            	}
+	            	var printResult = this.groupPrintPreview(params,printWidth,printHeight);
+	            	if(printResult != null && printResult.code == 0){
+	            		this.$message({
+                            type: 'error',
+                            message: printResult.msg
+                        });
+                        return;
+	            	}
+            	}else{//合格证
+            		this.printRow.productVariant.forEach(obj => {
+	            		let row = {
+	            			title:this.printRow.title,
+	            			productCode:this.printRow.productCode,
+	            			companyName:this.printRow.stallName,
+	            			barCode:obj.barcode,
+	            			detail:obj.colour+";"+obj.size,
+	            			dateTime:this.printRow.dateTime,
+	            			price:this.printRow.sellPrice,
+	            			printNum:obj.printNum
+	            		}
+	            		params.push(row);
+	            	});
+	            	var printResult = this.groupPrintPreviewHGZ(params);
+	            	if(printResult != null && printResult.code == 0){
+	            		this.$message({
+                            type: 'error',
+                            message: printResult.msg
+                        });
+                        return;
+	            	}
+            	}
+
+            },
+
+            //直接点打印
+            printDirect(){
+            	this.printRow.dateTime = formatDate(new Date(),'yyyy-MM-dd hh:mm');
+            	let params = [];
+            	if(this.printRadio == 1){//条形码
+            		if(this.printProductCodePrefix != '' && this.printProductCodePrefix.length>4){
+            			this.$message({
+                            type: 'error',
+                            message: "前缀不能超过4个字符"
+                        });
+                        return;
+            		}
+            		if(this.printProductBarText == ''){
+            			this.$message({
+                            type: 'error',
+                            message: "请先输入条码标题"
+                        });
+                        return;
+            		}
+            		if(this.printProductBarText.length>12){
+            			this.$message({
+                            type: 'error',
+                            message: "条码标题不能超过12个字符"
+                        });
+                        return;
+            		}
+            		let printSkuConfig = this.printSkuType.split("*");
+            		let printWidth = "800";
+            		let printHeight = "500";
+            		if(printSkuConfig.length>1){
+            			printWidth = printSkuConfig[0]*10;
+            			printHeight = printSkuConfig[1]*10;
+            		}
+            		this.printRow.productVariant.forEach(obj => {
+            			let barText = this.printProductCodePrefix+this.printRow.productCode+"-"+obj.colour+"-"+obj.size;
+	            		let row = {
+	            			title:this.printProductBarText,
+	            			barCode:obj.barcode,
+	            			detail:obj.colour+";"+obj.size,
+	            			dateTime:this.printRow.dateTime,
+	            			printNum:obj.printNum,
+	            			barText:barText
+	            		}
+	            		if(obj.printNum != '' && obj.printNum>0){
+	            			params.push(row);
+	            		}
+	            	});
+	            	if(params.length == 0){
+	            		this.$message({
+                            type: 'error',
+                            message: "请输入要打印的条码数量"
+                        });
+                        return;
+	            	}
+	            	var printResult = this.groupPrint(params,printWidth,printHeight);
+	            	if(printResult != null && printResult.code == 0){
+	            		this.$message({
+                            type: 'error',
+                            message: printResult.msg
+                        });
+                        return;
+	            	}
+            	}else{//合格证
+            		this.printRow.productVariant.forEach(obj => {
+	            		let row = {
+	            			title:this.printRow.title,
+	            			productCode:this.printRow.productCode,
+	            			companyName:this.printRow.stallName,
+	            			barCode:obj.barcode,
+	            			detail:obj.colour+";"+obj.size,
+	            			dateTime:this.printRow.dateTime,
+	            			price:this.printRow.sellPrice,
+	            			printNum:obj.printNum
+	            		}
+	            		params.push(row);
+	            	});
+	            	var printResult = this.groupPrintHGZ(params);
+	            	if(printResult != null && printResult.code == 0){
+	            		this.$message({
+                            type: 'error',
+                            message: printResult.msg
+                        });
+                        return;
+	            	}
+            	}
+
+            },
+
+
+            formatComeType:function(row, column){
+            	let comeType = row.comeType;
+            	if(comeType == 0){
+            		return "自建商品";
+            	}else if(comeType == 1){
+            		return "淘宝天猫";
+            	}else if(comeType == 2){
+            		return "京东";
+            	}else{
+            		return "";
+            	}
+            },
+
+            async queryProductUrl(productId){
+		      	let param = {
+		      		productId:productId,
+        			pageSize:100,
+        			pageIndex:1
+        		}
+		      	this.productUrlData = [];
+        		const res = await queryProductUrl(param);
+                if (res.isSuccess == true) {
+                	if(res.result.results && res.result.results.length>1){
+                		this.productUrlData = res.result.results;
+                		this.productUrlDialog = true;
+                	}else if(res.result.results && res.result.results.length==1){
+                		var a = document.createElement('a');
+			              a.setAttribute('href', res.result.results[0].detailUrl);
+			              a.setAttribute('target', '_blank');
+			              a.setAttribute('id', 'id');
+			              // 防止反复添加
+			              if(!document.getElementById('id')) {
+			                  document.body.appendChild(a);
+			              }
+			              a.click();
+                		this.productUrlDialog = false;
+                	}
+                }
+		    },
+
+		    inputPrintNum(){
+				let tempPrintNum = 0;
+				this.printRow.productVariant.forEach(obj => {
+					if(obj.printNum){
+						tempPrintNum = tempPrintNum+obj.printNum*1;
+					}
+				});
+				this.totalPrintNum = tempPrintNum;
+			},
+
+			lodopPrintPreview,
+			groupPrintPreview,
+			groupPrint,
+			groupPrintPreviewHGZ,
+			groupPrintHGZ,
+			priceFormat,
+			getStore,
+        }
+    }
+</script>
+
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/commodityMnagement';
+    .el-form-item__content {
+        position: static;
+    }
+    .avatar-uploader .el-upload {
+	    border: 1px dashed #d9d9d9;
+	    border-radius: 6px;
+	    cursor: pointer;
+	    position: relative;
+	    overflow: hidden;
+	  }
+	  .avatar-uploader .el-upload:hover {
+	    border-color: #409EFF;
+	  }
+	  .el-upload--picture-card {
+	    font-size: 28px;
+	    color: #8c939d;
+	    width: 110px;
+	    height: 110px;
+	    line-height: 110px;
+		text-align: center;
+
+	  }
+	  .el-upload-list--picture-card .el-upload-list__item{
+		width: 110px;
+		height: 110px;
+	  }
+	  .avatar-uploaderdetail,.detailnum{
+		  display: block;
+		  width: 110px;
+		  height: 20px;
+		  text-align: center;
+		  font-size: 14px;
+	  }
+	  .avatar {
+	    width: 110px;
+	    height: 110px;
+	    display: block;
+	  }
+</style>

@@ -1,0 +1,322 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('menuManagement')">
+                <router-link :to='{path:"/menuManagement"}'>菜单管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('platformSettings')">
+                <router-link :to='{path:"/platformSettings"}'>平台基础配置</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('msgParamsConfig')">
+                <router-link :to='{path:"/msgParamsConfig"}'>短信参数配置</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('msgSendInterfaceConfig')">
+                <router-link :to='{path:"/msgSendInterfaceConfig"}'>短信发送接口配置</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('logManagement')">
+                <router-link :to='{path:"/logManagement"}'>日志管理</router-link>
+            </li>
+            <li class="menuIndex3" v-if="getMenuAuthFun('inviteCode')" >
+                <router-link :to='{path:"/inviteCode"}'>邀请码</router-link>
+            </li>
+        </ul>
+        <div class="menuManagement">
+            <div>
+                <div >
+                    <div class="menuManagementTop">
+                    	<div class="left" style="padding-top: 5px;">邀请码： </div>
+                        <div class="left ">
+                            <el-input v-model="inviteCode" maxlength="4" placeholder="请输入邀请码"></el-input>
+                        </div>
+                        <div class="left " style="margin-left: 15px;">
+                            <el-input v-model="maxRegisterCount" placeholder="邀请码有效次数"></el-input>
+                        </div>
+                    </div>
+                    <div class="left btn">
+                        <el-button type="primary" @click="createInvitationCode" size="small">点击生成</el-button>
+                    </div>
+                </div>
+                <div class="menuInfoTable" style="padding-bottom: 50px;">
+                    <el-table
+                        ref="multipleTable"
+                        :data="inviteCodeData"
+                        tooltip-effect="dark"
+                        style="width: 100%"
+                        >
+                        <el-table-column
+                            prop="createTime"
+                            label="生成时间"
+                            :formatter="mydateFormat">
+                        </el-table-column>
+                        <el-table-column
+                            prop="invitationCode"
+                            label="邀请码">
+                        </el-table-column>
+                        <el-table-column
+                            prop="registerCount"
+                            label="已注册用户数">
+                        </el-table-column>
+                        <el-table-column
+                            prop="status"
+                            label="状态"
+                            :formatter="formatStatus">
+                        </el-table-column>
+                        <el-table-column
+                            prop="operate"
+                            label="操作类型"
+                            show-overflow-tooltip>
+                            <template scope="scope">
+                                <el-button
+                                    size="small"
+                                    v-if="scope.row.status == 2"
+                                    @click="updateInvitation(scope.row.id,1)">启用</el-button>
+                                <el-button
+                                    size="small"
+                                    type="danger"
+                                    v-if="scope.row.status == 1"
+                                    @click="updateInvitation(scope.row.id,2)">禁用</el-button>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                    <el-pagination
+		                small
+		                class="right"
+		                style="margin-top: 20px;"
+		                @current-change="handleCurrentChange"
+		                :current-page="currentPage"
+		                :page-size="pageSize"
+		                layout="total, prev, pager, next, jumper"
+		                :total="totalCount">
+		            </el-pagination>
+                </div>
+                
+                <!--<a href="javascript:void(0)" class="export_excle">导出excel</a>-->
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {createInvitationCode,queryInvitation,updateInvitation} from '@/api/getData'
+    import {mapActions, mapState} from 'vuex'
+    import {mydateFormat} from '../utils/dataFormater.js'
+    import {getMenuAuth} from  '../utils/AuthMenu.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+            	inviteCode:'',//邀请码
+            	
+            	maxRegisterCount:'',//邀请码次数
+            	
+            	//默认每页数据量
+                pageSize: 10,
+                
+                //默认高亮行数据id
+                highlightId: -1,
+
+                //当前页码
+                currentPage: 1,
+
+                //查询的页码
+                start: 1,
+
+                //默认数据总数
+                totalCount: 0,
+            	
+            	//邀请码数据
+            	inviteCodeData:[
+            		{
+            			createTime:1513060266000,
+            			invitationCode:"548796",
+            			registerCount:13,
+            			status:0
+            		},
+            		{
+            			createTime:1513060256000,
+            			invitationCode:"965874",
+            			registerCount:13,
+            			status:1
+            		},
+            		{
+            			createTime:1513060246000,
+            			invitationCode:"543358",
+            			registerCount:13,
+            			status:0
+            		},
+            		{
+            			createTime:1513060236000,
+            			invitationCode:"652314",
+            			registerCount:13,
+            			status:1
+            		},
+            		{
+            			createTime:1513060226000,
+            			invitationCode:"745632",
+            			registerCount:13,
+            			status:0
+            		},
+            		{
+            			createTime:1513060216000,
+            			invitationCode:"985214",
+            			registerCount:13,
+            			status:1
+            		},
+            		{
+            			createTime:1513060206000,
+            			invitationCode:"634597",
+            			registerCount:13,
+            			status:0
+            		},
+            		{
+            			createTime:1513060226000,
+            			invitationCode:"745632",
+            			registerCount:13,
+            			status:0
+            		},
+            		{
+            			createTime:1513060216000,
+            			invitationCode:"985214",
+            			registerCount:13,
+            			status:1
+            		},
+            		{
+            			createTime:1513060206000,
+            			invitationCode:"634597",
+            			registerCount:13,
+            			status:0
+            		}
+            	],
+            	
+            }
+        },
+        mounted(){
+            this.loadData();//加载数据
+        },
+        methods: {
+
+
+            async loadData(){
+                let params = {
+                	pageIndex:this.currentPage,
+                	pageSize:this.pageSize
+                }
+                const res = await queryInvitation(params);
+                this.inviteCodeData = [];
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: '加载数据成功'
+                    });
+                    if(res.result.results){
+                    	this.inviteCodeData = res.result.results;
+                    }
+                    if(this.currentPage == 1 && res.result.totalCount){
+                    	this.totalCount = res.result.totalCount;
+                    }
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            
+            async createInvitationCode(){
+            	if(this.inviteCode == ""){
+            		this.$message({
+                        type: 'error',
+                        message: "邀请码不能为空"
+                    });
+                    return;
+            	}
+            	let pattern = /[a-zA-Z0-9]+/;
+            	if(!pattern.test(this.inviteCode)){
+            		this.$message({
+                        type: 'error',
+                        message: "邀请码只能输入数字或字母"
+                    });
+                    return;
+            	}
+            	if(this.maxRegisterCount == ""){
+            		this.$message({
+                        type: 'error',
+                        message: "邀请码最大注册数不能为空"
+                    });
+                    return;
+            	}
+                let params = {
+                	invitationCode:this.inviteCode,
+                	maxRegisterCount:this.maxRegisterCount
+                }
+                const res = await createInvitationCode(params);
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: '生成成功'
+                    });
+                    this.currentPage == 1;
+                    this.loadData();
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            
+            async updateInvitation(inviteId,status){
+                let params = {
+                	invitationId:inviteId,
+                	status:status
+                }
+                const res = await updateInvitation(params);
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: '修改成功'
+                    });
+                    this.loadData();
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            
+            getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+ 
+           
+            formatStatus:function(row,column){
+                let data = row[column.property];
+                if(data==1){
+                    data = '有效';
+                }else{
+                    data = '无效';
+                }
+                return data;
+            },
+            
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+                this.currentPage = val;
+                this.loadData();
+            },
+            mydateFormat,
+        },
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/menuManagement';
+</style>

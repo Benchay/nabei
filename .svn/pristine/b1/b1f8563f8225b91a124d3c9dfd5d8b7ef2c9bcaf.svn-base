@@ -1,0 +1,88 @@
+.product{
+    color:#333;
+    margin:0 30px;
+    background: #fff;
+    padding: 20px 30px;
+    height:100%;
+    .productTop{
+        div{
+            width: 200px;
+            margin-right: 10px;
+        }
+    }
+    .productButton,.productTable{
+        img{
+            width:40px;
+            height: 40px;
+        }
+        .tableFoot{
+            a{
+                margin-right: 10px;
+            }
+        }
+        .title{
+            height: 40px;
+            line-height: 40px;
+        }
+    }
+    .productTabs{
+        margin-top: 20px;
+    }
+
+}
+.dialogForm{
+    padding: 0 20px 0 0;
+}
+//添加新商品
+.addGoods{
+    color:#333;
+    margin:1px 30px;
+    background: #fff;
+    padding: 20px 30px;
+    height:100%;
+    .addFrom{
+        overflow:scroll;
+        height:80%;
+        padding:10px 70px 0;
+        .goodsLast{
+            margin-top: 30px;
+        }
+    }
+}
+.addSpecification{
+    display: flex;
+    align-items: flex-start;
+}
+//分类
+.classGoods{
+    color:#333;
+    margin:0 30px;
+    background: #fff;
+    padding: 20px 30px;
+    .classTop{
+        div{
+            width: 200px;
+        }
+    }
+    .classButton,.classTable{
+        margin-top: 20px;
+    }
+}
+.merchantsPricing{
+    padding-right: 45px;
+}
+.pricingList{
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    p:nth-child(2){
+        width: 70px;
+    }
+    p{
+        margin-right: 20px;
+    }
+}
+.pricingList1{
+    font-size: 12px;
+}
+

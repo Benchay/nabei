@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport"
+          content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no"/>
+    <title>拿呗档口电子名片</title>
+    <script src="js/mui.js"></script>
+    <link href="js/mui.min.css" rel="stylesheet"/>
+    <link href="appIndex.css" rel="stylesheet"/>
+    <style>
+
+    </style>
+</head>
+<body>
+<div id="app">
+    <header class="mui-bar mui-bar-nav" style="z-index: 100;">
+        <a href="down.html" class=" mui-pull-left top_left"><img src="images/logo.png"></a>
+        <h1 class="mui-title">档口电子名片</h1>
+        <a href="" class="mui-pull-right top_right">分享</a>
+    </header>
+    <div class="mui-content" style="background-color: #fff;">
+        <div class="name_box">
+            <img src="images/photo.png" class="photo">
+            <div class="name">
+                <div class="mz">{{details}}<span>拿呗认证</span></div>
+                <div class="wz"><img src="images/loc.png">上海市 四季青 清江路 1楼</div>
+            </div>
+        </div>
+        <div class="lxfs">
+            <div class="we"><img src="images/wx.png"><span>我是微信昵称我是微信昵称我是微信昵称我是微信昵称</span></div>
+            <div class="phone"><img src="images/dh.png">13651456524</div>
+            <div class="we" style="border-top: 1px dashed #EFEFF4;"><img src="images/ww.png"><span>我是旺旺啊</span></div>
+            <div class="phone" style="border-top: 1px dashed #EFEFF4;"><img src="images/qq.png">13651456524</div>
+        </div>
+        <div class="ico_box">
+            <ul>
+                <li><a href="show.html"><img src=" images/g1.png"><br/>全部商品</a></li>
+                <li><a href="down.html"><img src=" images/g2.png"><br/>立即下单</a></li>
+                <li><a href="down.html"><img src=" images/g3.png"><br/>拿货</a></li>
+                <li><a href="down.html"><img src=" images/g4.png"><br/>退货</a></li>
+                <li><a href="down.html"><img src=" images/g5.png"><br/>结算</a></li>
+            </ul>
+
+        </div>
+        <h1 class="xp_til"> 上 / 架 / 商 / 品 /</h1>
+
+        <div class="xp_box"><a href="show.html">
+            <ul>
+                <li><img src=" images/s1.png"><br/>A001</li>
+                <li><img src=" images/s1.png"><br/>A001</li>
+                <li><img src=" images/s1.png"><br/>A001</li>
+                <li><img src=" images/s1.png"><br/>A001</li>
+                <li><img src=" images/s1.png"><br/>A001</li>
+                <li><img src=" images/s1.png"><br/>A001</li>
+            </ul>
+        </a>
+        </div>
+        <h1 class="xp_til" style="color: #666;border-top: 10px solid #EFEFF4;padding-top: 8px;"> 下 / 架 / 商 / 品 /</h1>
+
+        <div class="xp_box" style="margin-bottom: 50px;"><a href="show.html">
+            <ul>
+                <li><img src=" images/s1.png"><br/>A001</li>
+                <li><img src=" images/s1.png"><br/>A001</li>
+                <li><img src=" images/s1.png"><br/>A001</li>
+                <li><img src=" images/s1.png"><br/>A001</li>
+                <li><img src=" images/s1.png"><br/>A001</li>
+                <li><img src=" images/s1.png"><br/>A001</li>
+                <li><img src=" images/s1.png"><br/>A001</li>
+            </ul>
+        </a>
+        </div>
+        <div class="bottom_box">
+            <p class="bol">用拿呗，货品提前备！了解更多<a href="www.nabei.net" style="color: #46CFC5;text-decoration: underline;">www.nabei.net</a>！
+            </p>
+            <p class="down_ico"><a href="down.html">下载</a></p>
+        </div>
+    </div>
+</div>
+
+
+</body>
+<script>
+    var slider = mui("#slider");
+    slider.slider({
+        interval: 5000
+    });
+
+</script>
+<script src="vue.min.js"></script>
+<script>
+    new Vue({
+        el: '#app',
+        data: {
+            details: 123,
+        },
+        methods: {
+
+        },
+    })
+
+</script>
+</html>

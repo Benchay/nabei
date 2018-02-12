@@ -1,0 +1,127 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li class="menuIndex">
+                <router-link :to='{path:"/sellReturn"}'>销售退货</router-link>
+            </li>
+        </ul>
+        <div class="returns-content">
+            <div class="returnsAll">
+                <div class="right">
+                    <router-link :to='{path:"/sellReturn"}' class="comeBack">返回</router-link>
+                </div>
+                <div class="left">
+                    <a href="javascript:void(0)" class="buttonColor">签收</a>
+                </div>
+                <div class="orderDetails" style="margin: 40px 0 0;">
+                    <div class="flex detailsLeft">
+                        <img src="../image/111.png" alt="">
+                        <div>
+                            <p>订单编号：</p>
+                            <p>商家名称：</p>
+                            <p>共计金额：￥130</p>
+                        </div>
+                    </div>
+                    <div  class="detailsCenter">
+                        <p></p>
+                        <p>下单时间：</p>
+                        <p>商品数量：20</p>
+                    </div>
+                    <div class="flex detailsRight">
+                    </div>
+                </div>
+                <div class="returnsRemark">
+                    退货原因：商品质量问题！
+                </div>
+                <div class="returnsTable">
+                    <el-table
+                        :data="tableData"
+                        height="360"
+                        style="width: 100%">
+                        <el-table-column
+                            width="230"
+                            label="主图/货号">
+                            <template scope="scope">
+                                <div class="flex">
+                                    <img src="../image/111.png" alt=""  class="tableImg">
+                                    <p>MG110</p>
+                                </div>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            prop="productName"
+                            width="230"
+                            label="商品名称">
+                        </el-table-column>
+                        <el-table-column
+                            prop="color"
+                            label="颜色">
+                        </el-table-column>
+                        <el-table-column
+                            prop="size"
+                            label="尺码">
+                        </el-table-column>
+                        <el-table-column
+                            prop="number"
+                            label="数量">
+                        </el-table-column>
+                        <el-table-column
+                            prop="unitPrice"
+                            label="单价">
+                        </el-table-column>
+                    </el-table>
+                </div>
+                <el-pagination
+                    small
+                    class="right"
+                    style="margin-top: 20px;"
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :current-page="currentPage4"
+                    :page-sizes="[100, 200, 300, 400]"
+                    :page-size="100"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    :total="400">
+                </el-pagination>
+                <a href="javascript:void(0)" class="export_excle left">导出excel</a>
+            </div>
+        </div>
+    </div>
+</template>
+<script>
+    import headTop from '../components/headTop'
+    import {queryOrderInfo,queryStallOrderDetail} from '@/api/getData'
+    import {formatDate} from '../utils/date.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                currentPage4: 4,
+                status:0,
+                tableData: [{}],
+                pageSize:10,
+                currentPage:1,
+            }
+        },
+        mounted(){
+
+        },
+
+        methods: {
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+            },
+        }
+    }
+</script>
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/salesReturn';
+</style>

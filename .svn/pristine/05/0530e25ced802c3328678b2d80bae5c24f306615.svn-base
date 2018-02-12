@@ -1,0 +1,291 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('fastShipping2')">
+                <router-link :to='{path:"/fastShipping2"}'>快速出货</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('returnManagement2')">
+                <router-link :to='{path:"/returnManagement2"}'>快速退货</router-link>
+            </li>
+            <li class="menuIndex" v-if="getMenuAuthFun('orderPurchaseStall')">
+                <router-link :to='{path:"/orderPurchaseStall"}'>订单管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('sellerSettlement')">
+                <router-link :to='{path:"/sellerSettlement"}'>客户结算</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('customerManagement')">
+                <router-link :to='{path:"/customerManagement"}'>客户管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('statisticalStatement')">
+                <router-link :to='{path:"/statisticalStatement"}'>销售统计</router-link>
+            </li>
+        </ul>
+        <div class="indentManagement">
+            <div style="height: 45px;">
+                <div class="flex2 left" style="margin-right: 50px">
+                    <el-date-picker
+                        size="small"
+                        v-model="value6"
+                        type="daterange"
+                        placeholder="选择日期范围">
+                    </el-date-picker>
+                </div>
+                <div class="left flex2">
+                    <el-input v-model="input1" size="small" placeholder="订单号搜索" style="margin-right: 10px" ></el-input>
+                    <el-input v-model="input3" size="small" placeholder="电商卖家搜索"></el-input>
+                </div>
+               <el-col :span="24" class="indentList radioGreen">
+                   <el-radio-group v-model="radio" size="small" @change="changeStatus" >
+                       <el-radio-button label="0" >全部</el-radio-button>
+                       <el-radio-button label="1">待处理</el-radio-button>
+                       <el-radio-button label="2" >已完成</el-radio-button>
+                   </el-radio-group>
+               </el-col>
+            </div>
+            <el-table
+                :data="tableData"
+                style="width: 100%">
+                <el-table-column
+                    label="序号">
+                    <template scope="scope">{{scope.$index + 1}}</template>
+                </el-table-column>
+                <el-table-column
+                    prop="orderCode"
+                    label="订单编号">
+                </el-table-column>
+                <el-table-column
+                    prop="busiName"
+                    label="电商卖家">
+                </el-table-column>
+                <el-table-column
+                    prop="totalNum"
+                    label="订单数量">
+                </el-table-column>
+                <el-table-column
+                    prop="totalFee"
+                    label="订单金额">
+                </el-table-column>
+                <el-table-column
+                    width="180"
+                    label="下单时间">
+                    <template scope="scope">{{scope.row.createTime | formatDate }}</template>
+                </el-table-column>
+                <el-table-column
+                    prop="payType"
+                    label="结算方式"
+                    :formatter="formatData">
+                </el-table-column>
+                <el-table-column
+                    label="状态">
+                    <template scope="scope">
+                        <p  v-bind:class="[scope.row.status>6?'color2':scope.row.status<7?'color3':'']">{{scope.row.status==1?'待确认':scope.row.status==2?'待拿货':scope.row.status==3?'卖家待入库':scope.row.status==4?'待退货':scope.row.status==5?'待配货':scope.row.status==6?'部分配货':scope.row.status==7?'退货待签收':scope.row.status==8?'退货待确认':scope.row.status==9?'退货待入库':scope.row.status==99?'已完成':''}}</p>
+                    </template>
+                </el-table-column>
+                <el-table-column
+                    label="操作">
+                    <template scope="scope">
+                        <a href="javascript:void(0);" class="color4" @click="stateialog(scope.row.id, scope.row.status)">
+                            {{scope.row.status==1?'立即配货':scope.row.status==2?'待拿货':scope.row.status==3?'通知取货':scope.row.status==99?'查看':''}}
+                        </a>
+                        <a href="javascript:void(0);" class="color4" v-if="scope.row.state==4" @click="dialog = true">通知取货</a>
+                    </template>
+                </el-table-column>
+            </el-table>
+            <el-pagination
+                small
+                class="right"
+                style="margin-top: 20px;"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :current-page="currentPage"
+                :page-sizes="[10, 20, 30, 40]"
+                :page-size="pagesize"
+                layout="total, sizes, prev, pager, next, jumper"
+                :total="totalCount">
+            </el-pagination>
+            <a href="javascript:void(0)" class="export_excle" @click="exportTableData">导出excel</a>
+        </div>
+        <el-dialog
+            title="通知取货"
+            :visible.sync="dialog"
+            size="tiny">
+            <div class="flex2 inform">
+                <p>取货通知已发送给商家！</p>
+            </div>
+        </el-dialog>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {formatDate} from '../utils/date.js'
+    import {export_json_to_excel} from '../vendor/Export2Excel.js'
+    import {setStore,getStore} from  '../config/mUtils'
+    import {queryOrder,queryStallOrder} from '@/api/getData'
+    import {getMenuAuth,haveMenuAuth} from  '../utils/AuthMenu.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        filters:{
+        	formatDate(time){
+        		return formatDate(time,"yyyy-MM-dd hh:mm:ss");
+        	}
+        },
+        data() {
+            return {
+                dialog:false,
+                radio:1,
+                value6:'',
+                input:'',
+                input1: '',
+                input2: '',
+                input3: '',
+                orderStatusIn:['1','2','3','99'],
+                orderTypeIn:[2,4],
+                orderStatusNot:"",
+                tableData: [],
+                //默认每页数据量
+                pagesize: 8,
+
+                //默认高亮行数据id
+                highlightId: -1,
+
+                //当前页码
+                currentPage: 1,
+
+                //查询的页码
+                start: 1,
+
+                //默认数据总数
+                totalCount: 0,
+
+                //用户登录信息暂时写死
+            //  currentComp: getStore("curCompany")
+                currentComp:{id:'1000'}
+
+            }
+        },
+        async mounted(){
+            this.initloadData();
+            this.exportInit();		//初始化导出excel
+        },
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+            },
+            async initloadData() {
+            	let param ={
+            		pageIndex:this.currentPage,
+            		pageSize:this.pageSize,
+            		companyId:this.roleForm.compId,
+            		statusIn:this.orderStatusIn,
+            		statusNot:this.orderStatusNot,
+            		orderTypeIn:this.orderTypeIn
+            	}
+                //const res = await queryOrder(param);
+                const res = await queryStallOrder(param);
+                if (res.isSuccess == true) {
+                    //this.tableData = res.result.results;
+                    this.tableData = res.result.results;
+                    this.totalCount = res.result.totalCount;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+           changeStatus(){
+                var status=this.radio;
+            	if(status == 0) {
+        			this.orderStatusIn=['1','2','3','99'];
+        			this.initloadData();
+            	} else if (status == 1) {
+            		this.orderStatusNot='99';
+        			this.initloadData();
+            	} else if (status == 2) {
+            		this.orderStatusIn=['99'];
+        			this.initloadData();
+            	}
+            },
+            formatData:function(row,column){
+                let data = row[column.property];
+                if(data==0){
+                    data = '禁用';
+                }else if(data==1){
+                    data = '启用';
+                }
+                return data;
+    },
+            handleCurrentChange:function(val) {
+                this.currentPage = val;
+                this.initloadData();
+            },
+
+            handleIconClick(ev) {
+                console.log(ev);
+            },
+            stateialog(orderId, status){
+            	if(status == 1) {
+            	 	setStore("orderId", orderId);
+            		this.$router.push('/packageStall');
+            	} else if(status == 2 || status == 1 || status == 6){
+                    this.$router.push('/indentManagementReturnDetails');
+                }else
+                if(status == 3 || status == 5){
+                    this.$router.push('/indentManagementReturnDetails2');
+                }else
+                if(status == 7 || status == 9 || status == 8){
+                    this.$router.push('/indentManagementDetails');
+                }else if(status ==4){
+                    this.$router.push('/indentManagementPackageDetails');
+                }
+            },
+            exportInit(){
+	        	const s = document.createElement('script');
+				s.type = 'text/javascript';
+				s.src = 'http://oss.sheetjs.com/js-xlsx/xlsx.full.min.js';
+				document.body.appendChild(s);
+        	},
+            async exportTableData() {
+            	for(let i=0;i<this.tableData.length;i++){
+            		let excelData = this.tableData[i];
+            		if(excelData.status == 1) {
+            			excelData.statusVal = '待配货';
+            		} else if (excelData.status == 2) {
+            			excelData.statusVal = '待配货';
+            		} else if (excelData.status == 3) {
+            			excelData.statusVal = '待取货';
+            		} else if (excelData.status == 4) {
+            			excelData.statusVal = '退回';
+            		} else if (excelData.status == 99) {
+            			excelData.statusVal = '完成';
+            		}
+                }
+            	const list = this.tableData;
+                const tHeader = ['订单编号', '电商卖家','订单数量','订单金额','下单时间','结算方式','状态'];
+			　　　const filterVal = ['orderCode', 'companyId','totalNum','totalPrice','createTime','','statusVal'];
+			　　　const data = this.formatJson(filterVal, list);
+			　　　export_json_to_excel(tHeader, data, '订单管理表');
+            },
+            formatJson(filterVal, jsonData) {
+		　　　　　　return jsonData.map(v => filterVal.map(j => v[j]))
+		　　　},
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/indentManagement';
+</style>

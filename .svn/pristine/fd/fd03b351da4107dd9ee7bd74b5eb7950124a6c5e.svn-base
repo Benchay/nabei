@@ -1,0 +1,201 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li class="menuIndex2">
+                <router-link :to='{path:"/salesReturn"}'>退货</router-link>
+            </li>
+        </ul>
+        <div class="returnsAffirm">
+            <router-link :to='{path:"/salesReturn"}' class="right comeBack2">返回</router-link>
+            <div class="affirmButtom">
+                <a href="javascript:void(0)"  class="buttonColor3" @click="returnsAffirm">确认退货</a>
+            </div>
+            <div class="returnsAffirmTable">
+                <table width="100%" border="0" cellpadding="0" cellspacing="0" class="tableFirst">
+                    <tr>
+                        <td class="firstLi"><input type="checkbox" class="checkbox" @click="checkAllClick" />多选</td>
+                        <td>主图/货号</td>
+                        <td>颜色</td>
+                        <td>尺码</td>
+                        <td>单价</td>
+                        <td>数量</td>
+                    </tr>
+                </table>
+                <div class="tableHead">
+                    <div v-for="(item,key,index) in tableData">
+                    <table width="100%" border="0" cellpadding="0" cellspacing="0" class="buyTable">
+                        <tr>
+                            <th class="flex unfinisdhedFirst"><span style="width: 80px;">档口名称:{{item.stallName}}</span></th>
+                            <th>采购数量:{{item.orderNum}}</th>
+                            <th>总额:{{item.price}}</th>
+                            <th colspan="2" class="flex2" style="width:100%;">退货原因：
+                                <el-select v-model="value" placeholder="请选择" size="mini">
+                                <el-option
+                                    v-for="list in options"
+                                    :key="list.value"
+                                    :label="list.label"
+                                    :value="list.value">
+                                </el-option>
+                            </el-select></th>
+                        </tr>
+                    </table>
+                    <!--表格内容-->
+                    <div class="tableContent2">
+                        <table width="100%" border="0" cellpadding="0" cellspacing="0" class="buyTable2">
+                            <tr>
+                            	<td class="firstLi"><input type="checkbox" :value="item.orderDetailId" v-model="selectArr"> </el-checkbox></td> 
+                                <td>
+                                    <div class="tdFirst">
+                                        <img class="buyImg1" src="../image/111.png" alt="">
+                                        <div>{{item.productCode}}</div>
+                                    </div>
+                                </td>
+                                <td>{{item.color}}</td>
+                                <td>{{item.size}}</td>
+                                <td>{{item.unitPrice}}</td>
+                                <td>{{item.orderNum}}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    </div>
+                </div>
+            </div>
+            <el-pagination
+                small
+                class="right"
+                style="margin-top: 20px;"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :current-page="currentPage4"
+                :page-sizes="[10, 20, 30, 40]"
+                :page-size="100"
+                layout="total, sizes, prev, pager, next, jumper"
+                :total="400">
+            </el-pagination>
+            <a href="javascript:void(0)" class="export_excle">导出excel</a>
+        </div>
+        <el-dialog
+            title=""
+            :visible.sync="returnsAffirmDialog"
+            size="tiny">
+            <div class="flex2 returnsAffirmDialog">
+                <img src="../image/correct.png" alt="">
+                <p>下单成功，等待档口签收！</p>
+            </div>
+        </el-dialog>
+    </div>
+</template>
+<script>
+    import headTop from '../components/headTop'
+    import {salesReturnListEnter} from '@/api/getData'
+    import {userInfo} from  '../config/mUtils'
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                textarea:'',
+                currentPage4:4,
+                returnsAffirmDialog:false,
+                tableData:[],
+                selectArr:[],
+                options: [{
+                    value: '1',
+                    label: '商品与描述不符'
+                }, {
+                    value: '2',
+                    label: '商品发错'
+                }, {
+                    value: '3',
+                    label: '商品质量问题'
+                }, {
+                    value: '4',
+                    label: '其他原因'
+                }, {
+                    value: '5',
+                    label: '收到商品破损'
+                }],
+                value: '1'
+            }
+        },
+        mounted(){
+  
+        },
+        watch:{
+            '$route':function (route) {         	
+            	this.tableData = this.$route.query.data;
+            }
+        },       
+        methods: {
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+                this.currentPage = 1;
+                this.pageSize = val;
+                            
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+                this.currentPage = val;
+            },
+             async returnsAffirm(){
+                 if(this.selectArr == undefined || this.selectArr.length==0){
+                    this.$message({
+                        type: 'error',
+                        message: '请先勾选要退货的行！'
+                    });
+                    return;
+                }   
+                let ids='';
+                for(let i=0;i<this.selectArr.length;i++){
+                	if(i==this.selectArr.length-1){
+                		ids += this.selectArr[i];
+                	}else{
+                		ids += this.selectArr[i] + ',';
+                	}
+                }  
+             	let param = {
+            		"ids": ids,
+            		"companyId": userInfo().companyId
+            	};
+            	const res = await salesReturnListEnter(param);
+        		if (res.isSuccess == true) {
+	                this.$message({
+	                    type: 'success',
+	                    message: res.result.msg
+	                });
+	                this.returnsAffirmDialog = true;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }          	
+            },
+            checkAllClick(){
+            	var _this = this;
+			      if (!event.currentTarget.checked) {
+			        _this.selectArr = [];
+			      } else { //实现全选
+			        _this.selectArr = [];
+			        _this.tableData.forEach(function(item, i) {
+			              _this.selectArr.push(item.orderDetailId);
+			        });
+			      }           	
+            }
+        },
+        created () {
+            this.intervalid1 = setInterval(() => {
+                this.returnsAffirmDialog = false;
+            }, 5000)
+        },
+        beforeDestroy(){
+            clearInterval(this.intervalid1)
+        },
+    }
+</script>
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/salesReturn';
+</style>

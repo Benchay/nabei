@@ -1,0 +1,70 @@
+.expressDynamic{
+    margin:0 30px;
+    background: #fff;
+    padding: 20px 180px;
+    .expressPlan{
+        .step01,.step02,.step03{
+            background: url("../image/wparcel.png") no-repeat;
+            background-size: 100%;
+            display: inline-block;
+            width: 45px;
+            height: 45px;
+            line-height: 25px;
+        }
+        .step02{
+            background: url("../image/wlogistics01.png");
+            background-size: 100%;
+        }
+        .step03{
+            background: url("../image/wsign01.png");
+            background-size: 100%;
+        }
+        .el-step__head.is-text{border-style: hidden;background-color:transparent !important;}
+    }
+    .el-step__head{
+        width: 45px;
+        height: 45px;
+    }
+    .el-step__line.is-horizontal{
+        top: 22px;
+    }
+    .expressProgressBar{
+        background: #f4f4f4;
+        padding: 20px 40px;
+        ul{
+            display: flex;
+            flex-direction: column-reverse;
+            li{
+                font-size: 12px;
+                display: flex;
+                align-items: center;
+                line-height: 30px;
+                text-align: center;
+                div{
+                    width: 80px;
+                }
+                div:last-child{
+                    width:300px;
+                    text-align: left;
+                }
+                div:first-child{
+                    width:50px;
+                }
+            }
+        }
+
+    }
+    .details{
+        font-size: 13px;
+        padding: 20px;
+        color:#333;
+        li{
+            height: 30px;
+            line-height: 30px;
+            img{
+                margin:0 5px 0 20px;
+            }
+        }
+    }
+}
+

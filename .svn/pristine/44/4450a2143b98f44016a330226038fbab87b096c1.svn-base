@@ -1,0 +1,56 @@
+.stallProcurement{
+    color:#333;
+    margin:0 30px;
+    background: #fff;
+    padding: 20px 30px;
+    height:77%;
+    .stallTop{
+        .right{
+            width: 200px;
+        }
+    }
+    .stallTabs{
+        margin: 20px 0;
+    }
+    .stallTable{
+        img{
+            width: 40px;
+            height: 40px;
+        }
+        .tableFoot{
+            .blue2{
+                margin-right: 7px;
+            }
+        }
+    }
+    .stallDetailsButton{
+        margin-bottom: 20px;
+    }
+    .stallInput{
+        width: 80px;
+    }
+}
+
+.stocktakingTop>div{
+    margin-right: 10px;
+}
+.stallTable{
+    .tableTop{
+        padding: 0 20px;
+        font-size: 12px;
+        height: 40px;
+        line-height: 40px;
+        border: 1px solid #d4d4d4;
+        div{
+            margin-right: 20px;
+        }
+    }
+}
+.date{
+    margin-top: 10px;
+    font-size: 12px;
+    p{
+        height: 30px;
+        line-height: 30px;
+    }
+}

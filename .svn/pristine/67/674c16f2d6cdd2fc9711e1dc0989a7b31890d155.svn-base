@@ -1,0 +1,305 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/currentInventory"}'>当前库存</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/inventoryDetail"}'>库存变动</router-link>
+            </li>
+            <li class="menuIndex">
+                <router-link :to='{path:"/stocktaking"}'>库存盘点</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/stockTransshipment"}'>库存调拨</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/inventoryWarning"}'>库存预警</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/storeManagement"}'>多仓管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/statisticalStatement"}'>库存初始化</router-link>
+            </li>
+        </ul>
+        <div class="fastShippingDetails">
+            <router-link class="comeBack right" :to='{path:"/stocktaking"}'>返回</router-link>
+            <div class="fastShipping2 radioGreen">
+                <el-col :span="10" class="isLeft">
+                    <el-col :span="24" class="leftList">
+                        <div class="flex">
+                            <el-col :span="4" class="title">货号：</el-col>
+                            <el-col :span="19">
+                                <div>
+                                    <el-input v-model="productCode"  icon="search" placeholder="请输入货号..."  :on-icon-click="isShow"></el-input>
+                                </div>
+                            </el-col>
+                        </div>
+                       <div  v-if="isHide">
+                           <el-col :span="4">&nbsp;</el-col>
+                           <el-col :span="19" class="content">
+                               <div class="flex" style="margin-top: 20px">
+                                   <img src="../image/111.png" alt="">
+                                   <p>仓库位置：{{tableData.length>0?tableData[0].title:''}}</p>
+
+                               </div>
+                           </el-col>
+                       </div>
+                    </el-col>
+                  <div v-if="isHide">
+                      <div class="startTable">
+                          <el-table
+                              :data="tableData"
+                              height="250"
+                              style="width: 100%;overflow: auto;">
+                              <el-table-column
+                                  prop="colour"
+                                  label="颜色">
+                              </el-table-column>
+                              <el-table-column
+                                  prop="size"
+                                  label="尺码">
+                              </el-table-column>
+                              <el-table-column
+                                  prop="stockNum"
+                                  label="库存数">
+                              </el-table-column>
+                              <el-table-column
+                                  label="盘点数">
+                                  <template scope="scope">
+                                      <el-input v-model="scope.row.checkActualNum" :value="scope.row.stockNum"></el-input>
+                                  </template>
+                              </el-table-column>
+                          </el-table>
+                      </div>
+                      <el-col :span="24" class="flex leftList">
+                          <el-col :span="4" class="title">备注信息：</el-col>
+                          <el-col :span="18" class="content">
+                              <el-input v-model="input" placeholder="（非必填）"></el-input>
+                          </el-col>
+                      </el-col>
+                      <el-col :span="24" class="flex2 leftButton">
+                          <a href="javascript:void(0)" class="buttonColor" @click="addToList">加入盘点清单</a>
+                      </el-col>
+                  </div>
+                </el-col>
+                <el-col :span="14" class="isRight">
+                    <div class="flex" style="justify-content: space-between">
+                        <div>盘点清单</div>
+                        <div>
+                            <a href="javascript:void(0)" class="buttonColor  right">删除</a>
+                            <a href="javascript:void(0)" class="buttonColor  right">导入盘点单</a>
+                        </div>
+                    </div>
+                    <el-table
+                        :data="tableData6"
+                        class="rightTable"
+                        show-summary
+                        max-height="400"
+                        style="width: 100%">
+                        <el-table-column
+                            type="selection"
+                            width="55">
+                        </el-table-column>
+                        <el-table-column
+                            label="主图/货号">
+                            <template scope="scope">
+                                <div class="flex2 tableFirst">
+                                    <img src="../image/111.png" alt=""  class="tableImg">
+                                    <p>{{scope.row.productCode}}</p>
+                                </div>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            prop="colour"
+                            label="颜色">
+                        </el-table-column>
+                        <el-table-column
+                            prop="size"
+                            label="尺码">
+                        </el-table-column>
+                        <el-table-column
+                            prop="stockNum"
+                            label="库存数">
+                        </el-table-column>
+                        <el-table-column
+                            prop="checkActualNum"
+                            label="盘点数">
+                        </el-table-column>
+                    </el-table>
+                    <el-col :span="24" class="flex2 payButton">
+                        <a href="javascript:void(0)" class="buttonColor" @click="dialogVisible = true">结束盘点</a>
+                    </el-col>
+                </el-col>
+            </div>
+        </div>
+        <el-dialog
+            title="结束盘点"
+            :visible.sync="dialogVisible"
+            size="tiny">
+            <span>确定结束此次盘点？</span>
+            <span slot="footer" class="dialog-footer">
+    <el-button @click="dialogVisible = false">取 消</el-button>
+    <el-button type="primary" @click="submitChecked">确 定</el-button>
+  </span>
+        </el-dialog>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {getCompanyStocks,queryWarehouse,createStockOrder,queryProductInfo} from '@/api/getData'
+    import {export_json_to_excel} from '../vendor/Export2Excel.js'
+    import {userInfo,getStore,setStore} from  '../config/mUtils'
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                isHide:false,
+                dialogVisible:false,
+                state:1,
+                input:'',
+                tableData6:[],
+                tableData:[],
+                status:true,
+                data1:[],
+                productCode:''
+
+
+            }
+        },
+        mounted(){
+
+        },
+        methods: {
+            isShow(){
+                this.queryProductInfo();
+            },
+            addToList(){
+            	for(var i=0;i<=this.data1.length;i++){
+            		if(this.data1[i]==this.productCode){
+            			this.status = false;
+            			break;
+            		}
+            	}
+            	if(this.status){
+            		this.tableData6 = this.tableData6.concat(this.tableData);
+            		this.data1.push(this.productCode);
+            	}
+            },
+            async queryProductInfo(){
+                if(this.productCode==''){
+                    this.$message({
+                        type: 'error',
+                        message: '请输入货号！'
+                    });
+                    return
+
+                }
+                let  param = {
+                    "companyId":userInfo().companyId,
+                    "warehouseId":userInfo().warehouseId,// TODO setwareHouseId
+                    "productCode":this.productCode
+                };
+                const res = await queryProductInfo(param);
+                if (res.isSuccess == true) {
+                    if(res.result.length>0){
+                        this.$message({
+                            type: 'success',
+                            message: '加载数据成功'
+                        });
+                        this.tableData = res.result;
+                    }else{
+                        this.$message({
+                            type: 'error',
+                            message: '没有查询到数据！'
+                        });
+                        return
+                    }
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+                this.isHide=true;
+            },
+            async submitChecked(){
+                    let orderTotalStockFee=0;
+                    let orderNum=0;
+                    let stockNum=0;
+                    this.tableData6.forEach((obj)=>{
+                        orderNum+=(obj.checkActualNum-obj.stockNum),
+                        orderTotalStockFee+=(obj.unitPrice*(obj.checkActualNum-obj.stockNum)),
+                        stockNum+=obj.stockNum,
+                        obj.orderNum = obj.checkActualNum-obj.stockNum,
+                        obj.price = (obj.checkActualNum-obj.stockNum)*obj.unitPrice})
+
+                    let  param = {
+                        "type":'5',
+                        "companyId":userInfo().companyId,
+                        "warehouseId":userInfo().warehouseId,
+                        "flowStatus ":userInfo().warehouseId,
+                        "totalStockFee":orderTotalStockFee,
+                        "orderNum":orderNum,
+                        "checkedStockNum":stockNum,
+                        "autoAudit":true,
+                        "details": this.tableData6
+                    };
+                    const res = await createStockOrder(param);
+                    if (res.isSuccess == true) {
+                        this.$message({
+                            type: 'success',
+                            message: '提交盘点单成功！3S后跳转到列表...'
+                        });
+
+
+                    }else{
+                        this.$message({
+                            type: 'error',
+                            message: res.errorMsg
+                        });
+                    }
+
+                this.dialogVisible = false;
+
+                setTimeout(() => {
+                    this.$router.push('/stocktaking')
+                }, 3000);
+
+
+            }
+
+
+            },
+
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/fastShipping2';
+    @import "../style/stocktaking";
+    .fastShipping2{
+        padding: 20px 20px 0 0 ;
+        margin: 0 30px 0 10px;
+        .isLeft{
+            padding-right: 20px;
+        }
+        .startTable{
+            padding: 0 10px;
+            margin-bottom: 20px;
+        }
+        .contentInfo{
+            p{
+                height: 30px;
+                line-height: 30px;
+                margin-left: 5px;
+            }
+        }
+    }
+</style>

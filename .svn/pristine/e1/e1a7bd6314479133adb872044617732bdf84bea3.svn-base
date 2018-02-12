@@ -1,0 +1,14 @@
+.logTools{
+    color:#666;
+    font-size: 14px;
+    margin:1px 30px;
+    background: #fff;
+    padding: 20px 30px;
+    height:100%;
+    .logToolsTop>div{
+        width: 210px;
+    }
+    .logToolsTable{
+        margin-top: 20px;
+    }
+}

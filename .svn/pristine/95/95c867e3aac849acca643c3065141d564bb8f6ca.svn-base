@@ -1,0 +1,347 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/fastShipping2"}'>快速出货</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/returnManagement2"}'>快速退货</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/orderPurchaseStall"}'>订单管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/sellerSettlement"}'>客户结算</router-link>
+            </li>
+            <li class="menuIndex">
+                <router-link :to='{path:"/customerManagement"}'>客户管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/statisticalStatement"}'>销售统计</router-link>
+            </li>
+        </ul>
+        <div class="customerManagement">
+            <div class="customerTop flex left">
+                <el-input v-model="compNameSerche" placeholder="公司名称搜索" size="small" :on-icon-click="handleIconClick"  icon="search" ></el-input>
+                <el-input v-model="roleNameSerche" placeholder="角色搜索" size="small" :on-icon-click="handleIconClick"  icon="search" ></el-input>
+                <el-input v-model="userNameSerche" placeholder="联系人搜索" size="small" :on-icon-click="handleIconClick"  icon="search" ></el-input>
+                <el-input v-model="mobileSerche" placeholder="联系电话搜索" size="small" :on-icon-click="handleIconClick"  icon="search" ></el-input>
+            </div>
+            <el-col :span="24" class="customerButton">
+                <a href="javascript:void(0)" class="buttonColor" @click="dialogVisible =true">添加卖家</a>
+                <a href="javascript:void(0)" class="buttonColor">删除</a>
+            </el-col>
+            <div class="customerTable">
+                <el-table
+                    :data="tableData"
+                    style="width: 100%">
+                    <el-table-column
+                        type="selection"
+                        width="55">
+                    </el-table-column>
+                    <el-table-column
+                        prop="compName"
+                        label="公司名称">
+                    </el-table-column>
+                    <el-table-column
+                        prop="mobile"
+                        label="联系电话">
+                    </el-table-column>
+                    <el-table-column
+                        prop="location"
+                        width="250"
+                        label="地址">
+                    </el-table-column>
+                    <el-table-column
+                        prop="remarks"
+                        width="250"
+                        label="备注信息">
+                    </el-table-column>
+                    <el-table-column
+                        label="操作">
+                        <template scope="scope">
+                            <div class="stallOperation">
+                                <a href="javascript:void(0)" @click="dialogVisible2 = true">编辑</a>
+                                <a href="javascript:void(0)">删除</a>
+                            </div>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+            <el-pagination
+                small
+                class="right"
+                style="margin-top: 20px;"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :current-page="currentPage"
+                :page-sizes="[10, 20, 30, 40]"
+                :page-size="pagesize"
+                layout="total, sizes, prev, pager, next, jumper"
+                :total="totalCount">
+            </el-pagination>
+            <a href="javascript:void(0)" class="export_excle">导出excel</a>
+        </div>
+        <el-dialog
+            title="添加卖家"
+            :visible.sync="dialogVisible"
+            size="tiny"
+            :before-close="handleClose">
+            <div class="dialogAddCustomer">
+                <el-form ref="form" :model="form" label-width="120px">
+                    <el-form-item label="公司名称：">
+                        <el-autocomplete
+                            style="width:100%;"
+                            v-model="form.name"
+                            :fetch-suggestions="querySearchAsync"
+                            placeholder="请输入卖家公司名称"
+                            @select="handleSelect"
+                        ></el-autocomplete>
+                    </el-form-item>
+                    <el-form-item label="联系电话：">
+                        <el-input v-model="form.mobile" placeholder="请输入卖家电话"></el-input>
+                    </el-form-item>
+                    <el-form-item label="卖家地址：">
+                        <el-input v-model="form.location" placeholder="请输入卖家地址"></el-input>
+                    </el-form-item>
+                    <el-form-item label="备注：">
+                        <el-input
+                            type="textarea"
+                            :rows="2"
+                            placeholder="请输入备注信息"
+                            v-model="form.textarea">
+                        </el-input>
+                    </el-form-item>
+                </el-form>
+            </div>
+            <span slot="footer" class="dialog-footer flex2">
+                <a href="javascript:void(0)" @click="dialogVisible = false" class="buttonColor">确 定</a>
+                <a href="javascript:void(0)" @click="dialogVisible = false" class="buttonColor2">取 消</a>
+              </span>
+        </el-dialog>
+        <el-dialog
+            title="编辑卖家信息"
+            :visible.sync="dialogVisible2"
+            size="tiny"
+            :before-close="handleClose">
+            <div class="dialogAddCustomer">
+                <el-form ref="form" :model="form" label-width="120px">
+                    <el-form-item label="公司名称：">
+                        <el-autocomplete
+                            style="width:100%;"
+                            v-model="form.name"
+                            :fetch-suggestions="querySearchAsync"
+                            placeholder="请输入卖家公司名称"
+                            @select="handleSelect"
+                        ></el-autocomplete>
+                    </el-form-item>
+                    <el-form-item label="联系电话：">
+                        <el-input v-model="form.mobile" placeholder="请输入卖家电话"></el-input>
+                    </el-form-item>
+                    <el-form-item label="卖家地址：">
+                        <el-input v-model="form.location" placeholder="请输入卖家地址"></el-input>
+                    </el-form-item>
+                    <el-form-item label="备注：">
+                        <el-input
+                            type="textarea"
+                            :rows="2"
+                            placeholder="请输入备注信息"
+                            v-model="form.textarea">
+                        </el-input>
+                    </el-form-item>
+                </el-form>
+            </div>
+            <span slot="footer" class="dialog-footer flex2">
+                <a href="javascript:void(0)" @click="dialogVisible2 = false" class="buttonColor">确 定</a>
+                <a href="javascript:void(0)" @click="dialogVisible2 = false" class="buttonColor2">取 消</a>
+              </span>
+        </el-dialog>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {mapActions, mapState} from 'vuex'
+    import {queryAllContacts,loadUserInIds} from '@/api/getData'
+    import {setStore,getStore} from  '../config/mUtils'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                dialogVisible:false,
+                dialogVisible2:false,
+                form:{
+                    name:'',
+                    stallCoding:'',
+                    mobile:'',
+                    location:'',
+                    textarea:'',
+
+                },
+                roleForm: {
+                    userId: '',
+                    roleId: '',
+                    compId:''
+                },
+                ids:[],
+                pagesize: 10,
+                //默认高亮行数据id
+                highlightId: -1,
+                //当前页码
+                currentPage: 1,
+                //查询的页码
+                start: 1,
+                //默认数据总数
+                totalCount: 0,
+
+                compNameSerche:'',
+                roleNameSerche:'',
+                userNameSerche:'',
+                mobileSerche:'',
+                tableData: [{}]
+            }
+        },
+        mounted(){
+            var userInfo=getStore("userInfo");
+            var vjson = JSON.parse(userInfo);
+            //console.log(userInfo);
+            this.roleForm.userId=vjson.id;
+            var currentComp=getStore("curCompany");
+            var vcom = JSON.parse(currentComp);
+            this.roleForm.compId=vcom.id;
+            //测试代码
+            //this.roleForm.compId='2';
+            //console.log(this.roleForm.userId);
+            this.loadInit();
+            this.restaurants = this.loadAll();
+        },
+        methods: {
+            loadAll() {
+                return [
+                    { "value": "1三全鲜食（北新泾店）", "address": "长宁区新渔路144号" },
+                    { "value": "2Hot honey 首尔炸鸡（仙霞路）", "address": "上海市长宁区淞虹路661号" },
+                    { "value": "3新旺角茶餐厅", "address": "上海市普陀区真北路988号创邑金沙谷6号楼113" },
+                ];
+            },
+            querySearchAsync(queryString, cb) {
+                var restaurants = this.restaurants;
+                var results = queryString ? restaurants.filter(this.createStateFilter(queryString)) : restaurants;
+
+                clearTimeout(this.timeout);
+                this.timeout = setTimeout(() => {
+                    cb(results);
+                }, 200 * Math.random());
+            },
+            createStateFilter(queryString) {
+                return (state) => {
+                    return (state.value.indexOf(queryString.toLowerCase()) === 0);
+                };
+            },
+            handleSelect(item) {
+                console.log(item);
+            },
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+            },
+            handleIconClick(){
+                let  param = {
+                    "userId":this.roleForm.userId,
+                    "pageSize": this.pagesize,
+                    "pageIndex": this.currentPage,
+                    "compName":this.compNameSerche,
+                    "roleName":this.roleNameSerche,
+                    "userName":this.userNameSerche,
+                    "mobile":this.mobileSerche,
+                };
+                this.loadDataWithCondition(param);
+            },
+            loadInit(){
+                this.currentPage = 1;
+                let  param = {
+                    "userId":this.roleForm.userId,
+                    "pageSize": this.pagesize,
+                    "pageIndex": this.currentPage
+                };
+                this.loadDataWithCondition(param);
+            },
+            async loadDataWithCondition(param) {
+                var userId=param.userId;
+                const res = await queryAllContacts({userId:userId});
+
+                if (res.isSuccess == true) {
+                    var ids=this.getUserIds(res.result.data);
+                    var  param2 = param;
+                    param2.ids=ids;
+                    const res1=await loadUserInIds(param2);
+                    if (res1.isSuccess == true){
+                        //this.tableData = res1.result.data;
+                        this.totalCount = res1.result.totalCount;
+                        this.tableData=this.linkParaRemark(res.result.data,res1.result.data);
+                    }else{
+                        this.$message({
+                            type: 'error',
+                            message: res.errorMsg
+                        });
+                    }
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            getUserIds(data){
+                if(data==null || data.length <1) return '';
+                var ids='';
+                for(var i=0; i<data.length; i++) {
+                    var resultData = data[i];
+                    if(i<(data.length-1)){
+                        ids=ids +resultData.linkUserId +",";
+                    }else if(i==(data.length-1)){
+                        ids=ids +resultData.linkUserId ;
+                    }
+                }
+                return ids;
+            },
+            //拼接备注
+            linkParaRemark(linkData,usrData){
+                for(var i=0; i<usrData.length; i++) {
+                    var resultData = usrData[i];
+                    for(var j=0;j<linkData.length;j++){
+                        var resultData0 = linkData[j];
+                        if(resultData0.linkUserId == resultData.userId){
+                            usrData[i].remark=resultData0.remark;
+                            break;
+                        }
+                    }
+                }
+                return usrData;
+            },
+            handleCurrentChange: function(val) {
+                this.currentPage = val;
+                var role={"compId":this.roleForm.compId};
+                if(this.queryName !=null && this.queryName!=""){
+                    role={"compId":this.roleForm.compId,"name":this.queryName};
+                }
+                let  param = {
+                    "userId":this.roleForm.userId,
+                    "pageSize": this.pagesize,
+                    "pageIndex": this.currentPage
+                };
+                this.loadDataWithCondition(param);
+            },
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/customerManagement';
+</style>

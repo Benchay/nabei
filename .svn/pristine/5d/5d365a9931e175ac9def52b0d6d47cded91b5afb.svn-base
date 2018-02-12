@@ -1,0 +1,79 @@
+<template>
+    <el-button @click="checkSend" :disabled="time > 0">
+        {{ text }}
+    </el-button>
+</template>
+
+<script>
+
+    import {getMobileCode, getAdminInfo} from '@/api/getData'
+	import {mapActions, mapState} from 'vuex'
+    import {setStore} from  '../config/mUtils'
+    import ElButton from "../../node_modules/element-ui/packages/button/src/button";
+
+    export default  {
+        components: {ElButton},
+        props: {
+            mobilehpne:'',
+            second: {
+                type: Number,
+                default: 60
+            }
+        },
+        data() {
+            return {
+                time: 0,
+                mobilehpne:''
+            }
+        },
+        methods: {
+            checkSend(){
+                this.$emit('refCheckmobile', this.mobilehpne);
+            },
+            send(sendPhone) {
+            	if(sendPhone && sendPhone != ''){
+            		this.mobilehpne = sendPhone;
+            	}
+                var pattern = /^1[3|4|5|7|8][0-9]{9}$/
+                if (this.mobilehpne === '') {
+				this.$message.error({
+							title: 'error',
+							message: '手机号不能为空',
+							offset: 100
+						});
+                    return false;
+                } else if (!pattern.test(this.mobilehpne)) {
+                    this.$message.error({
+							title: 'error',
+							message: '请输入正确的手机号',
+							offset: 100
+						});
+                    return false;
+                }
+
+              const res =  getMobileCode({mobile:this.mobilehpne})
+                if (res.isSuccess == true) {
+				/*
+                    this.$message({
+                        type: 'success',
+                        message: '验证码已发出'
+                    });*/
+                }
+                this.time = this.second
+                this.timer()
+                this.$emit('send')
+            },
+            timer() {
+                if (this.time > 0) {
+                    this.time = this.time - 1
+                    setTimeout(this.timer, 1000)
+                }
+            }
+        },
+        computed: {
+            text() {
+                return this.time > 0 ? this.time + 's' : '获取验证码'
+            }
+        }
+    }
+</script>

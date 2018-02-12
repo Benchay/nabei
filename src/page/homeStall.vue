@@ -1,0 +1,416 @@
+<template>
+    <div class="fillcontain">
+        <div class="homeStall">
+            <el-col :span="15" class="isLeft">
+                <div class="shortcut">
+                    <div class="shortcutFirst">
+                        <div>
+                            <el-select v-model="value5"
+                                       class="right firstSelect"
+                                       multiple
+                                       filterable
+                                       allow-create
+                                       multiple-limit="4"
+                                       size="small"
+                                       @change="choiceMenus"
+                                       placeholder="显示快捷功能">
+                                <el-option
+                                    v-for="item in options"
+                                    :key="item.value"
+                                    :label="item.label"
+                                    :value="item.value">
+                                </el-option>
+                            </el-select>
+                        </div>
+                    </div>
+                    <div style="width: 100%;" class="shortcutSecond">
+                        <ul>
+                            <li class="flex2" v-show="this.options[0].display =='1'">
+                                <router-link :to='{path:"/fastShipping2"}'  class="flex2 ">
+                                    <img src="../image/syicon01.png" alt="">
+                                    <span>快速出货</span>
+                                </router-link>
+                            </li>
+                            <li class="flex2" v-show="this.options[1].display =='1'">
+                                <router-link :to='{path:"/returnManagement2"}' class="flex2">
+                                    <img src="../image/syicon02.png" alt="">
+                                    <span>快速退货</span>
+                                </router-link>
+                            </li>
+                            <li class="flex2" v-show="this.options[2].display =='1'">
+                                <router-link :to='{path:"/stallProcurement"}' class="flex2">
+                                    <img src="../image/syicon03.png" alt="">
+                                    <span>采购入库</span>
+                                </router-link>
+                            </li>
+                            <li class="flex2" v-show="this.options[3].display =='1'">
+                                <router-link :to='{path:"/stocktaking"}' class="flex2">
+                                    <img src="../image/syicon04.png" alt="">
+                                    <span>库存盘点</span>
+                                </router-link>
+                            </li>
+                            <li class="flex2" v-show="this.options[4].display =='1'">
+                                <router-link :to='{path:"/stockTransshipment"}' class="flex2">
+                                    <img src="../image/syicon05.png" alt="">
+                                    <span>库存调拨</span>
+                                </router-link>
+                            </li>
+                            <li class="flex2" v-show="this.options[5].display =='1'">
+                                <router-link :to='{path:"/sellerSettlement"}' class="flex2">
+                                    <img src="../image/syicon06.png" alt="">
+                                    <span>客户结算</span>
+                                </router-link>
+                            </li>
+                            <li class="flex2" v-show="this.options[6].display =='1'">
+                                <router-link :to='{path:"/takeGoods"}' class="flex2">
+                                    <img src="../image/syicon07.png" alt="">
+                                    <span>取货码</span>
+                                </router-link>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="stallStatistics">
+                    <div class="stallTitle">
+                        <a href="javascript:void(0)" v-for="(obj,index) in items2" @click="salesTabss(index)"  :class="{'change3':index === clickIndex2}" class="left">{{obj}}</a>
+                    </div>
+                    <ul class="flex2">
+                        <li>
+                            <div><img src="../image/syicon08.png" alt=""></div>
+                            <div>
+                                <P>销售额（元）</P>
+                                <P class="tit">12520</P>
+                            </div>
+                        </li>
+                        <li>
+                            <div><img src="../image/syicon09.png" alt=""></div>
+                            <div>
+                                <P>销售订单数（个）</P>
+                                <P class="tit">12520</P>
+                            </div>
+                        </li>
+                        <li>
+                            <div><img src="../image/syicon10.png" alt=""></div>
+                            <div>
+                                <P>客户欠款（元）</P>
+                                <P class="tit">12520</P>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="stallData" style="width:96%;overflow: auto">
+                    <div class="stallDataTitle">
+                        <p class="left">销售数据</p>
+                        <el-radio-group v-model="radio3" size="small" class="right radioGreen">
+                            <el-radio-button label="1">七天</el-radio-button>
+                            <el-radio-button label="2">一个月</el-radio-button>
+                            <el-radio-button label="3">三个月</el-radio-button>
+                        </el-radio-group>
+                    </div>
+                    <div class="stallDataButton">
+                        <ul class="flex">
+                            <li v-for="(obj,index) in items" @click="salesTabs(index)"  :class="{'change2':index === clickIndex}">
+                                <a href="javascript:void(0)">{{obj}}</a>
+                            </li>
+                        </ul>
+                    </div>
+                    <stockedLine :lineData="lineData" :lineUnit="lineUnit" :numData="numData" :typeName="typeName" :lineColor="lineColor"></stockedLine>
+                </div>
+            </el-col>
+            <el-col :span="9" class="isRight">
+                <div class="newNotice">
+                    <div class="flex">
+                        <img src="../image/tmessage03.png" alt="">
+                        <p class="title">最新公告</p>
+                    </div>
+                    <ul class="noticeList">
+                        <li v-for="item in bulletinData">【{{item.createTime}}】公告标题：{{item.title}}</li>
+                    </ul>
+                    <div v-show="bulletinCount>3" class="right noticeButton"><router-link :to='{path:"/systemNotice"}'>查看更多 》</router-link></div>
+                </div>
+                <div class="newNotice newNotice2">
+                    <div class="flex">
+                        <img src="../image/tmessage03.png" alt="">
+                        <p class="title">近期动态</p>
+                    </div>
+                    <ul class="DynamicList">
+                        <li class="flex" v-for="item in workMessageData">
+                            <div class="listHead">
+                                <img src="../image/sprite02.png" alt="">
+                            </div>
+                            <div class="state">
+                                <p class="flex"><span class="listState">{{item.tempOrderStatus}}</span><span class="listNum">{{item.companyName}}</span></p>
+                                <p class="flex"><span class="listState">{{item.tempOrderTime}}</span><span class="listNum">{{item.tempOrderTitle}}：{{item.tempOrderId}}</span></p>
+                            </div>
+                        </li>
+                        
+                    </ul>
+                    <div class="right noticeButton" v-if="workMessageCount > 3"><router-link :to='{path:"/messageCenter"}'>查看更多 》</router-link></div>
+                </div>
+                <router-link :to='{path:"/stallIntroduction"}' class="greenHand">
+                    <div>
+                        <p class="title">新手入门</p>
+                        <div class="greenHandImg">
+                            <img src="../image/timg2.png" alt="">
+                        </div>
+                    </div>
+                </router-link>
+            </el-col>
+            <el-col :span="24" style="height: 70px;">
+                &nbsp;
+            </el-col>
+        </div>
+    </div>
+</template>
+
+<script>
+    import {queryOrderRecord,queryBulletin,queryWorkMessage} from '@/api/getData'
+    import {userInfo,getStore} from  '../config/mUtils'
+    import {formatDate} from '../utils/date.js'
+    import stockedLine from '../components/stockedLine'
+
+    export default {
+        components: {
+            stockedLine
+        },
+        data(){
+            return {
+                options: [{
+                    value: '0',
+                    label: '快速出货',
+                    display:'1'
+                }, {
+                    value: '1',
+                    label: '快速退货',
+                    display:'1'
+                }, {
+                    value: '2',
+                    label: '采购入库',
+                    display:'1'
+                }, {
+                    value: '3',
+                    label: '库存盘点',
+                    display:'1'
+                }, {
+                    value: '4',
+                    label: '库存调拨',
+                    display:'0'
+                }, {
+                    value: '5',
+                    label: '客户结算',
+                    display:'0'
+                }, {
+                    value: '6',
+                    label: '取货码',
+                    display:'0'
+                }],
+                value5: ['0','1','2','3'],
+                radio3:1,
+                clickIndex:0,
+                clickIndex2:0,
+                //线形图数据
+                lineData:[
+                        ['10-01'],
+                        ['10-02'],
+                        ['10-03'],
+                        ['10-04'],
+                        ['10-05'],
+                        ['10-06'],
+                        ['10-07']],
+                numData:[20, 132, 101, 134, 90, 230, 210],
+                lineUnit:'',
+                typeName:'销售额',
+                lineColor:'#46cfc5',
+
+                items:['销售金额','销售订单数','销售金额'],
+                items2:['今日统计','本周统计','本月统计'],
+            	//默认每页数据量
+                pagesize: 3,
+
+                //默认高亮行数据id
+                highlightId: -1,
+
+                //当前页码
+                currentPage: 1,
+
+                //查询的页码
+                start: 1,
+
+                //默认数据总数
+                totalCount: 0,
+
+                //公告信息总数
+                bulletinCount:0,
+                //公告信息
+                bulletinData:[],
+                //近期动态
+                workMessageData:[],
+                //近期动态总数
+                workMessageCount:0,
+                
+                toUserId:'',
+            }
+        },
+        computed: {
+
+        },
+        mounted(){
+        	var userInfo=getStore("userInfo");
+            var vjson = JSON.parse(userInfo);
+            this.toUserId = vjson.id;
+            this.initloadData();
+            this.initBulletinMsg();
+            this.initWorkMessage();
+        },
+        methods: {
+            salesTabs(index){
+                this.clickIndex = index;
+            },
+            salesTabss(index){
+                this.clickIndex2 = index;
+            },
+            choiceMenus(){
+                //	初始化全部不显示
+                for (let i = 0; i < this.options.length; i++) {
+                    this.options[i].display = '0';
+                }
+                // 选中的显示
+                for (let j = 0; j < this.value5.length; j++) {
+                    let index = this.value5[j]
+                    this.options[index].display = '1';
+                }
+            },
+        	//从服务器获取数据(查询)
+            async initloadData() {
+//          	this.tableData = [];
+//              let param ={
+//                  "pageSize":this.pagesize,
+//                  "pageIndex":1,
+//                  "companyId": "1000",
+//  				"orderType": 2,
+//              }
+//              const res = await queryOrderRecord(param);
+//              if (res.isSuccess == true) {
+//                  this.tableData = res.result.results;
+//                  this.tableData.forEach((obj) => {
+//                  	if(obj.createTime){
+//                  		obj.createTime = formatDate(obj.createTime, 'yyyy-MM-dd hh:mm');
+//                  	}
+//                  });
+//              }else{
+//                  this.$message({
+//                      type: 'error',
+//                      message: res.errorMsg
+//                  });
+//              }
+            },
+
+            //从服务器获取数据
+            async initloadBackData() {
+//              let param ={
+//                  "pageSize":this.pagesize,
+//                  "pageIndex":1,
+//                  "companyId": userInfo().companyId,
+//  				"orderType": 4,
+//              }
+//              const res = await queryOrderRecord(param);
+//              if (res.isSuccess == true) {
+//                  this.tableData = res.result.results;
+//              }else{
+//                  this.$message({
+//                      type: 'error',
+//                      message: res.errorMsg
+//                  });
+//              }
+            },
+
+            //初始化公告信息
+            async initBulletinMsg(){
+            	this.bulletinData = [];
+            	let param = {
+            		applicationId:'4',
+            		pageIndex:1,
+            		pageSize:3
+            	}
+            	const res = await queryBulletin(param);
+                if (res.isSuccess == true) {
+                    this.bulletinData = res.result.data;
+                    this.bulletinCount = res.result.totalCount;
+                    this.bulletinData.forEach((obj) => {
+                    	obj.createTime = formatDate(obj.createTime,'yyyy-MM-dd hh:mm')
+                    })
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.isSuccess
+                    });
+                }
+            },
+            
+            //初始化公告信息
+            async initWorkMessage(){
+            	this.bulletinData = [];
+            	let param = {
+            		toUserId:this.toUserId,
+            		//type:"WORK_NEWS",
+            		//operateIn:"STALL_RETURN_ORDER_CONFIRM",
+            		state:'VALID',
+            		pageIndex:1,
+            		pageSize:3
+            	}
+            	const res = await queryWorkMessage(param);
+                if (res.isSuccess == true) {
+                    this.workMessageData = [];
+                    res.result.results.forEach(obj => {
+                    	let content = JSON.parse(obj.content)
+                    	obj.companyName = content.companyName;
+                    	obj.tempOrderTitle = '订单id';
+                    	if(obj.sendTime){
+                    		obj.tempOrderTime = formatDate(obj.sendTime,"yyyy-MM-dd");
+                    	}
+                    	if(obj.operate && obj.operate == 'SELLER_CREATE_ORDER'){
+                    		obj.tempOrderStatus = "已下单";
+                    		obj.tempOrderId = content.orderCode;
+                    	}else if(obj.operate && obj.operate == 'SELLER_RETURN_ORDER_APPLY'){
+                    		obj.tempOrderStatus = "已提交退货申请";
+                    		obj.tempOrderId = content.orderCode;
+                    	}else if(obj.operate && obj.operate == 'STALL_RETURN_ORDER_SIGN'){
+                    		obj.tempOrderStatus = "已签收";
+                    		obj.tempOrderId = content.orderCode;
+                    	}else if(obj.operate && obj.operate == 'STALL_RETURN_ORDER_CONFIRM'){
+                    		obj.tempOrderStatus = "已确认";
+                    		obj.tempOrderId = content.orderCode;
+                    	}else if(obj.operate && obj.operate == 'SELLER_CREATE_OUTSETTLEMENTORDER_APPLY'){
+                    		obj.tempOrderStatus = "提交付款结算申请";
+                    		obj.tempOrderTitle = '结算单id';
+                    		obj.tempOrderId = content.bizId;
+                    	}else if(obj.operate && obj.operate == 'SELLER_CREATE_INSETTLEMENTORDER_APPLY'){
+                    		obj.tempOrderStatus = "提交收款结算申请";
+                    		obj.tempOrderTitle = '结算单id';
+                    		obj.tempOrderId = content.bizId;
+                    	}else if(obj.operate && obj.operate == 'STALL_CREATE_STOCKORDER'){
+                    		obj.tempOrderStatus = "已提交采购订单";
+                    		obj.tempOrderTitle = '采购订单id';
+                    		obj.tempOrderId = content.orderNo;
+                    	}else if(obj.operate && obj.operate == 'SELLER_END_CARS_PACKAGENUM_WARN'){
+                    		
+                    	}
+                    	this.workMessageData.push(obj);
+                    });
+                    this.workMessageCount = res.result.totalCount;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import "../style/common";
+    @import "../style/homeStall";
+</style>

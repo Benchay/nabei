@@ -1,0 +1,77 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/stallProductManagement"}'>商品管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/classificationGoods"}'>商品分类</router-link>
+            </li>
+            <li class="menuIndex">
+                <router-link :to='{path:"/commodityStatistics"}'>商品统计</router-link>
+            </li>
+        </ul>
+        <div class="commodityStatistics">
+            <div class="radioGreen">
+                <el-radio-group v-model="saleState" size="small">
+                    <el-radio-button label="0">今日</el-radio-button>
+                    <el-radio-button label="1">本周</el-radio-button>
+                    <el-radio-button label="2">本月</el-radio-button>
+                </el-radio-group>
+            </div>
+            <div class="commodityList">
+                <ul class="lists">
+                    <li v-for="(obj,index) in items" @click="salesTabs(index)">
+                        <a href="javascript:void(0);">{{obj.title}}</a>
+                        <div class="down"  v-show="obj.Checked">
+                            <!--向下的三角-->
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            <div class="commodityContent">
+
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+
+    export default {
+        components: {
+        },
+        data() {
+            return {
+                saleState:0,
+                items:[
+                    {
+                        title:'商品销售趋势',
+                        Checked:1,
+                    },{
+                        title:'单品销售分析',
+                        Checked:0,
+                    },{
+                        title:'畅销商品分析',
+                        Checked:0,
+                    },{
+                        title:'滞销商品分析',
+                        Checked:0,
+                    },]
+            }
+        },
+        methods: {
+            salesTabs(obj){
+                console.log(obj)
+                console.log(this.items)
+                this.items[obj].checked = true;
+            },
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/commodityStatistics';
+</style>

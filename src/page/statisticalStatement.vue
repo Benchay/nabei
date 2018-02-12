@@ -1,0 +1,639 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('fastShipping2')">
+                <router-link :to='{path:"/fastShipping2"}'>快速出货</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('indentManagement')">
+                <router-link :to='{path:"/indentManagement"}'>订单管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('takeGoods')">
+                <router-link :to='{path:"/takeGoods"}'>取货码</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('sellerSettlement')">
+                <router-link :to='{path:"/sellerSettlement"}'>客户结算</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('SettlementRecordsStall')">
+                <router-link :to='{path:"/SettlementRecordsStall"}'>结算单</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('customerManagement')">
+                <router-link :to='{path:"/customerManagement"}'>客户管理</router-link>
+            </li>
+            <li class="menuIndex" v-if="getMenuAuthFun('statisticalStatement')">
+                <router-link :to='{path:"/statisticalStatement"}'>销售统计</router-link>
+            </li>
+        </ul>
+        <div class="commodityStatistics">
+            <!--1225-修改-->
+            <div class="firstRadio left">
+                <el-radio-group v-model="radio3" class="radioGreen" size="small" @change="choseLabel">
+                    <el-radio-button label="1">每日统计（按商品）</el-radio-button>
+                    <el-radio-button label="2">每日统计（按客户）</el-radio-button>
+                </el-radio-group>
+            </div>
+            <div class="right">
+                <el-date-picker
+                    size="small"
+                    v-model="filters.date.startDate"
+                    type="datetime"
+                    format="yyyy-MM-dd HH:mm:ss"
+                    placeholder="选择开始日期"
+                    :picker-options="startDateBefore"
+                    @change="handleIconClickDate"
+                >
+                </el-date-picker>
+                -
+                <el-date-picker
+                    size="small"
+                    v-model="filters.date.endDate"
+                    type="datetime"
+                    format="yyyy-MM-dd HH:mm:ss"
+                    placeholder="选择截止日期"
+                    :picker-options="startDateAfter"
+                    @click.native="handleIconClickDate"
+                >
+                </el-date-picker>
+                <el-input v-show="radio3 == '1'"  v-model="itemNo" size="small" style="width: 200px;"  placeholder="货号搜索"  @change="remoteMethod"></el-input>
+                <el-select
+                    v-show="radio3 == '2'"
+                    size="small"
+                    v-model="otherSideCompanyId"
+                    filterable
+                    clearable
+                    remote
+                    reserve-keyword
+                    style="width:260px"
+                    placeholder="请输入客户名称"
+                    :remote-method="remoteMethod2"
+                    :loading="loading"
+                    @change="handleIconClickName1">
+                    <el-option
+                        v-for="item in options4"
+                        :key="item.sellId"
+                        :label="item.sellName"
+                        :value="item.sellId">
+                    </el-option>
+                </el-select>
+            </div>
+            <div v-show="radio3 == '1'">
+              <div class="marketContent">
+                  <div>
+                      <span>商品总销量：{{orderNub}}</span>
+                  </div>
+                  <div>
+                      <span>已出货总数量：{{allocateProductNum}}</span>
+                  </div>
+                  <div>
+                      <span>待出货总数量：{{orderNub-allocateProductNum}}</span>
+                  </div>
+              </div>
+              <div class="marketTable">
+                  <el-table
+                      :data="tableData"
+                      style="width: 100%">
+                      <el-table-column
+                          width="80"
+                          label="排名">
+                          <template scope="scope">
+                              <p>{{(scope.$index+1)+(currentPage-1)*pagesize}}</p>
+                          </template>
+                      </el-table-column>
+                      <el-table-column
+                          label="主图+商品名称"
+                          width="280">
+                          <template scope="scope">
+                             <div class="flex">
+                                 <img :src="scope.row.imgUrl_main" alt="">
+                                 <p>{{ scope.row.productName }}</p>
+                             </div>
+                          </template>
+                      </el-table-column>
+                      <el-table-column
+                          prop="productCode"
+                          label="货号">
+                      </el-table-column>
+                      <el-table-column
+                          label="颜色/尺码">
+                          <template scope="scope">
+                              <div v-for="item in scope.row.details">
+                                  <p>{{item.color}}/{{item.size}}</p>
+                              </div>
+                          </template>
+                      </el-table-column>
+                      <el-table-column
+                          prop=""
+                          label="已出货量">
+                          <template scope="scope">
+                              <div v-for="item in scope.row.details">
+                                  <p>{{item.allocateProductNum}}</p>
+                              </div>
+                          </template>
+                      </el-table-column>
+                      <el-table-column
+                          prop=""
+                          label="待出货数量">
+                          <template scope="scope">
+                              <div v-for="item in scope.row.details">
+                                  <p>{{item.orderNum-item.allocateProductNum }}</p>
+                              </div>
+                          </template>
+                      </el-table-column>
+                      <el-table-column
+                          prop="allocateProductNum"
+                          label="商品总销量">
+                          <template scope="scope">
+                             <p>{{scope.row.orderNub}}</p>
+                          </template>
+                      </el-table-column>
+                  </el-table>
+              </div>
+                <el-pagination
+                    small
+                    class="right"
+                    style="margin-top: 20px;"
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :page-sizes="[10, 20, 30, 40,50]"
+                    :current-page="currentPage"
+                    :page-size="pagesize"
+                    layout="total, sizes,prev, pager, next, jumper"
+                    :total="totalCount">
+                </el-pagination>
+                <a href="javascript:void(0)" class="export_excle" @click="exportExcel">导出excel</a>
+          </div>
+            <div v-show="radio3 == '2'">
+                <div class="marketContent">
+                    <div>
+                        <span>采购总数量：{{orderNub2}}</span>
+                    </div>
+                    <div>
+                        <span>已配货总数量：{{allocateProductNum2}}</span>
+                    </div>
+                    <div>
+                        <span>待配货总数量：{{orderNub2-allocateProductNum2}}</span>
+                    </div>
+                </div>
+                <div class="marketTable">
+                    <el-table
+                        :data="tableData2"
+                        style="width: 100%">
+                        <el-table-column
+                            width="80"
+                            label="排名">
+                            <template scope="scope">
+                                <p>{{(scope.$index+1)+(currentPage2-1)*pagesize2}}</p>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            prop="companyName"
+                            label="客户信息"
+                            width="180">
+                            <template scope="scope">
+                                <p v-if="scope.row.busiCompId == ''">匿名卖家</p>
+                                <p v-else>{{scope.row.companyName}}</p>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            prop="orderNub"
+                            label="总采购数">
+                        </el-table-column>
+                        <el-table-column
+                            prop="allocateProductNum"
+                            label="已配货数">
+                        </el-table-column>
+                        <el-table-column
+                            prop=""
+                            label="待配货数">
+                            <template scope="scope">
+                                <p>{{scope.row.orderNub - scope.row.allocateProductNum }}</p>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </div>
+                <el-pagination
+                    small
+                    class="right"
+                    style="margin-top: 20px;"
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :page-sizes="[10, 20, 30, 40,50]"
+                    :current-page="currentPage2"
+                    :page-size="pagesize2"
+                    layout="total, sizes,prev, pager, next, jumper"
+                    :total="totalCount2">
+                </el-pagination>
+                <a href="javascript:void(0)" class="export_excle" @click="exportExcel">导出excel</a>
+            </div>
+            <div style="height: 210px;">
+                &nbsp;
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    import {getMenuAuth,haveMenuAuth} from  '../utils/AuthMenu.js'
+    import {queryOrderDetailSales,queryStallCustomer} from '@/api/getData'
+    import {userInfo} from  '../config/mUtils'
+    import {formatDate,timeZoneCovertDay} from '../utils/date.js'
+    import {export_json_to_excel} from '../vendor/Export2Excel.js'
+    import {format} from 'date-fns'
+    const _XLSX = require('xlsx')
+    const X = typeof XLSX !== 'undefined' ? XLSX : _XLSX;
+
+    export default {
+        components: {
+        },
+        data() {
+            return {
+                filters:{
+                    date:{
+                        startDate:'',
+                        endDate:''
+                    }
+                },
+                startDateBefore:{
+                    disabledDate: (time) => {
+                        let beginDateVal = this.filters.date.endDate;
+                        if (beginDateVal) {
+                            return time.getTime() > beginDateVal;
+                        }
+                    }
+                },
+                startDateAfter:{
+                    disabledDate: (time) => {
+                        let beginDateVal = this.filters.date.startDate;
+                        if (beginDateVal) {
+                            return time.getTime() < beginDateVal;
+                        }
+                    }
+                },
+//                startDate: new Date(),
+                itemNo: '',
+                roleForm: {
+                    userId: '',
+                    roleId: '',
+                    compId: ''
+                },
+                radio3: '1',
+                value6: '',
+                tableData: [],
+                tableData2:[],
+                pagesize: 10,
+                pagesize2: 10,
+                //默认高亮行数据id
+                highlightId: -1,
+                //当前页码
+                currentPage: 1,
+                currentPage2: 1,
+                //查询的页码
+                start: 1,
+                //默认数据总数
+                totalCount: 0,
+                totalCount2: 0,
+                allocateProductNum: 0,
+                orderNub: 0,
+                orderNub2: 0,
+                allocateProductNum2: 0,
+                today:'',
+                tomorrow:'',
+                query:'',
+                loading: false,
+                str:'',
+                otherSideCompanyName:'',
+                otherSideCompanyId:'',
+                options4:[]
+            }
+        },
+        watch:{
+            '$route':function (route) {
+                this.initData();
+            }
+        },
+        mounted() {
+            this.roleForm.compId = userInfo().companyId;
+            this.roleForm.userId = userInfo().userId;
+            this.initData();
+        },
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            async initData(param){
+                if (param == undefined){
+                    this.filters.date.startDate = new Date();
+                    this.filters.date.endDate = new Date();
+
+                    this.filters.date.startDate.setHours(0);
+                    this.filters.date.startDate.setMinutes(0);
+                    this.filters.date.startDate.setSeconds(0);
+                    this.filters.date.startDate.setMilliseconds(0);
+
+                    this.filters.date.endDate.setHours(23);
+                    this.filters.date.endDate.setMinutes(59);
+                    this.filters.date.endDate.setSeconds(59);
+                    this.filters.date.endDate.setMilliseconds(59);
+                    let start = formatDate(this.filters.date.startDate,'yyyy-MM-dd 00:00:00');
+                    let end = formatDate(this.filters.date.endDate,'yyyy-MM-dd 23:59:59');
+                    param={
+                        "companyId":this.roleForm.compId,
+                        "startTime":start,
+                        "endTime":end,
+                        "searchKey":this.query,
+                        "getHeader":"1",
+                        "pageIndex":this.currentPage,
+                        "pageSize":this.pagesize
+                    }
+                }
+
+                const res = await queryOrderDetailSales(param);
+                if (res.isSuccess == true) {
+                    let table = res.result.pageResult.results;
+                    if (this.radio3 == '1') {
+                        this.tableData = table;
+                        this.orderNub = res.result.salesCount.orderNub;
+                        this.allocateProductNum = res.result.salesCount.allocateProductNum;
+                        this.totalCount = res.result.pageResult.totalCount;
+                    }else{
+                        this.tableData2 = table;
+                        this.otherSideCompanyName = this.tableData2.otherSideCompanyName;
+                        this.orderNub2 = res.result.salesCount.orderNub;
+                        this.allocateProductNum2 = res.result.salesCount.allocateProductNum;
+                        this.totalCount2 = res.result.pageResult.totalCount;
+                    }
+                }
+            },
+            checkNull(val){
+                if(val!=undefined&&val!=''){
+                    return true;
+                }
+                return false;
+            },
+            //组合查询
+            handleIconClickDate(){
+                this.str = '';
+                var list = [];
+                if(this.checkNull(this.filters.date.startDate)){
+                    var svalue = formatDate(this.filters.date.startDate,'yyyy-MM-dd hh:mm:ss');
+                    var start = {name:"startTime",value:svalue};
+                    list.push(start);
+                }
+                if(this.checkNull(this.filters.date.endDate)) {
+                    var evalue = formatDate(this.filters.date.endDate, 'yyyy-MM-dd hh:mm:ss');
+                    var end = {name: "endTime", value: evalue};
+                    list.push(end);
+                }
+                var param = '';
+                if(this.radio3=='1'){
+                    this.str = '';
+                    this.str = '{';
+                    list.forEach((obj)=>{
+                        this.str = this.str + '"' + obj.name + '":"' + obj.value + '",'
+
+                    });
+                    this.str = this.str + '"pageIndex":' + this.currentPage + ',' + '"pageSize":' + this.pagesize + ',' + '"searchKey":"' + this.query + '",' +'"getHeader":"' + 1 + '",' +  '"companyId":"' + this.roleForm.compId + '"}';
+                    param = JSON.parse(this.str);
+                }else if(this.radio3=='2'){
+                    this.str = '';
+                    this.str = '{';
+                    list.forEach((obj)=>{
+                        this.str = this.str + '"' + obj.name + '":"' + obj.value + '",'
+
+                    });
+                    var paramTemp = "{\"mode\":\"1\",\"orderType\":" + 2 + "}";
+                    this.str = this.str + '"modeCfg":' + paramTemp + ',' +  '"pageIndex":' + this.currentPage + ',' + '"pageSize":' + this.pagesize + ',' + '"searchKey":"' + this.otherSideCompanyId + '",' +'"getHeader":"' + 1 + '",' +  '"companyId":"' + this.roleForm.compId + '"}';
+                    param = JSON.parse(this.str);
+                }
+
+                this.initData(param);
+            },
+            //远程搜索模糊查询货号
+            async remoteMethod(query){
+                this.query = query;
+                    let param = {
+                        "companyId":this.roleForm.compId,
+                        "startTime":this.filters.date.startDate,
+                        "endTime":this.filters.date.endDate,
+                        "searchKey":this.query,
+                        "getHeader":"1",
+                        "pageIndex":this.currentPage,
+                        "pageSize":this.pagesize
+                    };
+                    const res = await queryOrderDetailSales(param);
+                    if (res.isSuccess == true){
+                        let table= res.result.pageResult.results;
+                        this.tableData = table;
+                        this.orderNub = res.result.salesCount.orderNub;
+                        this.allocateProductNum = res.result.salesCount.allocateProductNum;
+                        this.totalCount =  res.result.pageResult.totalCount;
+                    }
+
+            },
+            //远程搜索模糊查询电商卖家名称
+            async remoteMethod2(query){
+                if(query!=undefined&&query!=''){
+                    this.options4 = [];
+                    this.loading = true;
+                    let param = {
+                        "companyId":userInfo().companyId,
+                        "sellName":query,
+                        "pageIndex":1,
+                        "pageSize":100
+                    };
+                    const res = await queryStallCustomer(param);
+                    setTimeout(() => {
+                        this.loading = false;
+                        this.options4 = res.result.results;
+                    }, 200);
+                } else {
+                    this.options4 = [];
+                }
+            },
+            handleIconClickName1(){
+                var start = formatDate(this.filters.date.startDate,'yyyy-MM-dd hh:mm:ss');
+                var end = formatDate(this.filters.date.endDate,'yyyy-MM-dd hh:mm:ss');
+                let param = {
+                    "companyId":this.roleForm.compId,
+                    "startTime":start,
+                    "endTime":end,
+                    "searchKey":this.otherSideCompanyId,
+                    "getHeader":"1",
+                    "modeCfg":{mode:'1',orderType:2},
+                    "pageIndex":this.currentPage2,
+                    "pageSize":this.pagesize2
+                };
+                this.initData(param)
+            },
+            choseLabel(){
+                var start = formatDate(this.filters.date.startDate,'yyyy-MM-dd hh:mm:ss');
+                var end = formatDate(this.filters.date.endDate,'yyyy-MM-dd hh:mm:ss');
+                if(this.radio3 == '1'){
+                    let param = {
+                        "companyId":this.roleForm.compId,
+                        "startTime":start,
+                        "endTime":end,
+                        "searchKey":this.query,
+                        "getHeader":"1",
+                        "pageIndex":this.currentPage,
+                        "pageSize":this.pagesize
+                    };
+                    this.initData(param)
+                }else if(this.radio3 == '2'){
+                    let param = {
+                        "companyId":this.roleForm.compId,
+                        "startTime":start,
+                        "endTime":end,
+                        "searchKey":this.otherSideCompanyId,
+                        "getHeader":"1",
+                        "modeCfg":{mode:'1',orderType:2},
+                        "pageIndex":this.currentPage2,
+                        "pageSize":this.pagesize2
+                    };
+                    this.initData(param)
+                }
+            },
+            handleSizeChange(val) {
+                this.pagesize = val;
+                var start = formatDate(this.filters.date.startDate,'yyyy-MM-dd hh:mm:ss');
+                var end = formatDate(this.filters.date.endDate,'yyyy-MM-dd hh:mm:ss');
+                if(this.radio3 == '1'){
+                    let param = {
+                        "companyId":this.roleForm.compId,
+                        "startTime":start,
+                        "endTime":end,
+                        "searchKey":this.query,
+                        "getHeader":"1",
+                        "pageIndex":this.currentPage,
+                        "pageSize":this.pagesize
+                    };
+                    this.initData(param)
+                }else if(this.radio3 == '2'){
+                    let param = {
+                        "companyId":this.roleForm.compId,
+                        "startTime":start,
+                        "endTime":end,
+                        "searchKey":this.otherSideCompanyId,
+                        "getHeader":"1",
+                        "modeCfg":{mode:'1',orderType:2},
+                        "pageIndex":this.currentPage,
+                        "pageSize":this.pagesize2
+                    };
+                    this.initData(param)
+                }
+                this.initData(param)
+            },
+            handleCurrentChange(val) {
+                this.currentPage = val;
+                var start = formatDate(this.filters.date.startDate,'yyyy-MM-dd hh:mm:ss');
+                var end = formatDate(this.filters.date.endDate,'yyyy-MM-dd hh:mm:ss');
+                if(this.radio3 == '1'){
+                    let param = {
+                        "companyId":this.roleForm.compId,
+                        "startTime":start,
+                        "endTime":end,
+                        "searchKey":this.query,
+                        "getHeader":"1",
+                        "pageIndex":this.currentPage,
+                        "pageSize":this.pagesize
+                    };
+                    this.initData(param)
+                }else if(this.radio3 == '2'){
+                    let param = {
+                        "companyId":this.roleForm.compId,
+                        "startTime":start,
+                        "endTime":end,
+                        "searchKey":this.otherSideCompanyId,
+                        "getHeader":"1",
+                        "modeCfg":{mode:'1',orderType:2},
+                        "pageIndex":this.currentPage,
+                        "pageSize":this.pagesize2
+                    };
+                    this.initData(param)
+                }
+                this.initData(param)
+            },
+            formatJson(filterVal, jsonData) {
+		　　　　　　return jsonData.map(v => filterVal.map(j => v[j]));
+		　　　},
+            async exportExcel(){
+                var start = formatDate(this.filters.date.startDate,'yyyy-MM-dd hh:mm:ss');
+                var end = formatDate(this.filters.date.endDate,'yyyy-MM-dd hh:mm:ss');
+                let param ={
+                    pageIndex:this.currentPage,
+            		pageSize:this.pagesize,
+                    companyId:this.roleForm.compId,
+                    getHeader:"1",
+                    "startTime":start,
+                    "endTime":end,
+                }
+                const res = await queryOrderDetailSales(param);
+                const list = [];
+                  if (res.isSuccess){
+                      res.result.pageResult.results.forEach(obj => {
+                        let title= '' ;//商品名称
+                    	let productCode = '';//商品货号
+                    	let colours = '';//颜色
+                    	let sizes = '';//尺码
+                        let alreadyout = '';//已出货量
+                    	let readyout = '';//待出货量
+                    	let totalout = '';//商品总量
+                    	let imgUrl_main = '';//产品主图
+                    	if(obj.productName){
+                    		title = obj.productName;
+                    	}
+                    	if(obj.productCode){
+                    		productCode = obj.productCode;
+                    	}
+                    	if(obj.orderNub){
+                    		totalout = obj.orderNub;
+                    	}
+                    	if(obj.imgUrl_main){
+                    		imgUrl_main = obj.imgUrl_main;
+                    	}
+                        if(obj.details){
+                            obj.details.forEach(item =>{
+                                var reg = new RegExp('_' , "g")
+                                if(item.color){
+                                    colours = item.color.replace(reg,"/");
+                                }
+                                if(item.size){
+                                    sizes = item.size.replace(reg,"/");
+                                }
+                                if(item.allocateProductNum){
+                                    alreadyout = item.allocateProductNum;
+                                }
+                                if(item.orderNum&&item.allocateProductNum){
+                                    readyout = item.orderNum-item.allocateProductNum;
+                                }
+                                 	let row = {
+                                        title : title,
+                                        productCode : productCode,
+                                        colours : colours,
+                                        sizes : sizes,
+                                        alreadyout : alreadyout,
+                                        readyout : readyout,
+                                        totalout : totalout,
+                                        imgUrl_main : imgUrl_main
+                                    }
+                                    // console.log(row)
+                                    list.push(row);
+                            })
+                        }
+                    });
+
+                    const tHeader = ['商品名称', '商品货号','颜色','尺码','已出货量','待出货量','商品总量','主图'];
+			　　　　const filterVal = ['title', 'productCode','colours','sizes','alreadyout','readyout','totalout','imgUrl_main'];
+            　　　　const data = this.formatJson(filterVal, list);
+			　　　　export_json_to_excel(tHeader, data, '档口统计表');
+                  }
+            },
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/commodityStatistics';
+</style>

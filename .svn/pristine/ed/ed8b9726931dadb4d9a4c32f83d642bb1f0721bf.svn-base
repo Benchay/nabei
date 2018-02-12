@@ -1,0 +1,1058 @@
+<template>
+    <div class="fillcontain">
+        <ul :class="[identity ==1 ?'stallShareMenu':identity ==2 ?'sellerShareMenu':'']">
+            <li class="ListMenu">
+                <router-link :to='{path:"/manageRole"}'>角色管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/manageStaff"}'>员工管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/basicInformation"}'>基本资料</router-link>
+            </li>
+        </ul>
+        <div class="role_content">
+           <div class="roleTop">
+               <el-button type="primary" @click="dialogFormRole = true" class="left">+添加角色</el-button>
+               <el-input
+                   v-model="queryName"
+                   placeholder="角色名称搜索"
+                   icon="search"
+                   @click="handleIconClick"
+                   class="role-search right">
+               </el-input>
+           </div>
+            <div class="roleTable">
+                <el-table
+                	max-height="481"
+                    :data="tableData"
+                    ref="roleTable"
+                    border>
+                    <el-table-column
+                        type="selection"
+                        width="55">
+                    </el-table-column>
+                    <el-table-column
+                        prop="name"
+                        label="角色名称"
+                        width="300">
+                    </el-table-column>
+                    <el-table-column
+                        prop="description"
+                        label="角色描述"
+                        width="500">
+                    </el-table-column>
+                    <!--
+                    <el-table-column
+                        prop="status"
+                        label="状态"
+                        width="70">
+                    </el-table-column>-->
+                    <el-table-column label="操作">
+                        <template scope="scope">
+                            <el-button
+                                size="small"
+                                @click="showEditRole(scope.$index)">编辑</el-button>
+                            <!--<el-button
+                                size="small"
+                                @click="handleEdit(scope.$index, scope.row)">禁用</el-button>-->
+                            <el-button
+                                size="small"
+                                type="danger"
+                                @click.native.prevent="deleteRow(scope.$index, tableData)">删除</el-button>
+                            <el-button
+                                size="small"
+                                type="info"
+                                @click="showAddMember(scope.$index)">添加成员</el-button>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+            <!--<el-pagination-->
+                <!--class="right"-->
+                <!--small-->
+                <!--layout="prev, pager, next"-->
+                <!--style="margin-top: 20px;"-->
+                <!--@current-change="handleCurrentChange"-->
+                <!--:current-page="currentPage"-->
+                <!--:page-size="pagesize"-->
+                <!--:total="totalCount"-->
+                <!--&gt;-->
+            <!--</el-pagination>-->
+            <el-pagination
+                small
+                class="right"
+                style="margin-top: 20px;"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :current-page="currentPage"
+                :page-sizes="[10, 20, 30, 40]"
+                :page-size="pagesize"
+                layout="total, sizes, prev, pager, next, jumper"
+                :total="totalCount">
+            </el-pagination>
+            <a href="javascript:void(0)" class="export_excle" @click="exportTableData">导出excel</a>
+            <div style="height:160px;">
+                &nbsp;
+            </div>
+
+            <el-dialog title="新增角色" :visible.sync="dialogFormRole" custom-class="dialogSize">
+                <el-form :model="form" :rules="addRoleRules" ref="form">
+                    <el-form-item label="角色名称：" prop="name" :label-width="formLabelWidth">
+                        <el-input v-model="form.name" auto-complete="off" placeholder="请输入角色名称"></el-input>
+                    </el-form-item>
+                    <el-form-item label="描述：" prop="description"  :label-width="formLabelWidth">
+                        <el-input
+                            v-model="form.description"
+                            type="textarea"
+                            :rows="2"
+                            placeholder="请输入描述内容">
+                        </el-input>
+                    </el-form-item>
+                    <el-col :span="24">
+                        <div class="flex">
+                            <p title="请配置角色权限" class="dialog_tit">请配置角色权限</p>
+                        </div>
+                       <div>
+                           <el-tabs type="border-card"  style="margin: 10px 0 30px;">
+                               <div v-for="(authitem,key1) in companyRole">
+                               <el-tab-pane :label="authitem.label" :name="authitem.name">
+                                   <el-col :span="24">
+                                       <el-col :span="6" class="flex" v-for="(item,key,index ) in authitem.children" >
+                                           <el-tree
+                                               :data="getRoleByIndex(item,key)"
+                                               show-checkbox
+                                               node-key="id"
+                                               ref="compRefTree_"
+                                               :default-expand-all=false
+                                               :props="defaultProps">
+                                           </el-tree>
+                                       </el-col>
+                                   </el-col>
+                               </el-tab-pane>
+                               </div>
+                           </el-tabs>
+                       </div>
+                    </el-col>
+                </el-form>
+                <div slot="footer" class="dialog-footer flex2" style="overflow: hidden;width:100%;">
+                    <el-button type="primary" @click="addNewRole">确 定</el-button>
+                    <el-button @click="cancelAddNewRole">取 消</el-button>
+                </div>
+            </el-dialog>
+
+            <el-dialog title="编辑" :visible.sync="dialogFormVisible" custom-class="dialogSize">
+                <el-form :model="editForm" :rules="editFormRules" ref="editForm">
+                    <el-form-item label="角色名称：" prop="name" :label-width="formLabelWidth">
+                        <el-input auto-complete="off" v-model="editForm.name" placeholder="请输入角色名称"></el-input>
+                    </el-form-item>
+                    <el-form-item label="描述："  prop="description" :label-width="formLabelWidth">
+                        <el-input
+                            v-model="editForm.description"
+                            type="textarea"
+                            :rows="2"
+                            placeholder="请输入描述内容">
+                        </el-input>
+                    </el-form-item>
+
+                    <el-col :span="24">
+                        <p title="请配置角色权限" class="dialog_tit">请配置角色权限</p>
+                        <div>
+                           <el-tabs type="border-card"  style="margin: 10px 0 30px;">
+                               <div v-for="(authitem,key1) in companyRole">
+                               <el-tab-pane :label="authitem.label" :name="authitem.name">
+                                   <el-col :span="24">
+                                       <el-col :span="6" class="flex" v-for="(item,key,index ) in authitem.children" >
+                                           <el-tree
+                                               :data="getRoleByIndex(item,key)"
+                                               show-checkbox
+                                               node-key="id"
+                                               ref="selectRoleTreeRef"
+                                               :default-checked-keys="selectRole"
+                                               :default-expand-all=false
+                                               :props="defaultProps">
+                                           </el-tree>
+                                       </el-col>
+                                   </el-col>
+                               </el-tab-pane>
+                               </div>
+                           </el-tabs>
+                       </div>
+                        <!--<div>
+                            <el-tabs type="border-card"  style="margin: 10px 0 30px;">
+                                <div v-for="(authitem,key1) in selectRole">
+                                    <el-tab-pane :label="authitem.label" :name="authitem.name">
+                                        <el-col :span="24">
+                                            <el-col :span="6" class="flex" v-for="(item,key,index ) in authitem.children" >
+                                                <el-tree
+                                                    :data="getRoleByIndex(item,key)"
+                                                    show-checkbox
+                                                    node-key="id"
+                                                    :ref="setRefName(key)"
+                                                    :default-expand-all=false
+                                                    :props="defaultProps">
+                                                </el-tree>
+                                            </el-col>
+                                        </el-col>
+                                    </el-tab-pane>
+                                </div>
+                            </el-tabs>
+                        </div>-->
+                    </el-col>
+                </el-form>
+                <div slot="footer" class="dialog-footer" style="overflow: hidden;width:100%;">
+                    <el-button type="primary" @click="saveEditRole">确 定</el-button>
+                    <el-button @click="dialogFormVisible = false">取 消</el-button>
+                </div>
+            </el-dialog>
+            <el-dialog title="添加成员" :visible.sync="dialogFormMember" custom-class="dialogSize">
+                    <el-col :span="24">
+                    </el-col>
+                <el-transfer
+                    filterable
+                    :filter-method="filterMethod"
+                    filter-placeholder="请输入成员名字"
+                    :titles="['所有成员', '已选成员']"
+                    v-model="selectMember"
+                    :data="data3">
+                </el-transfer>
+                <div slot="footer" class="dialog-footer" style="overflow: hidden;width:100%;">
+                    <el-button type="primary" @click="saveMemberRole">确 定</el-button>
+                    <el-button @click="dialogFormMember = false">取 消</el-button>
+                </div>
+            </el-dialog>
+        </div>
+    </div>
+</template>
+<script>
+    import headTop from '../components/headTop'
+    import {mapActions, mapState} from 'vuex'
+    import {queryUser,saveRole,delRole,getUserAuths,queryRole,queryAuthsByRole,queryCompanyUsers,batchAddUserRoles,queryUsersByRole,updateRole,getCompanyAuthsByCompanyId} from '@/api/getData'
+    import {setStore,getStore} from  '../config/mUtils'
+    import {getCompanyType} from  '../utils/common'
+    import {export_json_to_excel} from '../vendor/Export2Excel.js'
+
+    const cityOptions = ['绑定店铺', '开始采购', '退货', '档口考核'];
+    const cityOptions2 = ['财务总览', '账户设置', '账户余额', '企业钱包','其他管理'];
+    export default {
+        components: {
+            headTop,
+        },
+        data: function () {
+            var validateDescription = (rule, value, cb) => {
+                if (value.trim().length > 50) {
+                    cb(new Error('内容描述不能超过50个字符'))
+                } else {
+                    cb()
+                }
+            };
+            var validateName = (rule, value, cb) => {
+                if (value.trim().length >= 2 && value.trim().length <= 15) {
+                    cb()
+                } else {
+                    cb(new Error('角色名称不能少于2个字符且不能多于15个字符'))
+                }
+            }
+            return {
+                //1为档口、2为卖家身份
+                identity: 1,
+
+                isTure: false,
+                radio: '',
+                checkedCities1: [],
+                cities: cityOptions,
+                cities2: cityOptions2,
+                activeName2: '1',
+                roleForm: {
+                    userId: '',
+                    roleId: '',
+                    compId: ''
+                },
+                editForm: {
+                    name: '',
+                    description: ''
+                },
+                editFormRules:{
+                    name: [
+                        {required: true, message: '请输入角色名称', trigger: 'blur'},
+                        {validator:validateName, trigger:'blur'}
+                    ],
+                    description: [
+                        {validator: validateDescription, trigger: 'blur'}
+                    ]
+                },
+                tableData: [],
+                dialogFormVisible: false,
+                dialogFormMember: false,
+                dialogFormRole: false,
+                form: {
+                    name: '',
+                    description: '',
+                    region: '',
+                    date1: '',
+                    date2: '',
+                    delivery: false,
+                    type: [],
+                    resource: '',
+                    desc: ''
+                },
+                addRoleRules: {
+                    name: [
+                        {required: true, message: '请输入角色名称', trigger: 'blur'},
+                        {validator:validateName, trigger:'blur'}
+                    ],
+                    description: [
+                        {validator: validateDescription, trigger: 'blur'}
+                    ]
+                },
+                companyRole: [],
+                companyRoleDate: [],
+                selectRole: [], //编辑
+                formLabelWidth: '120px',
+                addTime: '',
+                roleMap: [],
+                data2: [{
+                    id: 1,
+                    label: '绑定店铺',
+                    children: [{
+                        id: 2,
+                        label: '查看'
+                    }, {
+                        id: 3,
+                        label: '编辑'
+                    }]
+                }],
+
+                defaultProps: {
+                    children: 'children',
+                    label: 'label'
+                },
+                usrRole: [],
+                pagesize: 10,
+                //默认高亮行数据id
+                highlightId: -1,
+                //当前页码
+                currentPage: 1,
+                //查询的页码
+                start: 1,
+                //默认数据总数
+                totalCount: 0,
+                queryName:'',
+
+                defaultProps: {
+                    children: 'children',
+                    label: 'label'
+                },
+                dynamicTags: ['标签二', '标签三', '标签二', '标签三', '标签二', '标签三', '标签二', '标签三'],
+                inputVisible: false,
+                inputValue: '',
+                //data3: generateData2(),
+                data3:[{label: 'hjw', key: '123', pinyin: 'p1'},{label: 'hjw2', key: '1232', pinyin: 'p12'}],
+                selectMember: [],
+                //selectMemberId: [],
+                selectRoleId:'',
+                filterMethod(query, item) {
+                    return item.pinyin.indexOf(query) > -1;
+                }
+            }
+        },
+        mounted(){
+            this.identity =getCompanyType(getStore("curCompany"));
+            var userInfo = getStore("userInfo");
+            var vjson = JSON.parse(userInfo);
+            this.roleForm.userId=vjson.id;
+            var currentComp=getStore("curCompany");
+            var vcom = JSON.parse(currentComp);
+            this.roleForm.compId=vcom.id;
+            //测试代码
+            //this.roleForm.compId='2';
+            this.loadInit();
+            this.roleData();
+        },
+        computed: {
+            ...mapState(['getUserRoles']),
+            ...mapState(['delRole'])
+        },
+        methods: {
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+                this.pagesize = val;
+                var role=null;
+                if(this.queryName !=null && this.queryName!=""){
+                    role={"compId":this.roleForm.compId,"name":this.queryName};
+                }else{
+                	role={"compId":this.roleForm.compId};
+                }
+                let  param = {
+                    "role":role,
+                    "pageSize": this.pagesize,
+                    "pageIndex": this.currentPage,
+                    "roleName":this.queryName
+                };
+                this.loadDataWithCondition(param);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+                this.currentPage = val;
+                var role=null;
+                if(this.queryName !=null && this.queryName!=""){
+                    role = {"compId":this.roleForm.compId,"name":this.queryName};
+                }else{
+                	role = {"compId":this.roleForm.compId};
+                }
+                let  param = {
+                    "role":CompanyUser,
+                    //"params": this.criteria,
+                    "pageSize": this.pagesize,
+                    "pageIndex": this.currentPage,
+                    "roleName":this.queryName
+                };
+                this.loadDataWithCondition(param);
+            },
+            loadInit(){
+                this.currentPage = 1;
+                let  param = {
+                    "role":{"compId":this.roleForm.compId},
+                    "pageSize": this.pagesize,
+                    "pageIndex": this.currentPage
+                };
+                this.loadDataWithCondition(param);
+            },
+            handleIconClick(){
+                this.handleCurrentChange(1);
+                this.queryName='';
+            },
+            //导出excel
+            async exportTableData() {
+            	const list = this.tableData;
+            	//alert(JSON.stringify(list));
+
+                //const tHeader = ['订单编号', '电商卖家','订单数量','订单金额','下单时间','结算方式','状态'];
+                const tHeader = ['角色名称', '角色描述'];
+		　　　   const filterVal = ['name', 'description'];
+		　　　   const data = this.formatJson(filterVal, list);
+		　　　   export_json_to_excel(tHeader, data, '角色管理表');
+            },
+            formatJson(filterVal, jsonData) {
+		　　　　　　return jsonData.map(v => filterVal.map(j => v[j]))
+		　　},
+            //页码变更
+            handleCurrentChange: function(val) {
+                this.currentPage = val;
+                var role={"compId":this.roleForm.compId};
+                let  param = {
+                    "role":role,
+                    "params": this.criteria,
+                    "pageSize": this.pagesize,
+                    "pageIndex": this.currentPage,
+                    "roleName":this.queryName
+                };
+                this.loadDataWithCondition(param);
+            },
+            async loadDataWithCondition(param) {
+                const res = await queryRole(param);
+                if (res.isSuccess == true) {
+                    /*
+                    this.$message({
+                       type: 'success',
+                       message: '加载数据成功'
+                    });*/
+                    this.tableData = res.result.data;
+                    this.totalCount = res.result.totalCount;
+                    this.changedFee =  res.result.groupData;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+//          handleCheckChange(data) {
+//          	if(!data.children){
+//          		alert(JSON.stringify(data))
+//          		var refname = this.getRefName(data.key);
+//          		var arr = this.$refs.refname.getCheckedKeys();
+//          		if(arr instanceof undefined){
+//          			arr = [data.id];
+//          		}
+//          		else if(arr instanceof Array){
+//          			if(!arr.contains(data.id))arr.push(data.id);
+//          			else arr.removeChild(data.id);
+//          		}
+//          	}
+//          	this.$refs.selectRoleTreeRef.setCheckedKeys(arr);
+//          	var tmp = this.$refs.selectRoleTreeRef.getCheckedKeys();
+//          	alert(tmp);
+//              console.log(1);
+//          },
+            //删除角色信息
+            async deleteRow(index, rows) {
+                //rows.splice(index, 1);
+                const res1= await queryUsersByRole({"compId":this.roleForm.compId,"roleId":this.tableData[index].id});
+                //console.log(res1);
+                var tips = '';
+                if (res1.isSuccess == true) {
+                    var roleUsers = this.formatMemberId(res1.result.user);
+                    if(roleUsers.length>0) tips='该角色下还有关联成员，';
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                    return;
+                }
+                var roleName = this.tableData[index].name;
+                this.$confirm(tips+'是否确认删除 '+roleName+' ?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(async () => {
+                    this.selectRoleId=this.tableData[index].id;
+                    const res=await delRole({"roleId":this.selectRoleId,"forced":true});
+                    if (res.isSuccess == true) {
+                    	this.$message({
+                    		type:'success',
+                    		message:'删除成功'
+                    	});
+                        this.loadInit();
+                    }else{
+                        this.$message({
+                            type: 'error',
+                            message: res.errorMsg
+                        });
+                    }
+                }).catch(() => {
+
+                });
+            },
+            toggleSelection(rows) {
+                if (rows) {
+                    rows.forEach(row => {
+                        this.$refs.multipleTable.toggleRowSelection(row);
+                    });
+                } else {
+                    this.$refs.multipleTable.clearSelection();
+                }
+            },
+            handleClose(tag) {
+                this.dynamicTags.splice(this.dynamicTags.indexOf(tag), 1);
+            },
+            //从服务器读取数据
+            async roleData() {
+                //const res = await getUserAuths({userId:this.roleForm.userId,companyId:this.roleForm.compId});
+                const res = await getCompanyAuthsByCompanyId({companyId:this.roleForm.compId});
+                if (res.isSuccess == true) {
+                    this.companyRoleDate=res.result.data;
+                    var rotemp=this.getAuthById(res.result.data);
+                    this.companyRole=rotemp;
+                    //console.log(rotemp);
+                   // console.log("======================");
+                    //console.log(this.data2);
+
+                    //this.usrRole=this.getAuthById(res.result.data);
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            setRefName(key){
+                return "selectRoleTreeRef"+key;
+            },
+            //选择的role的id
+            getSelectIndex(resdata){
+                //console.log(resdata);
+                var jsonArray1 = [];
+                for(var i=0; i<resdata.length; i++){
+                    //for(var resultData in resdata){
+                    var resultData = resdata[i];
+                    jsonArray1.push(resultData.id);
+                }
+                return jsonArray1;
+            },
+            //bianli
+            getRoleByIndex(data,index){
+                //console.log("getRoleByIndex----" + index);
+                //alert(JSON.stringify(data))
+                //alert(index);
+                var jsonArray1 = [];
+                jsonArray1.push(data);
+                return jsonArray1;
+            },
+            //拼接角色数组
+            linkRoleArray(data){
+                var rearray=[];
+                if(data instanceof Array && data.length >0){
+                    for(var i=0; i< (data.length );i++){
+                        var temp=data[i];
+                        if(temp=='') continue;
+                        if(temp instanceof Array &&  data.length > 0){
+                            for(var j=0; j< temp.length;j++){
+                                var tt=temp[j];
+                                if(tt=='') continue;
+                                rearray.push(temp[j]);
+                            }
+                        }else{
+                            rearray.push(temp);
+                        }
+                    }
+                }
+               return rearray;
+            },
+            getAuthByType(resdata){
+                var jsonArray1 = [];
+                var jsonArray2 = [];
+                var jsonArray3 = [];
+                for(var i=0; i<resdata.length; i++){
+                    //for(var resultData in resdata){
+                    var resultData = resdata[i];
+                    //console.log(resultData.name);
+                    if(resultData.type=='1' && resultData.parentAuthId==null ){//一级菜单
+                        // console.log(resultData.name);
+                        var json = new Object;
+                        json.id=resultData.id;
+                        json.name=resultData.name;
+                        //josn.parentAuthId=resultData.parentAuthId;
+                        jsonArray1.push(json);
+                    }else if(resultData.type =='1' && resultData.parentAuthId !=null){//二级菜单
+                        var json2 = new Object;
+                        json2.id=resultData.id;
+                        json2.name=resultData.name;
+                        json2.parentAuthId=resultData.parentAuthId;
+                        jsonArray2.push(json2);
+                    }else if(resultData.type=='2'){
+                        var json = new Object;
+                        json.id=resultData.id;
+                        json.name=resultData.name;
+                        json.parentAuthId=resultData.parentAuthId;
+                        jsonArray3.push(json);
+                    }
+                }
+                var result=new Array(jsonArray1,jsonArray2,jsonArray3);
+                return result;
+            },
+            getAuthById(resdata){
+                //console.log("getAuthById====="+JSON.stringify(resdata));
+                var jsonArray1 = [];
+                var jsonArray2 = [];
+                var jsonArray3 = [];
+                var result=this.getAuthByType(resdata);
+                jsonArray1=result[0];
+                jsonArray2=result[1];
+                jsonArray3=result[2];
+
+                var roleArray = [];
+                for(var i=0; i<jsonArray1.length; i++){
+                    var result1 = jsonArray1[i];
+                    var jt1 = new Object;
+                    jt1.id=result1.id;
+                    jt1.label=result1.name;
+                    jt1.name="" + i;
+                    jt1.children=[];
+                    var children1=[];
+                    for(var j=0; j<jsonArray2.length; j++){
+                        var result2 = jsonArray2[j];
+                        //console.log(result2);
+                        if(result2.parentAuthId != result1.id) continue;
+                        //添加二级菜单
+                        var jt2 = new Object;
+                        jt2.id=result2.id;
+                        jt2.label=result2.name;
+                        jt2.children=[];
+                        jt1.children.push(jt2);
+
+                        for(var k=0; k<jsonArray3.length; k++){
+                            var result3 = jsonArray3[k];
+                            if(result3==null) continue;
+                            if(result3.parentAuthId==result2.id){
+                                var jt3 = new Object;
+                                jt3.id=result3.id;
+                                jt3.label=result3.name;
+                                jt2.children.push(jt3);
+                            }
+                        }
+                        //console.log(children2);
+                    }
+                    //如果没有二级菜单则匹配三级菜单，看是否与一级菜单匹配
+                    if(jt1.children.length < 1){
+                    	for(var k=0; k<jsonArray3.length; k++){
+                            var result3 = jsonArray3[k];
+                            if(result3==null) continue;
+                            if(result3.parentAuthId==result1.id){
+                                var jt3 = new Object;
+                                jt3.id=result3.id;
+                                jt3.label=result3.name;
+                                jt1.children.push(jt3);
+                            }
+                        }
+                    }
+                    roleArray.push(jt1);
+                }
+                return roleArray;
+            },
+            initAddForm(){
+                this.form.name='';
+                this.form.description='';
+                //this.$refs.roletree.setCheckedKeys([]);
+            },
+            cancelAddNewRole(){
+                this.dialogFormRole = false
+                this.initAddForm();
+            },
+            //新建角色
+            async addNewRole(){
+                //var checklist=this.form.defaultProps.getCheckedKeys();
+                //console.log('-------------------------------------');
+                //this.$refs.roletree.setCheckedKeys(["1","2"]);
+                //console.log(this.checkedCities1);
+                console.log(this.$refs);
+                var keys = Object.keys('compRefTree_');
+                console.log(keys.length);
+                var keysArray=[];
+                if(keys instanceof Array){
+                    for(var i=0;i< ( this.$refs.compRefTree_.length);i++){
+                        var authIds=this.$refs.compRefTree_[i].getCheckedKeys();
+                        if(authIds.length >0){
+                            keysArray.push(authIds);
+                        }
+                    }
+                }
+                //console.log(keysArray);
+                var allarray=this.linkRoleArray(keysArray);
+                //console.log(allarray);
+                //console.log(this.$refs.roletree.getCheckedNodes());
+                //console.log(this.$refs.roletree.getCheckedKeys());
+                //var authIds=this.$refs.roletree.getCheckedKeys();
+                let  param = {
+                    "compId":this.roleForm.compId,
+                    "role":{"name":this.form.name,"createUserId":this.roleForm.userId,"description":this.form.description},
+                    "authIds": allarray
+                };
+                const res =await  saveRole(param);
+                if (res.isSuccess == true) {
+                    this.dialogFormRole = false
+                    this.initAddForm();
+                    this.loadInit();
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            //
+            contains(dataArray,value){
+                for (var i = 0; i < dataArray.length; i++) {
+                    if (dataArray[i] == value) {
+                        return true;
+                    }
+                }
+                return false;
+            },
+
+            /*
+            *  选择的角色是否存在
+             *  checkId :公司id的顶级菜单
+             *  selectRole：选择的角色
+             *  jsonArray2：公司的二级
+             *  jsonArray3：公司的三级
+            */
+            bexistRole(selectRole,jsonArray2,jsonArray3,checkId){
+                var comArray=[];
+                var comArray2=[];
+                comArray.push(checkId);
+                for(var i=0;i< jsonArray2.length;i++){
+                    var j2=jsonArray2[i];
+                    if(j2.parentAuthId==checkId){
+                        comArray2.push(j2.id);
+                        comArray.push(j2.id);
+                    }
+                }
+                //属于checkId的第三级id
+                for(var j=0;j<comArray2.length;j++){
+                    var jid2=comArray2[j];
+                    for(var i=0;i< jsonArray3.length;i++){
+                        var j3=jsonArray3[i];
+                        if(j3.parentAuthId==jid2){
+                            comArray.push(j3.id);
+                        }
+                    }
+                }
+                //所有checkId的id
+                for(var j=0;j<selectRole.length;j++){
+                    var ttid=selectRole[j].id;
+                    //console.log("====2====" + ttid);
+                    if(this.contains(comArray,ttid)) return true;
+                }
+                return false;
+            },
+
+            bexistRole2(selectRole,jsonArray2,jsonArray3,checkId){
+                var comArray=[];
+                var comArray2=[];
+                comArray.push(checkId);
+                for(var i=0;i< jsonArray2.length;i++){
+                    var j2=jsonArray2[i];
+                    if(j2.parentAuthId==checkId){
+                        comArray2.push(j2.id);
+                        comArray.push(j2.id);
+                    }
+                }
+                //属于checkId的第三级id
+                for(var j=0;j<comArray.length;j++){
+                    var jid2=comArray[j];
+                    for(var i=0;i< jsonArray3.length;i++){
+                        var j3=jsonArray3[i];
+                        if(j3.parentAuthId==jid2){
+                            comArray.push(j3.id);
+                        }
+                    }
+                }
+                //console.log(selectRole)
+                //所有checkId的id
+                for(var j=0;j<selectRole.length;j++){
+                    var ttid=selectRole[j].id;
+                    if(this.contains(comArray,ttid)) {
+                        return true;
+                    }
+                }
+                return false;
+            },
+
+            /*
+            *  从公司角色中找出已经选择的
+            */
+            converRoleData(selectRole,compRole){
+                //console.log(selectRole);
+                //console.log(compRole);
+                var jsonArray1 = [];
+                var result=this.getAuthByType(compRole);
+                var jsonArray2 = result[1];
+                //console.log(jsonArray2);
+                var jsonArray3 =  result[2];
+                //console.log(jsonArray3);
+                //找出选择的一级
+                var result2=this.getAuthByType(selectRole);
+                for(var i=0; i<compRole.length; i++){
+                    var resultData = compRole[i];
+                    //console.log(resultData.name);
+                    if(resultData.type=='1' && resultData.parentAuthId==null ){//一级菜单
+                        // console.log(resultData.name);
+                        var bfind=this.bexistRole2(selectRole,result[1],result[2],resultData.id);
+                        if(bfind){
+                            //console.log("convert---find" )
+                            var json = new Object;
+                            json.id=resultData.id;
+                            json.name=resultData.name;
+                            jsonArray1.push(json);
+                        }
+                    }
+                }
+                //二级菜单
+                //console.log(jsonArray1);
+                //jsonArray2=selectRole;
+                var roleArray = [];
+                for(var i=0; i<jsonArray1.length; i++){
+                    var result1 = jsonArray1[i];
+                    var jt1 = new Object;
+                    jt1.id=result1.id;
+                    jt1.label=result1.name;
+                    jt1.name="" + i;
+                    jt1.children=[];
+                    var children1=[];
+                    for(var j=0; j<jsonArray2.length; j++){
+                        var result2 = jsonArray2[j];
+                        //JSON.stringify()                     //
+                        var bfind=this.bexistRole2(selectRole,jsonArray2,jsonArray3,result2.id);
+                        if(!bfind) continue;
+                        var children2=[];
+                        //console.log(result2);
+                        for(var k=0; k<jsonArray3.length; k++){
+                            var result3 = jsonArray3[k];
+                            if(result3==null) continue;
+                            if(result3.parentAuthId==result2.id){
+                                var jt3 = new Object;
+                                jt3.id=result3.id;
+                                jt3.label=result3.name;
+                                children2.push(jt3);
+                            }
+                        }
+                        //console.log(children2);
+
+                        if(result2.parentAuthId==result1.id){
+                            var jt2 = new Object;
+                            jt2.id=result2.id;
+                            jt2.label=result2.name;
+                            jt2.children=[];
+                            //children1.push(jt2);
+                            if(children2.length >0){
+                                // jt2.children.push(children2);
+                                jt2.children=children2;
+                            }
+                            if(jt2.children.length <1){
+                                delete jt2.children;
+                            }
+                            jt1.children.push(jt2);
+                            //console.log("---1----")
+                            //console.log(jt2);
+                        }
+                    }
+                    if(jt1.children.length <1){
+                        delete jt1.children;
+                    }
+                    roleArray.push(jt1);
+                }
+                //console.log(roleArray);
+                return roleArray;
+            },
+            //
+             async showEditRole(index){
+                ///
+                this.selectRoleId=this.tableData[index].id;
+                this.editForm.name=this.tableData[index].name;
+                this.editForm.description=this.tableData[index].description;
+                const res =await queryAuthsByRole({"roleId": this.selectRoleId,"compId":this.roleForm.compId,"pageSize":2000,"pageNo":1});
+                if (res.isSuccess == true) {
+                    //console.log(res.result.data);
+                    //alert(JSON.stringify(res.result.data));
+                    this.selectRole.splice(0,this.selectRole.length);
+                    //alert(JSON.stringify(this.selectRole));
+                    if(res.result.data instanceof Array){
+                    	var tempData = res.result.data;
+                    	for(var i in res.result.data){
+                    		this.selectRole.push(tempData[i].id);
+                    	}
+                    }else{
+                    	this.selectRole.push(res.result.data.id);
+                    }
+                    this.dialogFormVisible=true;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+
+            },
+            async saveEditRole(){
+                if(this.selectRoleId=='') return false;
+                //var authIds=this.$refs.selectRoleTreeRef.getCheckedKeys();
+                var keys = Object.keys('selectRoleTreeRef');
+                console.log(keys.length);
+                var keysArray=[];
+                if(keys instanceof Array){
+                    for(var i=0;i< ( this.$refs.selectRoleTreeRef.length);i++){
+                        var authIds=this.$refs.selectRoleTreeRef[i].getCheckedKeys();
+                        for (var m in authIds) {
+                        	keysArray.push(authIds[m]);
+                        }
+                    }
+                }
+                //alert(JSON.stringify(keysArray));
+                //console.log(keysArray);
+                var allarray=this.linkRoleArray(keysArray);
+                let  param = {
+                    "compId":this.roleForm.compId,
+                    "role":{"id":this.selectRoleId,"name":this.editForm.name,"description":this.editForm.description},
+                    "authIds": keysArray
+                };
+                const res =await updateRole(param);
+                if (res.isSuccess == true) {
+                    this.dialogFormVisible=false;
+                    this.loadInit();
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            //formatMember
+            formatMember(resdata){
+                var jarray = [];
+                if(resdata==null || resdata=='') return jarray;
+                for(var i=0; i<resdata.length; i++) {
+                    var result1 = resdata[i];
+                    var jt1 = new Object;
+                    jt1.key=result1.id;
+                    jt1.label=result1.userName;
+                    jt1.pinyin='';
+                    jarray.push(jt1);
+                }
+                return jarray;
+            },
+            formatMemberId(resdata){
+                var jarray = [];
+                if(resdata==null || resdata=='') return jarray;
+                for(var i=0; i<resdata.length; i++) {
+                    var result1 = resdata[i];
+                    jarray.push(result1.id);
+                }
+                return jarray;
+            },
+            async showAddMember(index){
+                this.selectRoleId=this.tableData[index].id;
+                let  param = {
+                    "compId":this.roleForm.compId,
+                    "pageSize":200,
+                    "page":1
+                };
+                const res=await queryUser({"compId":this.roleForm.compId,"page":1,"pageSize":200,});
+                if (res.isSuccess == true) {
+                    this.data3=this.formatMember(res.result.data);
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+                const res1= await queryUsersByRole({"compId":this.roleForm.compId,"roleId":this.selectRoleId});
+                //console.log(res1);
+                if (res1.isSuccess == true) {
+                    this.selectMember=this.formatMemberId(res1.result.user);
+                    //console.log(this.selectMember);
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                    return false;
+                }
+                this.dialogFormMember = true;
+            },
+            //
+            async saveMemberRole(index){
+                //console.log(this.selectMember);
+//              if(this.selectMember==null || this.selectMember.length < 1){
+//                  this.$message({
+//                      type: 'error',
+//                      message: '请选择要加入的成员'
+//                  });
+//                  return false;
+//              }
+                let  param = {
+                    "compId":this.roleForm.compId,
+                    "userIds":this.selectMember,
+                    "roleId":this.selectRoleId
+                };
+               const res= await batchAddUserRoles(param);
+                if (res.isSuccess == true) {
+                     this.dialogFormMember = false;
+                    this.selectMember=[];
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+        }
+    }
+</script>
+<style lang="less">
+    @import '../style/mixin.less';
+    @import "../style/common";
+    @import "../style/manageRole";
+</style>

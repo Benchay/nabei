@@ -1,0 +1,405 @@
+<template>
+    <div class="fillcontain">
+        <ul :class="[identity ==1 ?'stallShareMenu':identity ==2 ?'sellerShareMenu':'']">
+            <li class="ListMenu">
+                <router-link :to='{path:"/financialManagement"}'>账户总览</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/financialManagement2"}'>财务交易记录</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/accountSetting"}'>账户设置</router-link>
+            </li>
+        </ul>
+        <div class="otherManagement">
+            <router-link :to='{path:"/financialManagement"}' :class="[identity ==1 ?'comeBack':identity ==2 ?'comeBack2':'']" class="right">返回</router-link>
+
+            <el-col class="flex otherList">
+                <el-col :span="2" class="bankTitle">银行卡</el-col>
+                <el-col :span="22" class="bankCard">
+                    <ul class="flex">
+                        <li class="flex"  v-for="item in bank" >
+                            <img src="../image/bbank02.png" alt="">
+                            <div class="tit">
+                                <p>中国XX银行</p>
+                                <p>{{item.account |toTel}}</p>
+                            </div>
+                            <img  class="delete" src="../image/rdelete03.png" alt=""  @click="handleDelAccount(2,item.account)">
+                        </li>
+                        <li class="flex addBank"  @click="dialogBank = true,addBank=false">
+                            <img src="../image/add.png" alt="">
+                            <div>
+                                <a href="javascript:void(0);">添加银行卡</a>
+                            </div>
+                        </li>
+                    </ul>
+
+                </el-col>
+            </el-col>
+            <el-col class="flex otherList">
+                <el-col :span="2" class="bankTitle">微信</el-col>
+                <el-col :span="22" class="bankCard">
+                    <ul class="flex">
+                        <li class="flex"  v-for="item in wechat" v-show="wechat.length > 0">
+                            <img src="../image/bweixin03.png" alt="">
+                            <div class="tit">
+                                <p>微信</p>
+                                <p id="wechat">{{item.account |toTel}}</p>
+                            </div>
+                            <img  class="delete" src="../image/rdelete03.png" alt=""  @click="handleDelAccount(2,item.account)">
+                        </li>
+                        <li class="flex addBank"  v-show="wechat.length < 1"  @click="dialogWechat = true">
+                            <img src="../image/add.png" alt="">
+                            <div>
+                                <a href="javascript:void(0);">添加微信</a>
+                            </div>
+                        </li>
+                    </ul>
+                </el-col>
+            </el-col>
+            <el-col class="flex otherList">
+                <el-col :span="2" class="bankTitle">支付宝</el-col>
+                <el-col :span="22" class="bankCard">
+                    <ul class="flex">
+                        <li class="flex" v-for="item in alipay" v-show="alipay.length > 0">
+                            <img src="../image/bzf04.png" alt="">
+                            <div class="tit">
+                                <p>支付宝</p>
+                                <p id="phone">{{item.account |toTel}}</p>
+                            </div>
+                            <img  class="delete" src="../image/rdelete03.png" alt="" @click="handleDelAccount(1,item.account)">
+                        </li>
+                        <li class="flex addBank" v-show="alipay.length < 1" @click="dialogalipay = true">
+                            <img src="../image/add.png" alt="">
+                            <div>
+                                <a href="javascript:void(0);">添加支付宝</a>
+                            </div>
+                        </li>
+                    </ul>
+                </el-col>
+            </el-col>
+        </div>
+        <el-dialog
+            title="添加银行卡"
+            :visible.sync="dialogBank"
+            size="tiny">
+            <div class="dialogAddBank">
+                <ul>
+                    <li>
+                        <el-button>
+                            <div class="flex2">
+                                <img src="../image/bank_abc.png" alt="">
+                                <p>中国农业银行</p>
+                            </div>
+                        </el-button>
+                    </li>
+                    <li>
+                        <el-button>
+                            <div class="flex2">
+                                <img src="../image/bank_boc.png" alt="">
+                                <p>中国银行</p>
+                            </div>
+                        </el-button>
+                    </li>
+                    <li>
+                        <el-button>
+                            <div class="flex2">
+                                <img src="../image/bank_ccb.png" alt="">
+                                <p>中国建设银行</p>
+                            </div>
+                        </el-button>
+                    </li>
+                    <li>
+                        <el-button>
+                            <div class="flex2">
+                                <img src="../image/bank_cmbc.png" alt="">
+                                <p>中国招商银行</p>
+                            </div>
+                        </el-button>
+                    </li>
+                    <li>
+                        <el-button>
+                            <div class="flex2">
+                                <img src="../image/bank_icbc.png" alt="">
+                                <p>中国工商银行</p>
+                            </div>
+                        </el-button>
+                    </li>
+                    <li>
+                        <el-button>
+                            <div class="flex2">
+                                <img src="../image/bank_posta.png" alt="">
+                                <p>中国邮政银行</p>
+                            </div>
+                        </el-button>
+                    </li>
+                    <li>
+                        <el-button>
+                            <div class="flex2">
+                                <img src="../image/bank_jt.png" alt="">
+                                <p>中国交通银行</p>
+                            </div>
+                        </el-button>
+                    </li>
+                    <li @click="addBank =true" class="flex2">
+                        <el-button>
+                            <div class="flex2">
+                                +添加银行卡
+                            </div>
+                        </el-button>
+                    </li>
+                </ul>
+            </div>
+            <div class="dialogZH" v-show="addBank">
+                <el-col :span="24">
+                    <el-col :span="7">银行账户：</el-col>
+                    <el-col :span="16"><el-input v-model="accountNo" placeholder="请输入银行账户" size="small"></el-input></el-col>
+                </el-col>
+                <el-col :span="24">
+                    <el-col :span="7">户主真是姓名：</el-col>
+                    <el-col :span="16"><el-input v-model="accountUserName" placeholder="请输入户主真是姓名" size="small"></el-input></el-col>
+                </el-col>
+                <el-col :span="24">
+                    <el-col :span="7">银行卡开户行：</el-col>
+                    <el-col :span="16"><el-input v-model="accountBankName" placeholder="请输入银行卡开户行" size="small"></el-input></el-col>
+                </el-col>
+            </div>
+            <span slot="footer" class="dialog-footer">
+    <el-button @click="dialogBank = false">取 消</el-button>
+    <el-button type="primary" @click="handleBindAccount(5)">确 定</el-button>
+  </span>
+        </el-dialog>
+        <el-dialog
+            title="添加微信"
+            :visible.sync="dialogWechat"
+            size="tiny">
+            <div class="dialogZH1">
+                <el-col :span="24">
+                    <el-col :span="7">微信帐号：</el-col>
+                    <el-col :span="16">
+                        <el-input v-model="accountNo" placeholder="请输入微信帐号" size="small"></el-input>
+                        <p class="wechatTip">*请输入正确微信帐号，并确认无误。</p>
+                    </el-col>
+                </el-col>
+                <el-col :span="24">
+                    <el-col :span="7">微信用户名：</el-col>
+                    <el-col :span="16"><el-input v-model="accountUserName" placeholder="请输入微信用户名" size="small"></el-input></el-col>
+                </el-col>
+                <el-col :span="24">
+                    <el-col :span="7">微信收款码：</el-col>
+                    <el-col :span="16">
+                        <el-upload
+                            class="avatar-uploader"
+                            action="https://jsonplaceholder.typicode.com/posts/"
+                            :show-file-list="false"
+                            :on-success="handleAvatarSuccess"
+                            :before-upload="beforeAvatarUpload">
+                            <img v-if="imageUrl" :src="imageUrl" class="avatar">
+                            <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+                        </el-upload>
+                    </el-col>
+                </el-col>
+            </div>
+            <span slot="footer" class="dialog-footer">
+    <el-button @click="dialogWechat = false">取消添加</el-button>
+    <el-button type="primary" @click="handleBindAccount(4)">确定添加</el-button>
+  </span>
+        </el-dialog>
+        <el-dialog
+            title="添加支付宝"
+            :visible.sync="dialogalipay"
+            size="tiny">
+            <div class="dialogZH1">
+                <el-col :span="24">
+                    <el-col :span="7">支付宝帐号：</el-col>
+                    <el-col :span="16">
+                        <el-input v-model="accountNo" placeholder="请输入支付宝帐号" size="small"></el-input>
+                        <p class="wechatTip">*请输入正确支付宝帐号，并确认无误。</p>
+                    </el-col>
+                </el-col>
+                <el-col :span="24">
+                    <el-col :span="7">支付宝用户名：</el-col>
+                    <el-col :span="16"><el-input v-model="accountUserName" placeholder="请输入支付宝用户名" size="small"></el-input></el-col>
+                </el-col>
+                <el-col :span="24">
+                    <el-col :span="7">支付宝收款码：</el-col>
+                    <el-col :span="16">
+                        <el-upload
+                            class="avatar-uploader"
+                            action="https://jsonplaceholder.typicode.com/posts/"
+                            :show-file-list="false"
+                            :on-success="handleAvatarSuccess"
+                            :before-upload="beforeAvatarUpload">
+                            <img v-if="imageUrl" :src="imageUrl" class="avatar">
+                            <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+                        </el-upload>
+                    </el-col>
+                </el-col>
+            </div>
+            <span slot="footer" class="dialog-footer">
+    <el-button @click="dialogalipay = false">取消添加</el-button>
+    <el-button type="primary" @click="handleBindAccount(3)">确定添加</el-button>
+  </span>
+        </el-dialog>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {queryPlatformAccount,bindingFinanceAccount,unbindingFinanceAccount} from '@/api/getData'
+    import {userInfo,getStore,setStore} from  '../config/mUtils'
+
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                //1为档口、2为卖家身份
+                identity:1,
+
+                addBank:false,
+                imageUrl:'',
+                dialogBank:false,
+                dialogWechat:false,
+                dialogalipay:false,
+                input:'',
+                alipay:[],
+                wechat:[],
+                accountUserName:'',
+                accountNo:'',
+                accountBankName:'',
+                bank:[],
+            }
+        },
+
+        mounted(){
+            this.loadAccuntInfo();
+
+        },
+        methods: {
+            handleAvatarSuccess(res, file) {
+                this.imageUrl = URL.createObjectURL(file.raw);
+            },
+            beforeAvatarUpload(file) {
+                const isJPG = file.type === 'image/jpeg';
+                const isLt2M = file.size / 1024 / 1024 < 2;
+
+                if (!isJPG) {
+                    this.$message.error('上传图片只能是 JPG 格式!');
+                }
+                if (!isLt2M) {
+                    this.$message.error('上传图片大小不能超过 2MB!');
+                }
+                return isJPG && isLt2M;
+            },
+            handleDelAccount (accountType,account){
+                switch(accountType){
+                    case 1:
+                        let  acc_index =  this.alipay.findIndex(function(value, index){
+                            return value = account;
+                        })
+                        if(acc_index>-1){
+                            this.alipay.splice(acc_index,1);
+                        }
+                    case 2:
+                        let  acc_index_1 =  this.wechat.findIndex(function(value, index){
+                            return value = account;
+                        })
+                        if(acc_index_1>-1){
+                            this.wechat.splice(acc_index_1,1);
+                        }
+                }
+            },
+
+            handleBindAccount (accountType){
+                    this.dialogBank=false;
+                    this.dialogWechat=false;
+                    this.dialogalipay=false;
+                let param ={
+                    name:this.accountUserName,
+                    accType:accountType,
+                    bankType:this.accountBankName,
+                    accoutNumber:this.accountNo,
+                    companyId:userInfo().companyId
+                }
+                this.createAccount (param);
+
+                this.$route.router.push(this.$route.path);
+            },
+            async loadAccuntInfo(){
+
+                let param ={companyId:userInfo().companyId};
+                const res = await queryPlatformAccount(param);
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: '加载数据成功'
+                    });
+
+                    this.alipay =this.getAccByType (1, res.result.financeAccounts);
+                    this.wechat =this.getAccByType (2, res.result.financeAccounts);
+                    this.bank =this.getAccByType (3, res.result.financeAccounts);
+
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+
+            },
+
+            async createAccount(param){
+                const res = await bindingFinanceAccount(param);
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: '加载数据成功'
+                    });
+                    this.loadAccuntInfo();
+                    this.restFields();
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+
+            },
+            getAccByType(type,financeAccounts) {
+                let results = [];
+                for (var acc of financeAccounts) {
+                    if(acc.accType==type){
+                        let  tem ={};
+                        tem.account = acc.accoutNumber;
+                        results.push(tem);
+
+                    }
+                }
+                return results;
+            },
+
+            restFields() {
+                this.accountUserName='';
+                this.accountNo='';
+                this.accountBankName=''
+            }
+
+        },
+        filters: {
+            toTel(str) {
+                let start = str.slice(0, 3);
+                let end = str.slice(-4);
+                return `${start}****${end}`;
+            }
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/otherManagement';
+</style>

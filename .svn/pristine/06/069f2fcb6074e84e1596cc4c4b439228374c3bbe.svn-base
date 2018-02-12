@@ -1,0 +1,357 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('webStoreOrderSalesBuy')">
+                <router-link :to='{path:"/webStoreOrderSalesBuy"}'>网店订单</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('purchaseRequireBuy')">
+                <router-link :to='{path:"/purchaseRequireBuy"}'>采购需求</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('orderPurchaseBuy')">
+                <router-link :to='{path:"/orderPurchaseBuy"}'>采购订单</router-link>
+            </li>
+            <!-- <li v-if="getMenuAuthFun('addShop')">
+                <router-link :to='{path:"/addShop"}'>绑定店铺</router-link>
+            </li> -->
+            <li class="menuIndex2" v-if="getMenuAuthFun('packageDetails')">
+                <router-link :to='{path:"/packageDetails"}'>包裹管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('salesForecast')">
+                <router-link :to='{path:"/salesForecast"}'>采购统计</router-link>
+            </li>
+        </ul>
+        <div class="startProcurement">
+            <div>
+                <el-row>
+                    <el-col :span="22"><p>包裹详情</p></el-col>
+                    <el-col :span="2"><router-link :to='{path:"/packageDetails"}' class="comeBack2 right">返回</router-link></el-col>
+                </el-row>
+                <el-row style="margin: 30px 0 25px 0;">
+                    <el-col :span="24">
+                        <el-button style="padding: 10px;" class="buttonColor3" @click="putqrcode">打印二维码</el-button>
+                    </el-col>
+                </el-row>
+                <div class="emptymianwrap">
+                    <div class="detailwrap">
+                        <el-row>
+                            <el-col :span="8">档口名称：{{stallName}}</el-col>
+                            <el-col :span="8">包裹总数：{{packNum}}</el-col>
+                            <el-col :span="8">包裹状态：{{packState | formatState}}</el-col>
+                        </el-row>
+                        <el-row>
+                            <el-col :span="8">包裹类型：{{packType | formatType}}</el-col>
+                            <el-col :span="8">创建时间：{{creatTime | formatDate}}</el-col>
+                            <el-col :span="8">创建人：{{userName}}</el-col>
+                        </el-row>
+                    </div>
+                    <div class="qrcodewrap" id="preview">
+                        <qrcode :value="'hmj_p_info'+packId" tag="img" :options="{ size: 110 }"></qrcode>  
+                    </div>
+                    <div class="qrDetail">
+                        卖家自建包裹
+
+                        创建人：{{userName}}
+                    </div>
+                </div>
+                 <el-row style="margin: 30px 0;">
+                    <el-col :span="24"><p>包裹详情</p></el-col>
+                </el-row>
+                    <div class="goodscontent">
+                        <div class="gooditem">
+                            <div class="mdimgwrap">
+                                <img src="../image/packagec.png" alt="" v-if="needTake">
+                            </div>
+                            <span class="describetion">包裹拿货</span>
+                            <span class="line" :class="{'active':needTake}"></span>
+                        </div>   
+                        <div class="gooditem">
+                            <div class="mdimgwrap">
+                                <img src="../image/packagec.png" alt="" v-if="needInCar">
+                            </div>
+                            <span class="describetion">包裹装车</span>
+                            <span class="line" :class="{'active':needInCar}"></span>
+                        </div>   
+                        <div class="gooditem">
+                            <div class="mdimgwrap">
+                                <img src="../image/packagec.png" alt="" v-if="needOutCar">
+                            </div>
+                            <span class="describetion">包裹卸货</span>
+                            <span class="line" :class="{'active':needOutCar}"></span>
+                        </div>   
+                        <div class="lastitem">
+                            <div class="mdimgwrap">
+                                <img src="../image/packagec.png" alt="" v-if="needInStock">
+                            </div>
+                            <span class="describetion">包裹入库</span>
+                        </div>          
+                    </div>  
+            </div>
+        </div>
+
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {setStore,getStore} from  '../config/mUtils'
+    import {loadPackage,getPackageFlowConfig} from '@/api/getData'
+    import {formatDate} from '../utils/date.js'
+    import {export_json_to_excel} from '../vendor/Export2Excel.js'
+    import {getMenuAuth,haveMenuAuth} from  '../utils/AuthMenu.js'
+    import qrcode from '@xkeshi/vue-qrcode'
+    import { getLodop } from '../Lodop/LodopFuncs.js'
+
+    export default {
+        components: {
+            headTop,
+            qrcode
+        },
+        filters:{
+        	formatDate(time){
+                 if(time==undefined||time==''){
+                    return '';
+                }
+
+                var date = new Date(time);
+        		return formatDate(time,"yyyy-MM-dd hh:mm:ss");
+            },
+            formatState(status) {
+                 if(status==-1){
+                     return "空包裹";
+                }
+                else if(status==0){
+                    return "待拿货";
+                  // 0:待拿货（已打包）      1:已拿货 (待装车) 2:装车 (待入库)  3:入库 (完成 )
+               }else if(status== 1){
+                   return "待装车";
+               }else if(status== 2){
+                   return "待入库";
+               }else if(status== 3){
+                   return "已完成";     
+               }else if(status== 21){
+                   return "装车待入库";     
+               }
+            },
+            formatType(type){
+                if(type == null||type == 0){
+                       return "普通包裹"
+                   }else if(type == 1){
+                       return "卖家自建包裹"
+                   }
+            }
+        },
+        data() {
+            return {
+                  roleForm: {
+                    userId: '',
+                    roleId: '',
+                    compId:''
+                },
+                needInCar:true,
+                needInStock:true,
+                needOutCar:true,
+                needTake:true,
+                packId:'',
+                stallName:'',
+                packNum:'',
+                packState:'',
+                packType:'',
+                creatTime:'',
+                userName:'',
+                //用户登录信息暂时写死
+                 currentComp: ""
+                // currentComp:{id:'1000'}
+            }
+        },
+        watch:{
+            '$route':function (route) {
+                this.packId=this.$route.query.packId;
+                if(route.path=='/emptypackage'){
+                    this.initData();
+                    this.getPackageFlowConfig();
+                }
+            }
+        },
+        mounted(){
+            this.currentComp = getStore("curCompany");
+            var userInfo=getStore("userInfo");
+            var vjson = JSON.parse(userInfo);
+            this.roleForm.userId=vjson.id;
+            var currentComp=getStore("curCompany");
+            var vcom = JSON.parse(currentComp);
+            this.roleForm.compId=vcom.id;
+            this.packId=this.$route.query.packId;
+            this.initData();
+            this.getPackageFlowConfig()
+        },
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            async initData(){
+                  let param ={
+                    packageId:this.packId,
+                    withLogs: true
+                }
+                const res = await loadPackage(param);
+                if(res.isSuccess){
+                    this.stallName = res.result.companyName
+                    this.packNum = res.result.sellerPackedNum
+                    this.packState = res.result.currPackageLogState
+                    this.packType = res.result.packageType
+                    this.creatTime = res.result.createTime
+                    this.userName = res.result.ownerCompanyName
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+	                });
+                }
+            },
+            putqrcode(){
+                   var codeStr = document.getElementById("preview").innerHTML;
+                    var textcode = document.getElementsByClassName("qrDetail")[0].innerHTML;
+                    
+                    //console.log(document.getElementById("barCode"))
+                    this.LODOP = getLodop();
+
+                    LODOP.PRINT_INIT('打印测试');
+                    LODOP.SET_PRINT_PAGESIZE(0, '800', '1400', 0);
+                    LODOP.ADD_PRINT_HTML(0, 15, 800, 500, codeStr);
+                    LODOP.ADD_PRINT_TEXT(0,15,800,500,textcode);
+                    LODOP.PREVIEW();
+            },
+            async getPackageFlowConfig(){
+                let param = {
+                    companyId:this.roleForm.compId
+                }
+                const res = await getPackageFlowConfig(param);
+                if(res.isSuccess){
+                    this.needInCar = res.result.needInCar;
+                 this.needInStock = res.result.needInStock;
+                 this.needOutCar = res.result.needOutCar;
+                 this.needTake = res.result.needTake;
+                 this.configid = res.result.id
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+	                });
+                }
+            },
+               
+          
+    
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/startProcurement';
+    .emptymianwrap{
+        display: flex;
+        justify-content: space-around;
+        box-sizing: border-box;
+        border: 1px solid #d8d8d8;
+        padding: 30px;
+        font-size: 14px;
+        .detailwrap{
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+        }
+        .qrcodewrap{
+            width: 110px;
+            height: 110px;
+            background-color: red;
+            box-sizing: border-box;
+        }
+        .qrDetail{
+            display: none;
+        }
+    }
+    .goodscontent{
+    display: flex;
+    padding: 0 50px;
+    margin: 50px 20px;
+    .gooditem{
+        flex: 1;
+        min-width: 296px;
+        font-size: 0;
+        margin-right: 10px;
+        text-align: center;
+        padding-top: 25px;
+        .mdimgwrap{
+            display: inline-block;
+            vertical-align: top;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            box-sizing: border-box;
+            border: 1px solid #dcdcdc;
+            margin-right: 10px;
+            position: relative;
+            img{
+                position: absolute;
+                top: -1px;
+                left: -1px;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+            }
+        }
+        .describetion{
+            font-size: 14px;
+            display: inline-block;
+            vertical-align: top;
+            margin-top: 9px;
+        }
+        .line{
+            display: inline-block;
+            vertical-align: top;
+            margin-top: 16px;
+            width: 180px;
+            margin-left: 10px;
+            box-sizing: border-box;
+            border-bottom: 1px dashed #dcdddc;
+        }
+        .active{
+            border-color: #da444f;
+        }
+    }
+    .lastitem{
+        width: 113px;
+        padding-top: 25px;
+           .mdimgwrap{
+            display: inline-block;
+            vertical-align: top;
+            width: 40px;
+            height: 40px;
+            box-sizing: border-box;
+            border-radius: 50%;
+            border: 1px solid #dcdcdc;
+            margin-right: 10px;
+            position: relative;
+            img{
+                position: absolute;
+                top: -1px;
+                left: -1px;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+            }
+        }
+        .describetion{
+            font-size: 14px;
+            display: inline-block;
+            vertical-align: top;
+            margin-top: 9px;
+        }
+    }
+}
+  
+</style>

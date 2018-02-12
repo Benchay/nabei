@@ -1,0 +1,163 @@
+<template>
+    <div class="preview" style="height: 560px;overflow-y: auto">
+            <div id="preview" style="height:500px">
+               <div>
+                   <p class="bigFont"><b>{{title}}</b></p>
+                   <p><barcode :value="barCode" tag="img" :options="{ displayValue: true ,width:1,font: 'OCR-B',height:40}" ></barcode></p>
+                   <p class="smallFont1">{{detail}}</p>
+                   <p class="smallFont2">{{dateTime}}</p>
+               </div>
+            </div>
+
+            <div class="print" style="width:100%;">
+                <el-button @click="lodopPrintPreview(title,barCode,detail,dateTime)">打印</el-button> <el-button  @click="lodopPrintDesign()">打印设计</el-button>
+            </div>
+        </div>
+</template>
+<script>
+    import {getLodop}   from '../Lodop/LodopFuncs.js'
+    import barcode from '@xkeshi/vue-barcode'	
+
+    export default {
+	  components: {
+            barcode
+        },
+	props: {
+            title:'',
+            barCode: '',
+			detail:'',
+			dateTime:''
+        },
+	
+        data(){
+            return {
+
+            }
+        },
+        mounted(){
+			alert(1111+this.barCode)
+
+        },
+		methods: {
+		printPreview(){
+		
+			var  codeStr = document.getElementById("preview").innerHTML;
+				//console.log(document.getElementById("barCode"))
+                this.LODOP = getLodop();
+                LODOP.PRINT_INIT('打印测试');
+				LODOP.SET_PRINT_PAGESIZE (0,'800','500',0);
+				LODOP.ADD_PRINT_HTML(0,15,800,500,this.getPrintStr(codeStr));
+				LODOP.PREVIEW();
+				//LODOP.PRINT_DESIGN();
+		},
+		
+		printDesign(){
+			var  codeStr = document.getElementById("preview").innerHTML;
+				//console.log(document.getElementById("barCode"))
+                this.LODOP = getLodop();
+                LODOP.PRINT_INIT('打印测试');
+				LODOP.SET_PRINT_PAGESIZE (0,'800','500',0);
+				LODOP.ADD_PRINT_HTM(0,15,800,500,this.getPrintStr(codeStr));
+				LODOP.PRINT_DESIGN();
+		},
+		
+		lodopPrintPreview(title,barCode,detail,dateTime){
+                this.LODOP = getLodop();
+                LODOP.PRINT_INIT('打印测试');
+				LODOP.SET_PRINT_PAGESIZE (0,'800','500',0);
+				LODOP.ADD_PRINT_TEXT(10,20,500,30,title)
+				LODOP.SET_PRINT_STYLEA(0, "itemtype", 1);
+				LODOP.SET_PRINT_STYLEA(0, "fontsize", 16);
+				LODOP.SET_PRINT_STYLEA(0, "bold", 1);
+
+				LODOP.ADD_PRINT_BARCODE(50,20,300,50,"Code39",barCode); 
+
+				LODOP.ADD_PRINT_TEXT(120,20,500,30,detail)
+				LODOP.SET_PRINT_STYLEA(0, "itemtype", 1);
+				LODOP.SET_PRINT_STYLEA(0, "fontsize", 12);
+				LODOP.SET_PRINT_STYLEA(0, "bold", 1); 
+				
+				LODOP.ADD_PRINT_TEXT(150,50,500,30,dateTime)
+				LODOP.SET_PRINT_STYLEA(0, "itemtype", 1);
+				LODOP.SET_PRINT_STYLEA(0, "fontsize", 8);
+				LODOP.SET_PRINT_STYLEA(0, "bold", 1); 
+				LODOP.PREVIEW();
+				//LODOP.PRINT_DESIGN(); 
+		},
+		
+		
+			lodopPrintDesign(title,barCode,detail,dateTime){
+                this.LODOP = getLodop();
+                LODOP.PRINT_INIT('打印测试');
+				LODOP.SET_PRINT_PAGESIZE (0,'800','500',0);
+				LODOP.ADD_PRINT_TEXT(10,20,500,30,title)
+				LODOP.SET_PRINT_STYLEA(0, "itemtype", 1);
+				LODOP.SET_PRINT_STYLEA(0, "fontsize", 16);
+				LODOP.SET_PRINT_STYLEA(0, "bold", 1);
+
+				LODOP.ADD_PRINT_BARCODE(50,20,300,50,"Code39",barCode); 
+
+				LODOP.ADD_PRINT_TEXT(120,20,500,30,detail)
+				LODOP.SET_PRINT_STYLEA(0, "itemtype", 1);
+				LODOP.SET_PRINT_STYLEA(0, "fontsize", 12);
+				LODOP.SET_PRINT_STYLEA(0, "bold", 1); 
+				
+				LODOP.ADD_PRINT_TEXT(150,50,500,30,dateTime)
+				LODOP.SET_PRINT_STYLEA(0, "itemtype", 1);
+				LODOP.SET_PRINT_STYLEA(0, "fontsize", 8);
+				LODOP.SET_PRINT_STYLEA(0, "bold", 1); 
+				//LODOP.PREVIEW();
+				LODOP.PRINT_DESIGN(); 
+		},
+		
+		getInnerHTMById(){
+			var style ="<style>   .preview{         background: #525659;         width:800;         height:400;         display: flex;         align-content:flex-start;         flex-wrap:wrap;         &.preview>div{             width:23%;         }         &.preview>div>div{             border-radius: 10px;             box-sizing: border-box;             background: #fff;             padding: 10px 30px;             margin: 15px;             img{                 width:100%;             }         }         .bigFont{             font-size: 18px;         }         .smallFont1{font-size: 16px;             height: 20px;line-height: 30px}         .smallFont2{font-size: 12px;text-align: center;             height: 20px;line-height: 30px;}         .print{             width:100%;             margin-top: 20px;             padding-left: 15px;         }     }</style>";
+		return  style;
+		},
+		
+		getBody(str){
+			return "<body>"+str+"</body>"
+		},
+		
+		getPrintStr(str){
+		  return  this.getInnerHTMById()+this.getBody(str);
+		}
+	}
+    }
+</script>
+
+<style lang="less" id="style">
+   .preview{
+        background: #525659;
+        display: flex;
+        align-content:flex-start;
+        flex-wrap:wrap;
+    }
+    .preview>div>div{
+        border-radius: 10px;
+        box-sizing: border-box;
+        background: #fff;
+        padding: 10px 30px;
+        margin: 15px;
+    }
+    .preview>div>div img{
+        width:100%;
+    }
+    .preview>div{
+        width:23%;
+    }
+    .bigFont{
+        font-size: 18px;
+    }
+    .smallFont1{font-size: 16px;
+        height: 20px;line-height: 30px}
+    .smallFont2{font-size: 12px;text-align: center;
+        height: 20px;line-height: 30px;}
+    .print{
+        width:100%;
+        margin-top: 20px;
+        padding-left: 15px;
+    }
+
+
+</style>

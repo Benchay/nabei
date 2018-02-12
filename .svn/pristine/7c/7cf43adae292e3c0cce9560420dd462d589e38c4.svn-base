@@ -1,0 +1,23 @@
+/**
+ * Created by Administrator on 2017/9/2.
+ */
+export function isJson(obj) {
+	var isjson = typeof(obj) == "object" && Object.prototype.toString.call(obj).toLowerCase() == "[object object]" && !obj.length;
+	return isjson;
+};
+export function isArray(arr) {
+	return Object.prototype.toString.call(arr) === "[object Array]";
+};
+
+export function isNullObject(x) {
+	if(x == undefined) return true;
+	return false;
+}
+
+export function getCompanyType(currentComp) {
+	if(currentComp != null && currentComp !='') {
+		var vcom = JSON.parse(currentComp);
+		return vcom.type;
+	}
+	return 1;
+}

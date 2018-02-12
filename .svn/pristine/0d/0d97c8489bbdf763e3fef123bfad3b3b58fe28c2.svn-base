@@ -1,0 +1,222 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/fastShipping2"}'>快速出货</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/returnManagement2"}'>快速退货</router-link>
+            </li>
+            <li class="menuIndex">
+                <router-link :to='{path:"/indentManagement"}'>订单管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/sellerSettlement"}'>客户结算</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/customerManagement"}'>客户管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/statisticalStatement"}'>销售统计</router-link>
+            </li>
+        </ul>
+        <div class="returns-content" style="height:77%;">
+            <div class="returnsAll">
+                <div class="right">
+                    <router-link :to='{path:"/indentManagement"}' class="comeBack">返回</router-link>
+                </div>
+                <div class="orderDetails">
+                    <div class="flex detailsLeft">
+                        <img src="../image/111.png" alt="">
+                        <div>
+                            <p>订单编号：{{orderVo.orderId}}</p>
+                            <p>商家名称：{{orderVo.stallName}}</p>
+                            <p>配货时间：{{formatDate(orderVo.orderTime)}}</p>
+                        </div>
+                    </div>
+                    <div  class="detailsCenter">
+                        <p>总采购数：{{orderVo.totalNum}}</p>
+                        <p>总采购金额：<span class="title">￥{{orderVo.totalFee}}</span></p>
+                    </div>
+                    <div class="flex detailsRight">
+                        <a href="javascript:void(0)" @click="dialog1 = true">
+                            <div>
+                                <p class="blue2">订单动态</p>
+                                <p>（已完成）</p>
+                            </div>
+                        </a>
+                        <router-link :to='{path:"/indentManagementCompleteAccount",query:{orderId:orderId}}'>
+                            <div>
+                                <p class="blue2">财务结算</p>
+                                <!--(已结算)（未结算）两种状态-->
+                                <p>（未结算）</p>
+                            </div>
+                        </router-link>
+                    </div>
+                </div>
+                <div class="returnsRemark">
+                    备注：{{this.memo}}
+                </div>
+                <div class="returnsTable">
+                    <el-table
+                        :data="tableData"
+                        style="width: 100%">
+                        <el-table-column
+                            label="主图/货号">
+                            <template scope="scope">
+                                <div class="flex2">
+                                    <img src="../image/111.png" alt=""  class="tableImg">
+                                    <p>MG110</p>
+                                </div>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            prop="productName"
+                            width="180"
+                            label="商品名称">
+                        </el-table-column>
+                        <el-table-column
+                            prop="color"
+                            label="颜色">
+                        </el-table-column>
+                        <el-table-column
+                            prop="size"
+                            label="尺码">
+                        </el-table-column>
+                        <el-table-column
+                            prop="allocateProductNum"
+                            label="退货成功">
+                        </el-table-column>
+                        <el-table-column
+                            prop="failedNum"
+                            label="退货失败">
+                        </el-table-column>
+                        <!--<el-table-column-->
+                            <!--prop="amount"-->
+                            <!--label="退货成功/退货失败">-->
+                            <!--<template scope="scope">-->
+                                <!--<p>25/<span class="blue2">30</span></p>-->
+                            <!--</template>-->
+                        <!--</el-table-column>-->
+                        <el-table-column
+                            prop="unitPrice"
+                            label="单价">
+                        </el-table-column>
+                    </el-table>
+                </div>
+                <el-pagination
+                    small
+                    class="right"
+                    style="margin-top: 20px;"
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :current-page="currentPage4"
+                    :page-sizes="[100, 200, 300, 400]"
+                    :page-size="100"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    :total="400">
+                </el-pagination>
+                <a href="javascript:void(0)" class="export_excle left">导出excel</a>
+            </div>
+        </div>
+    </div>
+</template>
+<script>
+    import headTop from '../components/headTop'
+    import {queryOrderInfo,queryStallOrderDetail} from '@/api/getData'
+    import {formatDate} from '../utils/date.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                currentPage4: 4,
+                memo:'',
+                orderId:'',
+                orderVo:'',
+                status:0,
+                tableData: [],
+                pageSize:10,
+                currentPage:1,
+            }
+        },
+        mounted(){
+            this.orderId = this.$route.query.orderId;
+            let param = {
+                "orderId":this.orderId
+            };
+            this.loadBasicInfo(param);
+        },
+
+        methods: {
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+            },
+            async loadBasicInfo(param){
+                const res = await queryOrderInfo(param);
+                if(res.isSuccess){
+                    this.orderVo = res.result.data;
+                    this.status = this.orderVo.status;
+                    this.loadData();
+                }else{
+                    this.$message({
+                        type:'info',
+                        message:res.errorMsg
+                    });
+                }
+
+
+            },
+            async loadData(){
+                let param = {
+                    "companyId":"1000",
+                    "orderId":this.orderId,
+                    "status":this.status,
+                    "orderType":4,
+                    "packageId":"-1",
+                    "pageIndex":this.currentPage,
+                    "pageSize":this.pageSize
+                };
+                const res = await queryStallOrderDetail(param);
+                if(res.isSuccess){
+                    let table = [];
+                    table = res.result.data.results;
+                    for(let i = 0 ;i<table.length;i++){
+                        let details = table[i].details;
+                        for(let j = 0 ;j<details.length;j++){
+                            if(details[j].status<9){
+                                details.failedNum = 0;
+                            }
+
+                            this.tableData.push(details[j]);
+                        }
+
+                    }
+                }
+
+            },
+            //数据格式化
+            formatDate:function(val) {
+                if (val == undefined||val=='') {
+                    return "";
+                }
+                var date = new Date(val);
+                return formatDate(date,'yyyy-MM-dd hh:mm:ss');
+            },
+            cancelRefund(){
+                this.dialog2 = false;
+                this.$router.push('/salesReturn');
+            }
+        }
+    }
+</script>
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/salesReturn';
+</style>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>拿呗档口电子名片</title>
+    <script src="js/mui.js"></script>
+    <link href="js/mui.min.css" rel="stylesheet" />
+    <link href="appIndex.css" rel="stylesheet" />
+
+</head>
+
+<body style="background: #fff;">
+    <div id="app">
+        <header class="mui-bar mui-bar-nav" style="z-index: 100;display: flex;align-items: center">
+            <a href="javascript:window.history.go(-1);" class="backImg"><img src="images/back.png" alt=""></a>
+            <h1 class="mui-title">商品列表</h1>
+        </header>
+        <div class="mui-content" style="background-color: #fff;">
+            <ul class="shang">
+                <li v-for="item in productData">
+                    <a href="down.html">
+                        <img :src="item.imgUrl_main">
+                        <p class="shang_m">{{item.title}}</p>
+                        <div class="jia_box">
+                            <p class="jia">￥{{item.sellPrice}}</p>
+                            <p class="tui">可退</p>
+                        </div>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</body>
+<script src="vue.min.js"></script>
+<script src="js/axios.min.js"></script>
+<script type="text/javascript">
+    new Vue({
+        el: '#app',
+        data: {
+            companyId: '',
+            accessToken:'',
+            saleState:'',
+            productData:[],
+        },
+        mounted() {
+            this.init2();
+        },
+        methods: {
+            init0(){
+                function GetQueryString(name) {
+                    var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+                    var r = window.location.search.substr(1).match(reg);
+                    if (r != null) return unescape(r[2]);
+                    return null;
+                }
+                this.companyId = GetQueryString("companyId");
+                this.accessToken = GetQueryString("accessToken");
+                this.saleState = GetQueryString("saleState")
+                axios.hangeOrigin = true;
+                axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
+            },
+            init2(){
+                this.init0()
+                axios.defaults.baseURL = 'http://192.168.0.123:5080/stock/';
+                axios.get('/api/queryProductByToken.do', {
+                    params: {
+                        companyId:'402880fb6076f130016077085eb80023',
+                        accessToken:this.accessToken,
+                        pageIndex:1,
+                        pageSize:20,
+                        saleState:this.saleState
+                    }
+                })
+                    .then(response => {
+                        this.productData = response.data.result.results;
+                    })
+                    .catch(function(error) {
+                        console.log(error);
+                    });
+            },
+        },
+    })
+</script>
+
+</html>

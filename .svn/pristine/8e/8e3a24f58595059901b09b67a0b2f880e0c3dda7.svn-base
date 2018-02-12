@@ -1,0 +1,34 @@
+.financeSerial,.msgManagement{
+    color: #333;
+    margin: 0 30px;
+    background: #fff;
+    padding: 10px 40px;
+    height: 100%;
+    .shopList{
+        img{
+            width: 40px;
+            height: 40px;
+        }
+        .trefresh>img {
+            width: 25px;
+            height: 25px;
+        }
+        .delete{
+            margin-top: 20px;
+            font-size: 12px;
+        }
+    }
+}
+.menu-list{
+    margin:0 30px;
+    background: #fff;
+    padding: 20px 40px;
+}
+
+.verify-menu-search{
+    margin:0 30px;
+    background: #fff;
+    height: 40px;
+    padding: 20px 40px;
+    padding-bottom: 0px;
+}

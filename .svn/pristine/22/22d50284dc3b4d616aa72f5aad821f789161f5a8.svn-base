@@ -1,0 +1,371 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/webStoreOrderSalesBuy"}'>网店订单</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/purchaseRequireBuy"}'>采购需求</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/orderPurchaseBuy"}'>采购订单</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/addShop"}'>绑定店铺</router-link>
+            </li>
+            <li class="menuIndex2">
+                <router-link :to='{path:"/packageDetails"}'>包裹管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/salesForecast"}'>采购统计</router-link>
+            </li>
+        </ul>
+        <div class="purchasing-content" style="height:77%;">
+            <div class="purchasingAll">
+                <router-link :to='{path:"/packageDetails"}' class="comeBack2 right">返回</router-link>
+                <div class="orderForm">
+                    <el-col :span="8">档口名称：{{stallName}}</el-col>
+                    <!--根据状态显示-->
+                    <el-col :span="8">包裹状态：{{currPackageLogState| formatState}}</el-col>
+                    <!--<el-col :span="8">拿货人/装车人/入库员：黄小儿</el-col>-->
+                    <el-col :span="8">拿货人/装车人/入库员：</el-col>
+                    <el-col :span="8">包裹编号：{{this.packId}}</el-col>
+                    <el-col :span="8">订单编号：{{orderCode}}</el-col>
+                    <!--<el-col :span="8">配货完成/拿货/装车/入库 时间：{{createTime}}</el-col>-->
+                    <el-col :span="8">操作时间：{{createTime}}</el-col>
+                    <el-col :span="8">共计金额：{{totalFee}}</el-col>
+                    <el-col :span="8">商品数量：{{orderNum}}</el-col>
+                    <el-col :span="8">提货码：{{pickUpCode}}</el-col>
+                </div>
+                <div class="stocktakingTable">
+                    <el-table
+                        :data="tableData"
+                        style="width: 100%">
+                        <el-table-column
+                            label="主图/货号">
+                            <template scope="scope">
+                                <div class="flex2">
+                                    <img src="../image/111.png" alt=""  class="tableImg">
+                                    <p>MG110</p>
+                                </div>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            prop="productName"
+                            width="180"
+                            label="商品名称">
+                        </el-table-column>
+                        <el-table-column
+                            prop="color"
+                            label="颜色">
+                        </el-table-column>
+                        <el-table-column
+                            prop="size"
+                            label="尺码">
+                        </el-table-column>
+                        <el-table-column
+                            prop="amount"
+                            label="配货数量">
+                        </el-table-column>
+                        <el-table-column
+                            prop="price"
+                            label="单价">
+                        </el-table-column>
+                    </el-table>
+                </div>
+                <div class="right"style="margin-top: 20px">
+                    <div class="purPendingButton">
+                        <a href="javascript:void(0)" class="buttonColor3" type="info" size="small" @click="dialogStorage = true">入库</a>
+                        <a href="javascript:void(0)" class="buttonColor3" type="info" size="small"  @click="showPackLog">包裹动态</a>
+                    </div>
+                </div>
+                <el-col :span="24">
+                    <a href="javascript:void(0)" class="export_excle">导出excel</a>
+                    <el-pagination
+                        small
+                        class="right"
+                        style="margin-top: 20px;"
+                        @size-change="handleSizeChange"
+                        @current-change="handleCurrentChange"
+                        :current-page="currentPage"
+                        :page-sizes="[10, 20, 30, 40]"
+                        :page-size="pagesize"
+                        layout="total, sizes, prev, pager, next, jumper"
+                        :total="totalCount">
+                    </el-pagination>
+                </el-col>
+            </div>
+        </div>
+        <el-dialog
+            title="确认入库"
+            :visible.sync="dialogStorage"
+            size="tiny">
+            <div class="flex2 dialogStorageNum">
+                确认将已选中的<span>{{this.orderNum}}</span>件商品入库吗？
+            </div>
+            <span slot="footer" class="dialog-footer flex2">
+                <a href="javascript:void(0)" @click="stockIn" class="buttonColor3">确 定</a>
+                <a href="javascript:void(0)" @click="dialogStorage = false" class="buttonColor2">取 消</a>
+              </span>
+        </el-dialog>
+        <el-dialog
+            title="包裹动态"
+            :visible.sync="dialog"
+            size="small">
+            <div class="dynamic">
+                <el-col :span="12">档口名称：{{this.stallName}}</el-col>
+                <el-col :span="12">{{this.currPackageLogState| formatState}}</el-col>
+                <el-col :span="12">订单编号：{{this.orderCode}}</el-col>
+            </div>
+            <el-col class="dynamicList">
+                <div class="track-rcol">
+                    <div class="track-list">
+                        <ul v-for="(authitem,index) in orderLog">
+                            <li>
+                                <i class="node-icon"></i>
+                                <span class="time">2016-03-10 18:07:15</span>
+                                <div class="txt">
+                                    <p>已入库</p>
+                                    <p>签收人：张晓梅</p>
+                                    <p>联系电话：13465211349</p>
+                                </div>
+                            </li>
+                            <!--
+                            <li>
+                                <i class="node-icon"></i>
+                                <span class="time">2016-03-10 18:07:15</span>
+                                <div class="txt">
+                                    <p>待装车</p>
+                                    <p>装车人：张晓梅</p>
+                                    <p>联系电话：13465211349</p>
+                                </div>
+                            </li>
+                            <li>
+                                <i class="node-icon"></i>
+                                <span class="time">2016-03-10 18:07:15</span>
+                                <div class="txt">
+                                    <p>待装车</p>
+                                    <p>装车人：张晓梅</p>
+                                    <p>联系电话：13465211349</p>
+                                </div>
+                            </li>-->
+                        </ul>
+                    </div>
+                </div>
+            </el-col>
+        </el-dialog>
+    </div>
+</template>
+<script>
+    import headTop from '../components/headTop'
+    import {setStore,getStore} from  '../config/mUtils'
+    import {queryPackageList,batchStockIn,queryPackageLogInfo,salesStockIn,loadPackage} from '@/api/getData'
+
+    export default {
+        components: {
+            headTop,
+        },
+        filters: {
+            formatState(status) {
+               if(status==0){
+                   return "待拿货";
+                  // 0:待拿货（已打包）      1:已拿货 (待装车) 2:装车 (待入库)  3:入库 (完成 )
+               }else if(status== 1){
+                   return "待装车";
+               }else if(status== 2){
+                   return "待入库";
+               }else if(status== 3){
+                   return "完成";
+               }
+            },
+        },
+        data() {
+            return {
+                roleForm: {
+                    loginname: '',
+                    userId: '',
+                    roleId: '',
+                    compId: '',
+                    userName: '',
+                    registerTime: '',
+                    nickName: '',
+                    currentComUid:'',
+                },
+                pickUpCode:'',
+                stallName:'',
+                packId:'',
+                totalFee:'',
+                orderNum:'',
+                orderCode:'',
+                createTime:'',
+                dialogStorage:false,
+                orderLog:[],
+                dialog:false,
+                num6:1,
+                clickIndex2:0,
+                //默认每页数据量
+                pagesize: 12,
+                //默认高亮行数据id
+                highlightId: -1,
+                //当前页码
+                currentPage: 1,
+                //查询的页码
+                start: 1,
+                //默认数据总数
+                totalCount: 0,
+                //用户登录信息暂时写死
+                 currentComp: getStore("curCompany"),
+                // currentComp:{id:'1000'},
+                packageList:[
+                    {
+                        list:2,
+                        name:'包裹1'
+                    },
+                    {
+                        list:3,
+                        name:'包裹2'},
+                ],
+                items:[
+                    {title:'全部'},
+                    {title:'配货'},
+                    {title:'退货'},
+                ],
+                tableDetails:[
+                    {
+                        name:'电商买家名称名称',
+                        numbers: 'NG123',
+                        checkDate:'2017-05-11 12:21:11',
+                    }
+                ],
+                tableData: [{
+                    productName:'名称名称名称名称名称',
+                    color:'红色',
+                    size:'L',
+                    price:100,
+                    amount:20,
+                },{
+                    productName:'名称名称名称名称名称',
+                    color:'红色',
+                    size:'L',
+                    price:100,
+                    amount:20,
+                    state:2,
+                },
+
+
+                ],
+            }
+        },
+        mounted(){
+            //   SVGAnimatedLengthList
+            var userInfo = getStore("user_info_user");
+            // alert(JSON.stringify(userInfo))
+            var vjson = JSON.parse(userInfo);
+            //console.log(vjson)
+            this.roleForm.userId = vjson.id;
+            this.roleForm.userName = vjson.userName;
+            var vcom = JSON.parse(this.currentComp);
+            this.roleForm.compId = vcom.id;
+            console.log(this.roleForm.compId)
+
+            // this.stallName = this.$route.query.stallName;
+            this.packId=this.$route.query.packId;
+            // this.totalFee=this.$route.query.totalFee;
+            // this.orderNum=this.$route.query.orderNum;
+            // this.currPackageLogState=this.$route.query.currPackageLogState;
+            // this.createTime= this.$route.query.createTime;
+            // this.orderCode=this.$route.query.orderCode;
+            // 
+          
+            this.initloadData();
+        },
+        methods: {
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+            },
+            async initloadData() {
+                let param ={
+                    pageIndex:this.currentPage,
+                    pageSize:this.pagesize,
+                    packageId:this.packId
+                }
+                const res = await loadPackage(param);
+                if (res.isSuccess == true) {
+                    let data = res.result;
+                    // this.totalCount = res.result.data.results.totalCount;
+                    this.stallName = data.companyName;
+                    this.currPackageLogState = data.currPackageLogState;
+                    this.orderCode = data.orderCode
+                    this.createTime = data.createTime
+                    this.totalFee = data.totalFee
+                    this.orderNum = data.orderNum
+                    // this.orderNum
+                    this.pickUpCode = data.pickUpCode
+                    // this.totalCount = data.productNum
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            this.queryPackageList();
+            },
+            //入库呢
+            async stockIn(){
+                const res = await salesStockIn({"orderId":this.orderId,"companyId":this.roleForm.companyId});
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: "入库成功"
+                    });
+                    this.dialogStorage = false
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            //显示包裹信息
+            async showPackLog(){
+                const res = await queryPackageLogInfo({"packageId":this.packId,"companyId":this.roleForm.compId});
+                if (res.isSuccess == true) {
+                    this.orderLog = res.result.data.results;
+                    this.dialog = true;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+                this.dialog = true;
+            },
+            //查询包裹详情
+             async queryPackageList(){
+                 let param ={
+                    companyId:this.roleForm.compId,
+                     packageId:this.packId
+                }
+                 const res = await queryPackageList(param);
+                 if(res.isSuccess == true){
+
+                 }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                 }
+
+             }
+        }
+    }
+</script>
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/purchasingManagement';
+    @import "../style/indentManagement";
+</style>

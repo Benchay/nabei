@@ -1,0 +1,332 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('messageManagement')">
+                <router-link :to='{path:"/messageManagement"}'>消息管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('bulletinManagement')">
+                <router-link :to='{path:"/bulletinManagement"}'>公告管理</router-link>
+            </li>
+            <li class="menuIndex3" v-if="getMenuAuthFun('msgManagement')">
+                <router-link :to='{path:"/msgManagement"}'>短信管理</router-link>
+            </li>
+            <!--<li>-->
+            <!--<router-link :to='{path:"/sessionManagement"}'>会话管理</router-link>-->
+            <!--</li>-->
+        </ul>
+
+
+        <div class="verify-menu-search">
+        	<div class="block left" style="padding-top: 5px;">
+              	发送时间：
+            </div>
+            <div class="block left">
+                <el-date-picker
+                    size="small"
+                    v-model="startDate"
+                    type="date"
+                    placeholder="选择开始日期"
+                    :picker-options="pickerOptions0"
+                    @change="initloadData">
+                </el-date-picker>
+            </div>
+            <div class="block left" style="padding-top: 5px;">
+              &nbsp;-&nbsp;
+            </div>
+            <div class="block left">
+                <el-date-picker
+                    size="small"
+                    v-model="endDate"
+                    type="date"
+                    placeholder="选择结束日期"
+                    :picker-options="pickerOptions0"
+                    @change="initloadData">
+                </el-date-picker>
+                <el-input style="width: 180px;"
+                          size="small"
+                      placeholder="手机号搜索"
+                      icon="search"
+                      v-model="searchPhone"
+                      :on-icon-click="initloadData">
+                  </el-input>
+
+            </div>
+        </div>
+        <div class="msgManagement">
+            <div style="margin-bottom: 15px">
+                <el-button type="info" @click="batchdeleteConfirmMsg" >一键删除</el-button>
+            </div>
+            <div class="shopList">
+                <el-table
+                    ref="multipleTable"
+                    :data="tableData3"
+                    tooltip-effect="dark"
+                    @selection-change="handleSelectionChange"
+                    style="width: 100%">
+                    <el-table-column
+                        type="selection"
+                        width="55">
+                    </el-table-column>
+                    <el-table-column
+                        prop="phone"
+                        label="手机号"
+                        width="220">
+                    </el-table-column>
+                    <el-table-column
+                        prop="identifyingCode"
+                        label="验证码"
+                        width="120">
+                    </el-table-column>
+                    <el-table-column
+                        prop="status"
+                        label="发送状态"
+                        :formatter="formatStatus">
+                    </el-table-column>
+                    <el-table-column
+                        prop="createTime"
+                        label="发送时间"
+                        :formatter="mydateFormat">
+                    </el-table-column>
+                    <el-table-column
+                        prop="operate"
+                        label="操作"
+                        show-overflow-tooltip>
+                        <template scope="scope">
+                            <a href="javascript:void(0);" class="blue" @click="deleteConfirmMsg(tableData3[scope.$index].id)">删除</a>
+                        </template>
+                    </el-table-column>
+                </el-table>
+
+            </div>
+            <el-pagination
+                small
+                class="right"
+                style="margin-top: 20px;"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :current-page="currentPage"
+                :page-sizes="[10, 20, 30, 40]"
+                :page-size="pagesize"
+                layout="total, sizes, prev, pager, next, jumper"
+                :total="totalCount">
+            </el-pagination>
+            <a href="javascript:void(0)" class="export_excle" @click="exportExcel">导出excle</a>
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {selectSendMsgRecord,batchDeleteSendMsgRecord} from '@/api/getData'
+    import {formatDate} from '../utils/date.js'
+    import {mydateFormat} from '../utils/dataFormater.js'
+    import {export_json_to_excel} from '../vendor/Export2Excel.js'
+    import {getMenuAuth,haveMenuAuth} from  '../utils/AuthMenu.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        computed: {
+            classObject: function () {
+                return {
+                    active: this.isActive && !this.error,
+                    'text-danger': this.error && this.error.type === 'fatal',
+                }
+            }
+        },
+        data() {
+            return {
+                tableData3: [],
+
+                //默认每页数据量
+                pagesize: 5,
+
+                //默认高亮行数据id
+                highlightId: -1,
+
+                //当前页码
+                currentPage: 1,
+
+                //查询的页码
+                start: 1,
+
+                //默认数据总数
+                totalCount: 0,
+                startDate:'',
+                endDate: '',
+                searchPhone:'',
+
+                tableDataExport:[],
+            }
+        },
+        mounted(){
+            this.initloadData();
+            const s = document.createElement('script');
+			s.type = 'text/javascript';
+			s.src = 'http://oss.sheetjs.com/js-xlsx/xlsx.full.min.js';
+			document.body.appendChild(s);
+        },
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+            },
+            //从服务器获取数据
+            async initloadData() {
+                let param ={
+                    "pageSize":this.pagesize,
+                    "pageIndex":1,
+                    "startDate":this.startDate,
+                    "endDate":this.endDate,
+                    "phone":this.searchPhone
+                }
+                const res = await selectSendMsgRecord(param);
+                if (res.isSuccess == true) {
+                    this.tableData3 = res.result.data.results;
+                    this.totalCount = res.result.data.totalCount;
+                    this.currentPage = res.result.data.pageNo;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+            async initloadData2() {
+                let param ={
+                    "pageSize":this.pagesize,
+                    "pageIndex":this.currentPage,
+                    "startDate":this.startDate,
+                    "endDate":this.endDate,
+                    "phone":this.searchPhone
+                }
+                const res = await selectSendMsgRecord(param);
+                if (res.isSuccess == true) {
+                    this.tableData3 = res.result.data.results;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            async initloadexportData() {
+
+            },
+            deleteRow(index, rows) {
+                rows.splice(index, 1);
+            },
+            handleCurrentChange:function(val) {
+                this.currentPage = val;
+                this.initloadData2();
+            },
+
+            exportExcel() {
+            	this.initloadexportData();
+	　　　　},
+	　　　　formatJson(filterVal, jsonData) {
+	　　　　　　return jsonData.map(v => filterVal.map(j => v[j]))
+	　　　　},
+            mydateFormat,
+
+            //多选响应
+            handleSelectionChange: function(val) {
+                this.multipleSelection = val;
+            },
+
+            async batchDelete(){
+				if(this.multipleSelection.length==0)
+                    return;
+                var array = [];
+                this.multipleSelection.forEach((item) => {
+                    array.push(item.id);
+                })
+                let param = {
+                	ids:array
+                }
+                const res = await batchDeleteSendMsgRecord(param);
+            	if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: res.result.msg
+                    });
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+                this.initloadData();
+            },
+
+            async configDelete(id){
+            	let array = [id];
+            	let param = {
+                	ids:array
+                }
+                const res = await batchDeleteSendMsgRecord(param);
+            	if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: res.result.msg
+                    });
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+                this.initloadData();
+            },
+
+            deleteConfirmMsg(id) {
+		        this.$confirm('是否确认删除该信息?', '提示', {
+		          confirmButtonText: '确定',
+		          cancelButtonText: '取消',
+		          type: 'warning'
+		        }).then(() => {
+		          this.configDelete(id);
+		        }).catch(() => {
+
+		        });
+		    },
+
+		    batchdeleteConfirmMsg(){
+		    	this.$confirm('是否确认删除选中的信息?', '提示', {
+		          confirmButtonText: '确定',
+		          cancelButtonText: '取消',
+		          type: 'warning'
+		        }).then(() => {
+		          this.batchDelete();
+		        }).catch(() => {
+
+		        });
+		    },
+
+            formatStatus:function(row, column) {
+                let data = row.status;
+                if(data == 1){
+                	return "发送成功";
+                }else if(data == 2){
+                	return "发送失败";
+                }else{
+                	return "";
+                }
+            },
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/financeSerial';
+</style>

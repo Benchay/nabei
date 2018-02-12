@@ -1,0 +1,999 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('stallManage')">
+                <router-link :to='{path:"/stallManage"}'>档口管理</router-link>
+            </li>
+            <li class="menuIndex2" v-if="getMenuAuthFun('stallSettlement')">
+                <router-link :to='{path:"/stallSettlement"}'>档口结算</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('SettlementRecords')">
+                <router-link :to='{path:"/SettlementRecords"}'>结算单</router-link>
+            </li>
+        </ul>
+        <div class="sellerSettlement">
+            <div class="settlementContent stallContent">
+                <p class="title">立即结算</p>
+                <el-tabs v-model="activeName" @tab-click="handleClick">
+                    <el-tab-pane label="发起收款" name="first" v-if="activeName == 'first'">
+                        <div class="gathering">
+                            <el-col :span="12">
+                                <el-col :span="6" class="listTitle">档口名称：</el-col>
+                                <el-col :span="18" class="tkList">{{otherSideCompanyName}}</el-col>
+                            </el-col>
+                            <el-col :span="12" class="flex">
+                                <el-col :span="6" class="listTitle">退款（元）：</el-col>
+                                <el-col :span="18"  class="flex tkList tkList1">
+                                    <p>0.00</p>
+                                    <el-switch
+                                        v-model="value3"
+                                        class="swich-on"
+                                        on-color="#da444f"
+                                        off-color="#999"
+                                        on-text="开"
+                                        off-text="关">
+                                    </el-switch>
+                                    <p>（打开开关，收款自动抵扣退款金额）</p>
+                                </el-col>
+                            </el-col>
+                            <el-col :span="12">
+                                <el-col :span="6" class="listTitle">当前总欠款（元）：</el-col>
+                                <el-col :span="18"  class="tkList">
+                                    <p>{{totalFee}}</p>
+                                </el-col>
+                            </el-col>
+                            <el-col :span="12">
+                                &nbsp;
+                            </el-col>
+                            <el-col :span="12" class="flex">
+                                <el-col :span="6" class="listTitle"><i>*</i>实收金额：</el-col>
+                                <el-col :span="18"  class="tkList">
+                                    <el-input v-model="firstActualPayFee" placeholder="请输入" class="input1"></el-input>
+                                </el-col>
+                            </el-col>
+                            <el-col :span="12" class="flex">
+                                <el-col :span="6" class="listTitle">抹平金额：</el-col>
+                                <el-col :span="18"  class="tkList">
+                                    <el-input v-model="fixFee" placeholder="请输入" class="input1"></el-input>
+                                </el-col>
+                            </el-col>
+                            <el-col :span="12" class="flex">
+                                <el-col :span="6" class="listTitle">是否现结：</el-col>
+                                <el-col :span="18"  class="tkList">
+                                    <el-select v-model="value1" placeholder="请选择">
+                                        <el-option
+                                            v-for="item in optionss"
+                                            :key="item.value"
+                                            :label="item.label"
+                                            :value="item.value">
+                                        </el-option>
+                                    </el-select>
+                                </el-col>
+                            </el-col>
+                            <el-col :span="24">
+                                <el-col :span="3" class="listTitle">收款说明：</el-col>
+                                <el-col :span="18"  class="tkList">
+                                    <el-input
+                                        type="textarea"
+                                        :autosize="{ minRows: 2, maxRows: 4}"
+                                        placeholder="请输入备注"
+                                        v-model="firstMemo">
+                                    </el-input>
+                                </el-col>
+                            </el-col>
+                            <el-col :span="24" class="flex2">
+                                <a href="javascript:void(0)" class="buttonColor3" @click="startCollect">发起</a>
+                                <router-link :to='{path:this.backPath}' class="buttonColor3 right">返回</router-link>
+                            </el-col>
+                        </div>
+                    </el-tab-pane>
+                    <el-tab-pane label="发起付款" name="second"  v-if="activeName == 'second'">
+                        <div class="payment">
+                            <el-col :span="12">
+                                <el-col :span="6" class="listTitle">档口名称：</el-col>
+                                <el-col :span="18" class="tkList">{{otherSideCompanyName}}</el-col>
+                            </el-col>
+                            <el-col :span="12" class="flex">
+                                <el-col :span="6" class="listTitle">退款（元）：</el-col>
+                                <el-col :span="18"  class="flex tkList tkList1">
+                                    <p>0.00</p>
+                                </el-col>
+                            </el-col>
+                            <el-col :span="24" class="flex">
+                                <el-col :span="3" class="listTitle"><i>*</i>付款金额：</el-col>
+                                <el-col :span="18"  class="tkList">
+                                    <el-input-number v-model="actualPayFee" placeholder="请输入" class="input1" :disabled="isModify"></el-input-number>
+                                </el-col>
+                            </el-col>
+                            <el-col :span="12" class="flex">
+                                <el-col :span="6" class="listTitle"><i>*</i>选择付款类型：</el-col>
+                                <el-col :span="18"  class="tkList">
+                                    <el-select v-model="value" placeholder="请选择" class="tkList2" @change="changeAccounts">
+                                        <el-option
+                                            v-for="item in options"
+                                            :key="item.value"
+                                            :label="item.label"
+                                            :value="item.value">
+                                        </el-option>
+                                    </el-select>
+                                </el-col>
+                            </el-col>
+                            <el-col :span="12" class="flex"  v-if="this.value > 1">
+                                <el-col :span="6" class="listTitle"><i>*</i>选择付款账户：</el-col>
+                                <el-col :span="18"  class="tkList">
+                                    <el-select v-model="payAcount" placeholder="请选择" class="tkList2" >
+                                        <el-option
+                                            v-for="item in selfAccounts"
+                                            :key="item.value"
+                                            :label="item.value"
+                                            :value="item.value">
+                                        </el-option>
+                                    </el-select>
+                                </el-col>
+                            </el-col>
+                            <el-col :span="12" class="flex"  v-if="this.value>1">
+                                <el-col :span="6" class="listTitle"><i>*</i>选择收款账户：</el-col>
+                                <el-col :span="18"  class="tkList">
+                                    <el-select v-model="reciveAcount" placeholder="请选择" class="tkList2" >
+                                        <el-option
+                                            v-for="item in stallAccounts"
+                                            :key="item.value"
+                                            :label="item.value"
+                                            :value="item.value">
+                                        </el-option>
+                                    </el-select>
+                                </el-col>
+                            </el-col>
+                            <el-col :span="24" class="flex" v-if="this.value>1">
+                                <!--最多上传三张凭证-->
+                                <el-col :span="3" class="listTitle">上传凭证：</el-col>
+                                <el-col :span="18"  class="tkList">
+                                    <el-upload
+                                      name = "uploadFile"
+                                      class="avatar-uploader"
+									  action="/cws/uploadFile"
+									  list-type="picture-card"
+									  :on-preview="handlePictureCardPreview"
+									  :on-remove="handleRemove"
+									  :on-success = "handleAvatarSuccess">
+									  <i class="el-icon-plus"></i>
+									</el-upload>
+
+                                </el-col>
+                            </el-col>
+                            <el-col :span="24">
+                                <el-col :span="3" class="listTitle">付款说明：</el-col>
+                                <el-col :span="18"  class="tkList">
+                                    <el-input
+                                        type="textarea"
+                                        :autosize="{ minRows: 2, maxRows: 4}"
+                                        placeholder="请输入备注"
+                                        v-model="memo">
+                                    </el-input>
+                                </el-col>
+                            </el-col>
+                            <el-col :span="24" class="flex2">
+                                <a class="buttonColor3" @click="handleStart" :disabled="isStarted">发起</a>
+                                <router-link :to='{path:this.backPath}' class="buttonColor3 right">返回</router-link>
+                            </el-col>
+                        </div>
+                    </el-tab-pane>
+                </el-tabs>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    import {getSettlementOrder,queryPlatformAccount,walletFeeforward,createOffLineFinanceRecord,payForSettlementOrder,saveSettlementOrder,
+        getOrder,getSettlement
+    } from '@/api/getData'
+    import {userInfo} from '../config/mUtils.js'
+    import {getMenuAuth,haveMenuAuth} from  '../utils/AuthMenu.js'
+
+    export default {
+        data() {
+            return {
+                value3:false,
+                activeName:'first',
+                uploadFileList:[],
+                options: [{
+                    value: 1,
+                    label: '余额'
+                }, {
+                    value: 3,
+                    label: '支付宝'
+                }, {
+                    value: 4,
+                    label: '微信'
+                }, {
+                    value: 5,
+                    label: '银行卡'
+                }],
+                value: 1,
+                optionss:[{
+                    value: 0,
+                    label: '否'
+                }, {
+                    value: 1,
+                    label: '是'
+                }],
+                value1:0,
+                options2: [],
+                value2: '1',
+                dialogImageUrl: '',
+                dialogVisible: false,
+                otherSideCompanyName:'',
+                actualPayFee:0,
+                actualPayFeeType:0,
+                payAcount:'',
+                reciveAcount:'',
+                settlementOrderId:'',
+                isModify:false,
+                saleCompanyId:'',
+                stallAccounts:[],
+                selfAccounts:[],
+                selfAccountsTemp:[],
+                stallAccountsTemp:[],
+                isStarted:false,
+                memo:'',
+                settlementOrder:'',
+                settlementOrders:[],
+                totalDebtFee:0,
+
+                saleOrderId:'',
+                stallName:'',
+                totalFee:0,
+                firstMemo:'',
+                fixFee:0,
+                payFee:0,
+                firstActualPayFee:0,
+                backOrderIds:[],
+                orderId:'',
+                orderIds:[],
+                orderVo:'',
+                actualPayFeeTemp:0,
+                dialogImgVisible:false,
+                backPath:'',
+            }
+        },
+        watch:{
+            '$route': function (route) {
+
+                this.backPath = this.$route.query.backPath;
+                this.saleCompanyId = this.$route.query.saleCompanyId;
+                this.otherSideCompanyName = this.$route.query.otherSideCompanyName;
+                this.activeName = this.$route.query.activeName;
+                if(this.activeName==undefined||this.activeName==''){
+                    var type = this.$route.query.type;
+                    if(type==22){
+                        this.activeName = 'second';
+                    }else if(type==2){
+                        this.activeName = 'first';
+                    }
+                }
+                //-----------------发起收款的参数和调用方法--------------
+                this.backOrderIds = this.$route.query.backOrderIds;
+
+
+                //-----------------发起付款的参数和调用方法--------------
+                this.settlementOrderId = this.$route.query.settlementOrderId;
+                this.settlementOrders = this.$route.query.orderIds;
+                this.orderId = this.$route.query.orderId;
+                this.orderIds = this.$route.query.orderIds;
+                this.isStarted = false;
+                if(this.settlementOrderId!=undefined&&this.settlementOrderId!=''){
+                    this.isModify = true;
+                    this.loadSettlementOrderInfo();//加载结算单
+                }else if(this.backOrderIds!=undefined&&this.backOrderIds.length!=0){
+                    this.loadSaleReturnOrdersInfo();
+                }else if(this.orderId!=undefined&&this.orderId!=''){
+                    this.loadOrderInfo();
+                }else{
+                    this.isModify = false;
+                    this.actualPayFeeTemp= this.$route.query.unClosedFee;
+
+                    this.actualPayFee = this.$route.query.unClosedFee;
+                    this.totalDebtFee = this.$route.query.unClosedFee;
+                }
+
+                //查询财务账户
+                this.queryAccounts();
+                //检查余额
+                this.remoteMethod();
+
+                //发起收款部分
+                this.saleOrderId = this.$route.query.salesId;
+                if(this.saleOrderId!=undefined&&this.saleCompanyId!=''){
+                    this.initData();
+                }
+            }
+        },
+        mounted(){
+            this.backPath = this.$route.query.backPath;
+            this.saleCompanyId = this.$route.query.saleCompanyId;
+            this.otherSideCompanyName = this.$route.query.otherSideCompanyName;
+            this.activeName = this.$route.query.activeName;
+            if(this.activeName==undefined||this.activeName==''){
+                var type = this.$route.query.type;
+                if(type==22){
+                    this.activeName = 'second';
+                }else if(type==2){
+                    this.activeName = 'first';
+                }
+            }
+            //-----------------发起收款的参数和调用方法--------------
+            this.backOrderIds = this.$route.query.backOrderIds;
+
+
+            //-----------------发起付款的参数和调用方法--------------
+            this.settlementOrderId = this.$route.query.settlementOrderId;
+            this.settlementOrders = this.$route.query.orderIds;
+            this.orderId = this.$route.query.orderId;
+            this.orderIds = this.$route.query.orderIds;
+            this.isStarted = false;
+            if(this.settlementOrderId!=undefined&&this.settlementOrderId!=''){
+                this.isModify = true;
+                this.loadSettlementOrderInfo();//加载结算单
+            }else if(this.backOrderIds!=undefined&&this.backOrderIds.length!=0){
+                this.loadSaleReturnOrdersInfo();
+            }else if(this.orderId!=undefined&&this.orderId!=''){
+                this.loadOrderInfo();
+            }else{
+                this.isModify = false;
+                this.actualPayFeeTemp= this.$route.query.unClosedFee;
+
+                this.actualPayFee = this.$route.query.unClosedFee;
+                this.totalDebtFee = this.$route.query.unClosedFee;
+            }
+
+            //查询财务账户
+            this.queryAccounts();
+            //检查余额
+            this.remoteMethod();
+
+            //发起收款部分
+            this.saleOrderId = this.$route.query.salesId;
+            if(this.saleOrderId!=undefined&&this.saleCompanyId!=''){
+                this.initData();
+            }
+
+
+        },
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            //查询结算单金额
+            async loadSettlementOrderInfo(){
+                let param = {
+                    "settlementOrderId":this.settlementOrderId
+                };
+                const res = await getSettlementOrder(param);
+                if(res.isSuccess){
+                    let data = res.result;
+                    this.actualPayFeeTemp = data.actualPayFee;
+                    this.actualPayFee = data.actualPayFee;
+                    this.settlementOrder = data;
+                    this.otherSideCompanyName = data.otherSideCompanyName;
+                }else{
+                    this.message({
+                        type:'error',
+                        message:'查询失败'
+                    });
+                    return;
+                }
+            },
+
+            //查询订单欠款
+            async loadOrderInfo(){
+                if(this.orderId!=undefined&&this.orderId!=''){
+                    let param = {
+                        "id":this.orderId,
+                        "getOrderId":1
+                    };
+                    const res = await getOrder(param);
+                    if(res.isSuccess){
+                        var orderVo = res.result;
+                        this.actualPayFeeTemp = orderVo.totalFee;
+                        this.actualPayFee = orderVo.totalFee;
+                    }
+                }else if(this.orderIds!=undefined&&this.orderIds.length!=0){
+                   this.orderIds.forEach((obj)=>{
+                       let par = {
+                           "id":obj,
+                           "getOrderId":1
+                       };
+                       this.fun(param);
+                   });
+                }
+
+            },
+            async fun (param){
+                const res = await getOrder(param);
+                if(res.isSuccess){
+                    this.actualPayFee = this.actualPayFee + res.result.totalFee;
+                    this.actualPayFeeTemp = this.actualPayFeeTemp + res.result.totalFee;
+                }
+            },
+
+            //查询财务账户
+            async queryAccounts(){
+                if(this.activeName!='second'){
+                    return;
+                }
+                this.selfAccountsTemp = [];
+                this.stallAccountsTemp = [];
+                let param = {
+                    "companyId":userInfo().companyId
+                };
+                const res = await queryPlatformAccount(param);//查询自己的财务账户
+                if(res.isSuccess){
+                    let platForm = res.result.financeAccounts;
+                    platForm.forEach((obj)=>{
+                       let pa = {
+                           type:obj.accType,
+                           id:obj.platformAccountId,
+                           value:obj.accoutNumber
+                       };
+                        this.selfAccountsTemp.push(pa);
+                    });
+                }
+                let para = {
+                    "companyId":this.saleCompanyId
+                };
+                const re = await queryPlatformAccount(para);//查询对方的财务账户
+                if(re.isSuccess){
+                    let platfm = re.result.financeAccounts;
+                    platfm.forEach((obj)=>{
+                        let p = {
+                            type:obj.accType,
+                            id:obj.platformAccountId,
+                            value:obj.accoutNumber
+                        };
+                        this.stallAccountsTemp.push(p);
+                    });
+                }
+            },
+
+            //检查余额
+            async remoteMethod(){
+                if(this.activeName!='second'){
+                    return ;
+                }
+                if(this.value==1){
+                    let param = {
+                        "companyId":userInfo().companyId
+                    };
+                    const res = await queryPlatformAccount(param);
+                    if(res.isSuccess){
+                        if(res.result.blance < this.actualPayFee){
+                            this.isStarted = true;
+                            this.$message({
+                                type:'error',
+                                message:'您的余额不足，不能发起付款'
+                            });
+                        }else if(this.orderVo!=undefined&&this.orderVo.closeFee!=undefined&&this.orderVo.totalFee!=undefined&&this.orderVo.closeFee==this.orderVo.totalFee){
+                            this.isStarted = true;
+                            this.$message({
+                                type:'error',
+                                message:'当前订单已结算'
+                            });
+                        }
+                    }
+                }
+            },
+
+            //更换支付方式
+            changeAccounts(){
+                if(this.value==1){
+                    this.remoteMethod();
+                }else{
+                    if(this.orderVo!=undefined&&this.orderVo.closeFee!=undefined&&this.orderVo.totalFee!=undefined&&this.orderVo.closeFee==this.orderVo.totalFee){
+                        this.$message({
+                            type:'error',
+                            message:'当前订单已结算'
+                        });
+                        this.isStarted = true;
+                    }else{
+                        this.isStarted = false;
+                    }
+
+                    var table = [];
+                    var table2=[];
+                    if(this.value == 3){
+                        this.selfAccountsTemp.forEach((obj)=>{
+                            if(obj.type==3){
+                                table.push(obj);
+                            }
+                        });
+                        this.selfAccounts = table;
+                        this.stallAccountsTemp.forEach((obj)=>{
+                            if(obj.type == 3){
+                                table2.push(obj);
+                            }
+                        });
+                        this.stallAccounts = table2;
+
+                    }else if(this.value == 4){
+                        this.selfAccountsTemp.forEach((obj)=>{
+                            if(obj.type==4){
+                                table.push(obj);
+                            }
+                        });
+                        this.selfAccounts = table;
+                        this.stallAccountsTemp.forEach((obj)=>{
+                            if(obj.type == 4){
+                                table2.push(obj);
+                            }
+                        });
+                        this.stallAccounts = table2;
+
+                    }else if(this.value == 5){
+                        this.selfAccountsTemp.forEach((obj)=>{
+                            if(obj.type==5){
+                                table.push(obj);
+                            }
+                        });
+                        this.selfAccounts = table;
+                        this.stallAccountsTemp.forEach((obj)=>{
+                            if(obj.type == 5){
+                                table2.push(obj);
+                            }
+                        });
+                        this.stallAccounts = table2;
+                    }
+                }
+
+            },
+
+            //回调图片
+            handleAvatarSuccess(res, file) {
+            	let row = {
+            		name:file.name,
+            		url:"http://proxy.tintop.cn:26880/"+res.result
+            	}
+            	this.uploadFileList.push(row);
+            },
+
+            beforeAvatarUpload(file) {
+                const isJPG = file.type === 'image/jpeg';
+                const isPNG = file.type === 'image/png';
+                const isLt2M = file.size / 1024 / 1024 < 2;
+                if (!isJPG && !isPNG) {
+                    this.$message.error('上传头像图片只能是 JPG或PNG 格式!');
+                }
+                if (!isLt2M) {
+                    this.$message.error('上传头像图片大小不能超过 2MB!');
+                }
+                return (isJPG||isPNG) && isLt2M;
+            },
+
+            //发起结算
+            startSettlement(){
+            	let certificate = '';
+                this.uploadFileList.forEach(obj => {
+                	certificate += ","+obj.url;
+                });
+                if(certificate != ''){
+                	certificate = certificate.substring(1);
+                }
+                if((this.value==3||this.value==4||this.value==5)&&this.uploadFileList.length<1){
+                    this.$message.error('请先上传凭证!');
+                    return;
+                }
+
+                if(this.settlementOrderId!=undefined&&this.settlementOrderId!=''){
+                    if(this.value==1){
+                        this.balancePay();//余额支付
+                    }else{
+                        this.onlinePay();//支付宝微信银行卡支付
+                    }
+                }else if(this.settlementOrders!=undefined&&this.settlementOrders!=''&&this.settlementOrders.length!=0){
+                    //创建结算单
+                    var ids = '[';
+                    this.settlementOrders.forEach((obj)=>{
+                        ids = ids + obj + ',';
+                    });
+                    ids = ids.substring(0,ids.length-1);
+                    ids = ids + ']';
+                    let para = {
+                        "stockOrders":ids,
+                        "settlementType":2,
+                        "totalDebtFee":this.totalDebtFee,
+                        "actualPayFee":this.actualPayFee,
+                        "reciveAcount":this.reciveAcount,
+                        "payAcount":this.payAcount,
+                        "payMemo":this.memo,
+                        "type":2,
+                        "companyId":userInfo().companyId,
+                        "otherSideCompanyId":this.saleCompanyId,
+                        "isOffLine":0,
+                        "certificate":certificate
+                    };
+                    this.createSettlementOrder(para);
+
+                }else {
+                    let para = {
+                        "settlementType":2,
+                        "actualPayFee":this.actualPayFee,
+                        "reciveAcount":this.reciveAcount,
+                        "payAcount":this.payAcount,
+                        "payMemo":this.memo,
+                        "type":2,
+                        "companyId":userInfo().companyId,
+                        "otherSideCompanyId":this.saleCompanyId,
+                        "isOffLine":1,
+                        "payFee":this.actualPayFee,
+                        "actualPayFeeType":this.value,
+                        "reciveAcountType":this.value,
+                        "certificate":certificate,
+                        "isOffLine":0
+                    };
+                    this.createSettlementOrder(para);
+                }
+            },
+
+            //创建结算单
+            async createSettlementOrder(para){
+                const res = await saveSettlementOrder(para);
+                if(res.isSuccess){
+                    if(this.value==1){
+                        this.balancePay();//余额支付
+                    }else{
+                        this.onlinePay();//支付宝微信银行卡支付
+                    }
+                }else{
+                    this.$message({
+                        type:'error',
+                        message:'操作失败'
+                    });
+                }
+            },
+
+            //创建线下流水
+            async createFinanceRecord(){
+                let param = {
+                    "financeItemCode":33,
+                    "ownerAccountId":this.payAcount,
+                    "otherAccountId":this.reciveAcount,
+                    "memo":this.payMemo,
+                    "companyId":userInfo().companyId,
+                    "accountType":this.value,
+                    "recordType":3,
+                    "changeFee":this.actualPayFee,
+                    "otherCompanyId":this.saleCompanyId
+                };
+                const res = await createOffLineFinanceRecord(param);
+                if(res.isSuccess){
+                    this.$message({
+                        type:'info',
+                        message:'操作成功'
+                    });
+                }else{
+                    this.$message({
+                        type:'error',
+                        message:'操作失败'
+                    });
+                }
+            },
+
+            //余额支付
+            async balancePay(){
+                if(this.settlementOrderId==undefined||this.settlementOrderId==''){
+                    this.$router.push({path:"/SettlementRecords"})
+                    return;
+                }
+                this.modifySettlementOrder(); //修改结算单状态
+
+            },
+
+            //支付宝微信银行卡支付
+            async onlinePay(){
+                if(this.settlementOrderId==undefined||this.settlementOrderId==''){
+                    //创建线下流水
+                    this.createFinanceRecord();
+//                    this.$message({
+//                        type:'info',
+//                        message:'操作成功'
+//                    });
+                    this.$router.push({path:"/SettlementRecords"})
+                    return;
+                }
+                this.modifySettlementOrder();//修改结算单
+            },
+
+
+            //修改结算单
+            async modifySettlementOrder(){
+            	let certificate = '';
+                this.uploadFileList.forEach(obj => {
+                	certificate += ","+obj.url;
+                });
+                if(certificate != ''){
+                	certificate = certificate.substring(1);
+                }
+                let para = {
+                    "id":this.settlementOrderId,
+                    "settlementType":this.settlementOrder.settlementType,
+                    "totalDebtFee":this.settlementOrder.totalDebtFee,
+                    "payFee":this.settlementOrder.payFee,
+                    "fixFee":this.settlementOrder.fixFee,
+                    "actualPayFee":this.settlementOrder.actualPayFee,
+                    "reciveAcount":this.reciveAcount,
+                    "payAcount":this.payAcount,
+                    "actualPayFeeType":this.value,
+                    "reciveAcountType":this.value,
+                    "payMemo":this.memo,
+                    "certificate":certificate,
+                    "status":4,
+                    "type":2,
+                    "companyId":userInfo().companyId,
+                    "otherSideCompanyId":this.saleCompanyId,
+                    "isOffLine":1
+                };
+                const re = await payForSettlementOrder(para);
+                if(re.isSuccess){
+                    if(this.value!=1){
+                        this.createFinanceRecord();//创建线下流水
+                    }else{
+                        this.$message({
+                            type:'info',
+                            message:'操作成功'
+                        });
+                    }
+                    this.$router.push({path:"/SettlementRecords"})
+                }else{
+                    this.$message({
+                        type:'error',
+                        message:'操作失败'
+                    });
+                }
+            },
+
+            //发起付款
+            async handleStart(){
+                if(this.value!=3){
+                    this.isStarted = false;
+                }
+
+                if((this.value==3||this.value==4||this.value==5)&&this.uploadFileList.length<0){
+                    this.$message({
+                        type:'error',
+                        message:'请上传凭证'
+                    });
+                    return;
+                }
+                if(this.settlementOrderId!=undefined&&this.settlementOrderId!=''){
+                    let param = {
+                        "settlementOrderId":this.settlementOrderId
+                    };
+                    const res = await getSettlementOrder(param);
+                    if(res.isSuccess){
+                        if(res.result.status==4){
+                            this.$message({
+                                type:'error',
+                                message:'该结算单已在付款中，不能重复提交'
+                            });
+                        }else{
+                            this.settlementOrder = res.result;
+                            this.startSettlement();
+                        }
+                    }else{
+                        this.$message({
+                            type:'error',
+                            message:'操作失败'
+                        });
+                    }
+                }else if((this.orderId!=undefined&&this.orderId!='')){
+                    this.createSettlementPay();
+                }else if(this.orderIds!=undefined&&this.orderIds.length!=0){
+                    this.createSettlementPay();
+                }else{
+                    this.startSettlement();
+                }
+            },
+
+            //主动发起付款
+            async createSettlementPay(){
+                var stockOrderIds = '';
+                var settlementType = 0;
+                let certificate = '';
+                this.uploadFileList.forEach(obj => {
+                	certificate += ","+obj.url;
+                });
+                if(certificate != ''){
+                	certificate = certificate.substring(1);
+                }
+                if((this.value==3||this.value==4||this.value==5)&&this.uploadFileList.length<0){
+                    this.$message({
+                        type:'error',
+                        message:'请上传凭证'
+                    });
+                    return;
+                }
+
+                if(this.orderId!=undefined&&this.orderId!=''){
+                    stockOrderIds = '[' + this.orderId + ']';
+                    settlementType = 1;
+                }else if(this.orderIds!=undefined&&this.orderIds.length!=0){
+                    stockOrderIds = '[';
+                    this.orderIds.forEach((obj)=>{
+                        stockOrderIds = stockOrderIds + obj + ',';
+                    });
+                    stockOrderIds = stockOrderIds.substring(0,stockOrderIds.length-1);
+                    stockOrderIds = stockOrderIds + ']';
+                    settlementType = 2;
+                }else{
+                    settlementType = 2;
+                }
+
+                let param = {
+                    "stockOrders":stockOrderIds,
+                    "companyId":userInfo().companyId,
+                    "otherSideCompanyId":this.saleCompanyId,
+                    "type":2,
+                    "payFee":this.actualPayFee,
+                    "actualPayFee":this.actualPayFee,
+                    "settlementType":settlementType,
+                    "reciveAcount":this.reciveAcount,
+                    "payAcount":this.payAcount,
+                    "actualPayFeeType":this.value,
+                    "reciveAcountType":this.value,
+                    "payMemo":this.memo,
+                    "certificate":certificate,
+                    "type":2,
+                    "companyId":userInfo().companyId,
+                    "isOffLine":0
+                };
+                const res = await saveSettlementOrder(param);
+                if(res.isSuccess){
+                    if(this.value==1){
+                        this.balancePay();//余额支付
+                    }else{
+                        this.onlinePay();//支付宝微信银行卡支付
+                    }
+                }else{
+                    this.$message({
+                        type:'error',
+                        message:'操作失败'
+                    });
+                }
+            },
+
+            handleClick(tab, event) {
+                console.log(tab, event);
+            },
+            handleRemove(file, fileList) {
+                console.log(file, fileList);
+            },
+            handlePictureCardPreview(file, fileList) {
+                this.dialogImageUrl = file.url;
+                this.dialogVisible = true;
+            },
+    //-------------------------------发起收款部分--------------------------------
+            //查询多个订单金额
+            loadSaleReturnOrdersInfo(){
+                if(this.backOrderIds.length==0){
+                    this.$message({
+                        type:'info',
+                        message:'当前没有可结算的订单'
+                    });
+                    return;
+                }
+                this.backOrderIds.forEach((obj)=> {
+                    let param = {
+                        "id": obj,
+                        "getOrderId":1
+                    };
+                    this.fun(param);
+                });
+            },
+
+            async fun(param){
+                const res = await getOrder(param);
+                if (res.isSuccess) {
+                    var vo = res.result;
+                    this.totalFee = this.totalFee + vo.totalFee;
+                    if(vo.closeFee==undefined){
+                        vo.closeFee=0;
+                    }
+                    if(vo.closingFee==undefined){
+                        vo.closingFee = 0;
+                    }
+                    this.firstActualPayFee = this.firstActualPayFee + (vo.totalFee - vo.closeFee-vo.closingFee);
+                }
+            },
+
+
+            async initData(){
+                if(this.activeName == 'first'){
+                    if(this.saleOrderId!=undefined&&this.saleOrderId!=''){
+                        let param = {
+                            "id": this.saleOrderId,
+                            "getOrderId": "1"
+                        };
+                        const res = await getOrder(param);
+                        if(res.isSuccess){
+                            let data = res.result;
+                            this.otherSideCompanyName = data.stallName;
+                            this.totalFee = data.totalFee;
+                            this.firstActualPayFee = data.totalFee
+                        }
+                    }else{
+                        this.$message({
+                            type:'error',
+                            message:'数据加载错误'
+                        });
+                    }
+                }
+            },
+
+            async startCollect (){
+                var stockOrders = '';
+                var settlementType = 0;
+                if(this.saleOrderId!=undefined&&this.saleOrderId!=''){
+                    stockOrders = '[' + this.saleOrderId + ']';
+                    settlementType = 1;
+                }else if(this.backOrderIds!=undefined&&this.backOrderIds.length!=0){
+                    stockOrders = '[';
+                    this.backOrderIds.forEach((obj)=>{
+                        stockOrders = stockOrders + obj + ',';
+                    });
+                    stockOrders = stockOrders.substring(0,stockOrders.length-1);
+                    stockOrders = stockOrders + ']';
+                    settlementType = 2;
+                }
+                let param = {
+                    "stockOrders":stockOrders,
+                    "companyId":userInfo().companyId,
+                    "otherSideCompanyId":this.saleCompanyId,
+                    "reciveMemo":this.firstMemo,
+                    "type":1,
+                    "isOffLine":this.value1,
+                    "payFee":this.firstActualPayFee,
+                    "fixFee":this.fixFee,
+                    "actualPayFee":this.firstActualPayFee,
+                    "settlementType":settlementType
+                };
+                const res = await saveSettlementOrder(param);
+                if(res.isSuccess){
+                    this.$message({
+                        type: 'success',
+                        message: '已发起收款！'
+                    });
+                    this.$router.push({path:"/SettlementRecords"})
+                }else{
+                    this.$message({
+                        type:'error',
+                        message:"当期没有可结算的订单"
+                    });
+                }
+            }
+        //-----------------------------------------------------------------------------
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/sellerSettlement';
+    .el-upload--picture-card {
+        background-color: #fbfdff;
+        border: 1px dashed #c0ccda;
+        border-radius: 6px;
+        box-sizing: border-box;
+        width: 150px;
+        height: 150px;
+        cursor: pointer;
+        line-height: 150px;
+        vertical-align: top;
+    }
+    .avatar {
+	    width: 130px;
+	    height: 130px;
+	    display: block;
+	  }
+</style>

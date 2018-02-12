@@ -1,0 +1,202 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/fastShipping2"}'>快速出货</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/returnManagement2"}'>快速退货</router-link>
+            </li>
+            <li class="menuIndex">
+                <router-link :to='{path:"/orderPurchaseStall"}'>订单管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/sellerSettlement"}'>客户结算</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/customerManagement"}'>客户管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/statisticalStatement"}'>销售统计</router-link>
+            </li>
+        </ul>
+       <div class="Picking">
+            <div style="height: 20px;">
+                <router-link :to='{path:"/indentManagement"}' class="comeBack right">返回</router-link>
+            </div>
+           <el-col :span="12" class="isLeft">
+               <p class="title">待配货清单</p>
+               <el-table
+                   ref="multipleTable"
+                   :data="tableData3"
+                   height="400"
+                   style="width: 100%">
+                   <el-table-column
+                       type="selection"
+                       width="55">
+                   </el-table-column>
+                   <el-table-column
+                       width="150"
+                       label="主图/货号">
+                       <template scope="scope">
+                           <div class="flex2">
+                               <img src="../image/111.png" alt=""  class="tableImg">
+                               <p>MG110</p>
+                           </div>
+                       </template>
+                   </el-table-column>
+                   <el-table-column
+                       prop="color"
+                       label="颜色">
+                   </el-table-column>
+                   <el-table-column
+                       prop="size"
+                       label="尺码"
+                       width="120">
+                   </el-table-column>
+                   <el-table-column
+                       prop="number"
+                       label="数量">
+                   </el-table-column>
+                   <el-table-column
+                       prop="price"
+                       label="单价">
+                   </el-table-column>
+               </el-table>
+               <div class="flex2 leftButton">
+                   <a href="javascript:void(0)" class="buttonColor">加入包裹清单</a>
+                   <router-link :to='{path:"/indentManagementPackageDetails"}' class="buttonColor">完成打包</router-link>
+                   <a href="javascript:void(0)" class=""></a>
+               </div>
+           </el-col>
+           <el-col :span="12" class="isLeft">
+               <div class="title flex">
+               <ul>
+                   <li>
+                       <a href="javascript:void(0);" v-for="(obj,index) in packageList" @click="tabs(index)"  :class="{'change2':index === clickIndex}" >{{obj.list}}</a>
+                   </li>
+               </ul>
+                   <a href="javascript:void(0)" class="blue2">+添加包裹</a>
+               </div>
+               <el-table
+                   ref="multipleTable"
+                   :data="tableData3"
+                   height="400"
+                   style="width: 100%">
+                   <el-table-column
+                       type="selection"
+                       width="55">
+                   </el-table-column>
+                   <el-table-column
+                       width="150"
+                       label="主图/货号">
+                       <template scope="scope">
+                           <div class="flex2">
+                               <img src="../image/111.png" alt=""  class="tableImg">
+                               <p>MG110</p>
+                           </div>
+                       </template>
+                   </el-table-column>
+                   <el-table-column
+                       prop="color"
+                       label="颜色">
+                   </el-table-column>
+                   <el-table-column
+                       prop="size"
+                       label="尺码"
+                       width="120">
+                   </el-table-column>
+                   <el-table-column
+                       prop="number"
+                       label="数量">
+                   </el-table-column>
+                   <el-table-column
+                       prop="price"
+                       label="单价">
+                   </el-table-column>
+               </el-table>
+               <div class="flex2 leftButton">
+                   <a href="javascript:void(0)" class="buttonColor">移出包裹</a>
+                   <a href="javascript:void(0)" class="buttonColor">删除包裹</a>
+               </div>
+           </el-col>
+       </div>
+    </div>
+</template>
+<script>
+    import headTop from '../components/headTop'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                clickIndex:0,
+                packageList:[
+                    {
+                        list:'包裹1'
+                    },
+                    {
+                        list:'包裹2'},
+                ],
+                tableData3:[{
+                    color:'白色',
+                    size:'L',
+                    number:12,
+                    price:25,
+                },{
+                    color:'白色',
+                    size:'L',
+                    number:12,
+                    price:25,
+                },{
+                    color:'白色',
+                    size:'L',
+                    number:12,
+                    price:25,
+                },{
+                    color:'白色',
+                    size:'L',
+                    number:12,
+                    price:25,
+                },{
+                    color:'白色',
+                    size:'L',
+                    number:12,
+                    price:25,
+                },{
+                    color:'白色',
+                    size:'L',
+                    number:12,
+                    price:25,
+                },{
+                    color:'白色',
+                    size:'L',
+                    number:12,
+                    price:25,
+                },{
+                    color:'白色',
+                    size:'L',
+                    number:12,
+                    price:25,
+                },{
+                    color:'白色',
+                    size:'L',
+                    number:12,
+                    price:25,
+                },]
+            }
+        },
+        methods: {
+            tabs(index){
+                this.clickIndex = index;
+            },
+        }
+    }
+</script>
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import "../style/indentManagement";
+</style>

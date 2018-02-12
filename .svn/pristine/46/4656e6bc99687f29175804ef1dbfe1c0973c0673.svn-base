@@ -1,0 +1,518 @@
+.salesReturn{
+    margin:0 30px;
+    background: #fff;
+    padding: 20px 40px;
+    height:100%;
+    color:#333;
+    .salesTop{
+        font-size: 14px;
+        .salesTopInput>div{
+            width: 200px;
+            margin-left:5px;
+        }
+    }
+    .salesRadio{
+        margin: 15px 0;
+    }
+    //表格内容
+    .salesTable{
+        img{
+            width: 40px;
+            height: 40px;
+        }
+        .manner{
+            margin-top: 20px;
+            font-size: 14px;
+            a{
+                color:@red;
+                margin-right: 20px;
+            }
+            a>span{
+                background-size: 100%;
+                width: 36px;
+                height: 36px;
+                display: inline-block;
+                margin-right: 5px;
+            }
+            .background1{
+                background: url("../image/tedit04.png") no-repeat center;
+            }
+        }
+    }
+    .defeated{
+        font-size: 13px;
+        color:#333;
+        border:1px solid #ddd;
+        border-top:none;
+        padding: 10px 50px 10px 20px ;
+        ul>li{
+            height: 28px;
+            line-height: 28px;
+        }
+
+    }
+}
+
+//退货详情
+.returns-content{
+    background:#fff;
+    margin:0 30px;
+    height:100%;
+    .returnsAll{
+        padding:20px 40px 0;
+        .orderDetails{
+            height: 120px;
+            font-size: 12px;
+            border:1px solid #d4d4d4;
+            border-radius: 2px;
+            margin: 30px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            .detailsLeft{
+                img{
+                    width: 80px;
+                    height: 80px;
+                    border-radius: 5px;
+                }
+                div{
+                    margin-left: 10px;
+                    p{
+                        height: 24px;
+                        line-height: 24px;
+                    }
+                }
+            }
+            .detailsCenter{
+                p{
+                    height: 30px;
+                    line-height: 30px;
+                }
+                .title{
+                    color:@orange;
+                }
+            }
+            .detailsRight{
+                a{
+                    color:#333;
+                    div{
+                        border:1px solid #d4d4d4;
+                        border-radius: 5px;
+                        width: 70px;
+                        height: 70px;
+                        margin:0 5px;
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: center;
+                        align-items: center;
+                        p{
+                            margin: 5px 0;
+                        }
+                    }
+                }
+            }
+        }
+        .returnsRemark{
+            border:1px solid #d4d4d4;
+            border-top: none;
+            margin-bottom: 10px;
+            padding: 5px 20px;
+            font-size: 12px;
+            line-height: 20px;
+        }
+        .returnsTable{
+            img{
+                width: 40px;
+                height: 40px;
+            }
+        }
+    // 销售管理 部分配货
+        .indentPicking{
+            height: 36px;
+            margin-top: 10px;
+            ul{
+                li{
+                    font-size: 14px;
+                    box-sizing: border-box;
+                    padding: 5px 20px;
+                    border-bottom: 1px solid @blue2;
+                    a{
+                        color:#333;
+                    }
+                }
+                .change6{
+                    border:1px solid @blue2;
+                    a{
+                        color:@blue2;
+                    }
+                }
+            }
+            .right{
+                p{
+                    font-size: 14px;
+                    line-height: 40px;
+                }
+            }
+        }
+        .pickingButton{
+            height: 25px;
+            margin-top: 10px;
+        }
+    }
+    .affirmDialog{
+        p{
+            height: 40px;
+            line-height: 40px;
+        }
+        p:last-child{
+            img{
+                margin-right: 10px;
+            }
+        }
+    }
+}
+//弹窗动态
+.orderDetails{
+    color:#333;
+    height: 120px;
+    font-size: 12px;
+    border:1px solid #d4d4d4;
+    border-radius: 2px;
+    margin: 30px 0 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    .detailsLeft{
+        img{
+            width: 80px;
+            height: 80px;
+            border-radius: 5px;
+        }
+        div{
+            margin-left: 10px;
+            p{
+                height: 24px;
+                line-height: 24px;
+            }
+        }
+    }
+    .detailsCenter{
+        p{
+            height: 30px;
+            line-height: 30px;
+        }
+        .title{
+            color:@orange;
+        }
+    }
+    .detailsRight{
+        a{
+            color:#333;
+            div{
+                border:1px solid #d4d4d4;
+                border-radius: 5px;
+                width: 70px;
+                height: 70px;
+                margin:0 5px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                p{
+                    margin: 5px 0;
+                }
+            }
+        }
+    }
+}
+//订单动态弹窗
+.dynamicList{
+    min-height: 320px;
+    margin-top: 30px;
+    .track-rcol{width: 100%; border: 1px solid #eee;padding-bottom: 20px;}
+    .track-list{margin: 20px; padding-left: 5px; position: relative;}
+    .track-list li{
+        position: relative; padding: 9px 0 0 25px; line-height: 18px; border-left: 1px solid #d9d9d9; color: #999;
+        .node-icon{position: absolute; left: -6px; top: 50%; width: 11px; height: 11px;
+            background: url(../image/yuan.png) no-repeat;background-size:100%; }
+        .time{margin-right: 20px; position: relative; top: 4px; display: inline-block; vertical-align: middle;}
+        .txt{max-width: 500px;margin-left: 80px;position: relative; display: inline-block; vertical-align: middle;font-size: 12px}
+    }
+    .track-list li:first-child{
+        color: red; padding-top: 0; border-left-color: #fff;
+        .time{margin-right: 20px; }
+        .txt{max-width: 500px; }
+        .node-icon{position: absolute; left: -6px; top: 50%; width: 11px; height: 11px;
+            background: url(../image/yuan2.png) no-repeat;background-size:100%;}
+    }
+}
+.dynamic>div{
+    margin: 0 0 10px;
+}
+
+//立即退货
+.promptlyReturns{
+    margin:0 30px;
+    background: #fff;
+    padding: 20px 40px;
+    height:100%;
+
+
+}
+.promptlyReturns{
+    color:#666;
+    font-size: 14px;
+    margin:1px 30px;
+    background: #fff;
+    padding: 20px 30px;
+    height:100%;
+    .fastTop{
+        margin-bottom: 30px;
+        .title{
+            width: 90px;
+        }
+        .content{
+            width: 200px;
+        }
+    }
+    .isLeft{
+        .leftList{
+            margin-bottom: 30px;
+            .isChange{
+                color:@blue2;
+                border-bottom: 1px solid @blue2;
+                margin-left: 10px;
+            }
+            .title{
+                text-align: right;
+                color:#333;
+            }
+            .content{
+                margin-left: 10px;
+                .contentTips{
+                    margin-top: 10px;
+                    a{
+                        font-size: 12px;
+                        color:#666;
+                        border:1px solid rgb(191, 203, 217);
+                        padding:3px  5px;
+                        border-radius: 5px;
+                        margin-right: 10px;
+                    }
+                }
+                .contentTips>a:hover{
+                    color: rgb(191, 203, 217);
+                }
+                .contentInfo{
+                    margin: 20px 0;
+                    img{
+                        width: 125px;
+                        height: 125px;
+                    }
+                    .infoRight{
+                        width: 300px;
+                        margin-left: 20px;
+                        p{
+                            height: 30px;
+                            line-height: 30px;
+                        }
+                    }
+                }
+            }
+        }
+        .leftList2{
+            align-items: flex-start;
+            input{
+                width: 300px;
+            }
+        }
+        .leftButton{
+            margin-top: 25px;
+        }
+        .buttonColor{
+            margin-top: 40px;
+        }
+    }
+    .isRight{
+        height:77%;
+        border-left: 1px solid #d4d4d4;
+        padding-left: 30px;
+        .rightTable{
+            margin-top: 20px;
+            color:#666;
+            .tableFirst{
+                padding: 2px;
+                .tableImg{
+                    width: 40px;
+                    height: 40px;
+                    margin-right: 5px;
+                }
+            }
+        }
+        .payment{
+            margin-top: 30px;
+        }
+        .payButton{
+            margin-top: 30px;
+        }
+        .rightDelete{
+            height: 40px;
+        }
+        .tips{
+            margin-top: 12px;
+            font-size: 12px;
+            color:@red;
+            display: flex;
+            align-items: flex-start;
+            p{
+                line-height: 20px;
+            }
+        }
+    }
+}
+//确认退货
+.returnsAffirm{
+    color:#666;
+    font-size: 14px;
+    margin:1px 30px;
+    background: #fff;
+    padding: 20px 30px;
+    height:100%;
+    .affirmButtom{
+        margin-bottom: 10px;
+    }
+    .returnsAffirmTable{
+        padding-top: 10px;
+        color:#333;
+        .headImg{
+            width:40px;
+            height:40px;
+        }
+        .tableFirst{
+            height: 40px;
+            line-height: 40px;
+            font-size: 14px;
+            text-align: center;
+            border:1px solid #d4d4d4;
+            td{
+                width:17%;
+            }
+            .firstLi{
+                text-align: left;
+                padding-left: 18px;
+            }
+            .salesCheckbox{
+                width:20px;
+                padding-left: 17px;
+            }
+        }
+        .buyTable,.buyTable1,.buyTable2{
+            border:1px solid #d4d4d4;
+            border-bottom: none;
+            font-size: 12px;
+            .buyImg1{
+                height: 40px;
+                margin: 0 30px 0 10px;
+            }
+            th,td{
+                height: 30px;
+                line-height: 30px;
+            }
+            td{
+                border-top: 1px solid #d4d4d4;
+                height: 50px;
+                line-height: 50px;
+                text-align: center;
+            }
+            th{
+                width:17%;
+                font-weight: 100;
+                background: #f4f4f4;
+            }
+            td{
+                width:17%;
+            }
+            td:first-child{
+                width:34%;
+            }
+            th:first-child{
+                text-align: left;
+                padding-left: 18px;
+            }
+            .tdFirst{
+                display: flex;
+                align-items: center;
+                justify-content: flex-start;
+                text-align: left;
+                padding-right: 20px;
+                p{
+                    height: 30px;
+                    line-height: 30px;
+                }
+            }
+            .tdLast{
+                p{
+                    height: 20px;
+                    line-height: 20px;
+                    margin: 5px 0;
+                }
+                a{
+                    margin: 0 5px;
+                }
+            }
+            .checkbox{
+                margin-left: 5px;
+            }
+            .unfinisdhedFirst{
+                width:100%;
+            }
+        }
+        .buyTable2{
+            border-top: none;
+            td:first-child{
+                text-align: left;
+                padding-left: 18px;
+                width:17%;
+            }
+            td{
+                height: 30px;
+                line-height: 30px;
+            }
+            .remark{
+                padding: 1px;
+                width: 400px;
+            }
+        }
+        .tableContent{
+            border-bottom:1px solid #d4d4d4;
+            overflow: scroll;
+            overflow-x: hidden;
+        }
+        .tableContent2{
+            border-bottom:1px solid #d4d4d4;
+            overflow: scroll;
+            overflow-x: hidden;
+            max-height: 165px;
+            margin-bottom: 5px;
+        }
+        .nth-2{
+            text-align: left;
+        }
+        .scrollTable{
+            overflow: scroll;
+            max-height: 410px;
+        }
+        .tableHead{
+            margin-top: 5px;
+        }
+    }
+}
+.returnsAffirmDialog{
+    font-size: 16px;
+    padding: 30px 0 40px;
+    p{
+        margin-left: 10px;
+    }
+}

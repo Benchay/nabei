@@ -1,0 +1,268 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/stallProcurement"}'>采购入库</router-link>
+            </li>
+            <li class="menuIndex">
+                <router-link :to='{path:"/stallPurchase"}'>采购退货</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/supplierManagement"}'>供应商管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/purchaseStatistics"}'>采购统计</router-link>
+            </li>
+        </ul>
+        <div class="supplier">
+            <div class="flex supplierTop" style="width: 100%;">
+            	提交时间：
+            	<el-date-picker
+                    size="small"
+                    v-model="startDate"
+                    type="date"
+                    placeholder="选择开始日期"
+                    :picker-options="pickerOptions0"
+                    @change="loadData">
+                </el-date-picker>
+                <el-input
+                    size="small"
+                    placeholder="供应商名称搜索"
+                    icon="search"
+                    v-model="q_supplierName"
+                    :on-icon-click="loadData">
+                </el-input>
+                <el-input
+                    size="small"
+                    placeholder="联系电话搜索"
+                    icon="search"
+                    v-model="q_supplierTel"
+                    :on-icon-click="loadData">
+                </el-input>
+                
+                
+            </div>
+            <div style="float: right; margin-top: -25px;" >
+            	<router-link :to='{path:"/stallPurchaseReturns"}' class="buttonColor"><span class="background1"></span>新增采购退货</router-link>
+            	<a href="javascript:void(0)" class="buttonColor" @click="handleAdd">导入退货</a>
+            </div>
+            
+            
+            <div class="supplierTable">
+                <el-table
+                    :data="tableData"
+                    style="width: 100%">
+                    
+                    <el-table-column
+                        prop="orderNo"
+                        label="单号">
+                    </el-table-column>
+                    <el-table-column
+                        prop="otherSideCompanyId"
+                        label="供应商">
+                    </el-table-column>
+                    <!--<el-table-column
+                        prop="linkTel"
+                        label="退货总数量">
+                    </el-table-column>
+                    <el-table-column
+                        prop="linkTel"
+                        label="退货总金额">
+                    </el-table-column>-->
+                    <el-table-column
+                        prop="createTime"
+                        label="提交时间"
+                        :formatter="mydateFormat">
+                    </el-table-column>
+                    <el-table-column
+                        prop="reciveAccountNum"
+                        label="提交人">
+                    </el-table-column>
+                    <el-table-column
+                        label="操作">
+                        <template scope="scope">
+                            <div class="tableFoot">
+                            	<router-link :to='{path:"/stallPurchaseDetail",query:{param:scope.row.id}}' class="blue2">查看</router-link>
+                            </div>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+            <el-pagination
+                small
+                class="right"
+                style="margin-top: 20px;"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :current-page="currentPage"
+                :page-sizes="[10, 20, 30, 40]"
+                :page-size="pagesize"
+                layout="total, sizes, prev, pager, next, jumper"
+                :total="totalCount">
+            </el-pagination>
+            <a href="javascript:void(0)" class="export_excle">导出excel</a>
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {queryStockOrder,querySupplier} from '@/api/getData'
+    import {userInfo,getStore,setStore} from  '../config/mUtils'
+    import {mydateFormat} from '../utils/dataFormater.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                multipleSelection:[],
+                startDate:'',
+                q_supplierName:'',
+                q_supplierId:'',
+                q_supplierTel:'',
+                //默认每页数据量
+                pageSize: 5,
+
+                //默认高亮行数据id
+                highlightId: -1,
+
+                //当前页码
+                currentPage: 1,
+
+                //查询的页码
+                start: 1,
+
+                //默认数据总数
+                totalCount: 0,
+                
+                tableData:[],//数据
+                
+                supplierFlag:true,//若为false,则查询列表为空
+            }
+        },
+        mounted(){
+           this.loadData();
+        },
+        methods: {
+           
+           loadData(){
+           		//this.loadSupplier().then(()=>this.loadPurchaseData());
+           		
+           		this.loadSupplier();
+           },
+           
+           async loadSupplier(){
+           		if(this.q_supplierName != "" || this.q_supplierTel != ""){
+           			let param = {companyId:userInfo().companyId};
+           			if(this.q_supplierName != ""){
+           				param.name = this.q_supplierName;
+           			}
+           			if(this.q_supplierTel != ""){
+           				param.linkTel = this.q_supplierTel;
+           			}
+           			let params = {
+           				param:param,
+           				pageSize:1,
+           				pageIndex:1
+           			}
+           			const res = await querySupplier(params);
+           			if (res.isSuccess == true) {
+	                    if(res.result.totalCount==0){
+	                    	this.supplierFlag = false;
+	                    	this.q_supplierId = '';
+	                    }else{
+	                    	this.supplierFlag = true;
+	                    	this.q_supplierId = res.result.results[0].id;
+	                    }
+	                    this.loadPurchaseData()
+	                }else{
+	                    this.$message({
+	                        type: 'error',
+	                        message: res.isSuccess
+	                    });
+	                    this.loadPurchaseData()
+	                }
+           		}else{
+           			this.supplierFlag = true;
+           			this.q_supplierId = '';
+           			this.loadPurchaseData()
+           		}
+           },
+            async loadPurchaseData(){
+            	if(!this.supplierFlag){
+            		this.tableData = [];
+            		this.totalCount = 0;
+            		return;
+            	}
+            	let params = null;
+            	if(this.q_supplierId != ""){
+            		params = {
+            			type:7,
+            			createTime:this.startDate,
+            			companyId:userInfo().companyId,
+            			otherSideCompanyId:this.q_supplierId
+            		}
+            	}else{
+            		params = {
+            			type:7,
+            			createTime:this.startDate,
+            			companyId:userInfo().companyId
+            		}
+            	}
+            	let param = {
+            		params:params,
+            		pageSize:this.pageSize,
+            		pageIndex:this.currentPage
+            		
+            	}
+                const res = await queryStockOrder(param);
+                if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: '数据加载成功！'
+                    });
+                    this.tableData = res.result.results;
+                    this.totalCount = res.result.totalCount;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.isSuccess
+                    });
+                }
+            },
+            
+            //页码变更
+            handleCurrentChange: function(val) {
+                this.currentPage = val;
+                let params ={
+                    param:{
+                        stallId:userInfo().companyId,
+                    },
+                    pageIndex:this.currentPage,
+                    pageSize:this.pagesize
+                }
+                if(this.q_supplierName!=''){
+                    params.param.name = this.q_supplierName
+                }
+                if(this.q_supplierTel!=''){
+                    params.param.linkTel = this.q_supplierTel
+                }
+                this.loadPurchaseData(params);
+            },
+
+            //多选响应
+            handleSelectionChange: function(val) {
+                this.multipleSelection = val;
+            },
+            mydateFormat,
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/supplierManagement';
+</style>

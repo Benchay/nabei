@@ -1,0 +1,170 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/webStoreOrderSalesBuy"}'>网店订单</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/purchaseRequireBuy"}'>采购需求</router-link>
+            </li>
+            <li class="menuIndex2">
+                <router-link :to='{path:"/orderPurchaseBuy"}'>采购订单</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/addShop"}'>绑定店铺</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/packageDetails"}'>包裹管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/salesForecast"}'>采购统计</router-link>
+            </li>
+        </ul>
+        <div class="sellerSettlement">
+            <router-link :to='{path:"/orderPurchaseBuyDetails"}' class="right comeBack2">返回</router-link>
+            <div class="details">
+                <el-col :span="24" v-for="list in info">
+                    <el-col :span="6">档口名称：{{stallName}}</el-col>
+                    <el-col :span="6">
+                        <div  class="flex">
+                            <p v-bind:class="[settleDay.settlementType ==1?'style1':settleDay.settlementType ==2?'style2':'']">{{settleDay.settlementType== 1?'周结':settleDay.settlementType == 2?'月结':''}}</p>
+                            <p>{{settleDay.settlementDay}}</p>
+                        </div>
+                    </el-col>
+                    <el-col :span="6">状态：财务未结清</el-col>
+                </el-col>
+                <el-col :span="24">
+                    <el-col :span="6">当前总欠款金额：4000</el-col>
+                    <el-col :span="6">已结金额：2000</el-col>
+                    <el-col :span="6" class="colorText">待结金额：2000</el-col>
+                    <!--已结算状态 无此按钮-->
+                    <el-col :span="6"><router-link :to='{path:"/stallSettlementImmediately"}' class="buttonColor3">立即付款</router-link></el-col>
+                    <!---->
+                </el-col>
+            </div>
+            <div class="detailsTable">
+                <p class="tableTop">付款记录：</p>
+                <el-table
+                    :data="tableData6"
+                    style="width: 100%">
+                    <el-table-column
+                        prop="date"
+                        label="结算时间"
+                        width="180">
+                    </el-table-column>
+                    <el-table-column
+                        prop="newSum"
+                        label="本次结算金额（￥）">
+                    </el-table-column>
+                    <el-table-column
+                        prop="clearingForm"
+                        label="结算方式">
+                    </el-table-column>
+                    <el-table-column
+                        prop="practicalSum"
+                        label="实际付款金额（￥）">
+                    </el-table-column>
+                    <el-table-column
+                        label="操作">
+                        <template scope="scope">
+                            <router-link :to='{path:"/orderFinancialDetails"}' class="red">查看详情</router-link>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+        </div>
+    </div>
+</template>
+<script>
+    import headTop from '../components/headTop'
+    import {formatDate} from '../utils/date.js'
+    import {querySettlementDay} from '@/api/getData'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                roleForm: {
+                    userId: '',
+                    roleId: '',
+                    compId:''
+                },
+                info:[{
+                    state:1,
+                    date:'1号',
+                }],
+                tableData6:[{
+                    date:'2017-02-11',
+                    newSum:1200,
+                    clearingForm:'支付宝',
+                    practicalSum:1000
+                },],
+                orderId:'',
+                orderTime:'',
+                stallName:'',
+                totalFee:0,
+                busiCompId:'',
+                settleDay:'',
+            }
+        },
+        mounted(){
+            var userInfo = getStore("user_info_user");
+            var vjson = JSON.parse(userInfo);
+            //console.log(vjson)
+            this.roleForm.userId = vjson.id;
+            this.roleForm.userName = vjson.userName;
+            var currentComp = getStore("curCompany");
+            if (isJson(currentComp)) {
+                var vcom = JSON.parse(currentComp);
+                this.roleForm.compId = vcom.id;
+            }
+
+            //测试代码
+            this.roleForm.compId='1000';
+
+            this.stallName = this.$route.query.stallName;
+            this.orderTime = this.$route.query.orderTime;
+            this.orderId   = this.$route.query.id;
+            this.totalFee  = this.$route.query.totalFee;
+            this.busiCompId = this.$route.query.busiCompId;
+
+            this.initSettleDay();
+        },
+        methods: {
+            formatOrderDate(time) {
+                if(time==undefined||time==''){
+                    return '';
+                }
+                var date = new Date(time);
+                return formatDate(date, 'yyyy-MM-dd hh:mm');
+            },
+            async initSettleDay(){
+                let param = {
+                "params":{
+                        "companyId": this.roleForm.compId,
+                        "settlementCompanyId":this.busiCompId,
+                        "type":2
+                },
+                    "pageIndex": 1,
+                    "pageSize": 10
+                };
+                const res = await querySettlementDay(param);
+
+                if(res.isSuccess){
+                    let table = res.result.results;
+                    if(table.length>=1){
+                        this.settleDay = table[0];
+                    }
+
+                }
+            },
+        }
+    }
+</script>
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/sellerSettlement';
+</style>

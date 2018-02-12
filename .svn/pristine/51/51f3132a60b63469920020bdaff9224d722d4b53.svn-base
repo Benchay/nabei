@@ -1,0 +1,204 @@
+.product{
+    color:#333;
+    margin:0 30px;
+    background: #fff;
+    padding: 20px 30px;
+    height:100%;
+    .productTop{
+        div{
+            width: 170px;
+            margin-right: 10px;
+        }
+    }
+    .productButton,.productTable{
+        img{
+            width:40px;
+            height: 40px;
+            margin: 0;
+            padding: 0;
+        }
+        .tableFoot{
+            a{
+                margin-right: 10px;
+            }
+        }
+        .title{
+            height: 40px;
+            line-height: 40px;
+        }
+    }
+    .productTabs{
+        margin-top: 20px;
+    }
+
+}
+.tableImg2{
+    width:40px;
+    height: 40px;
+}
+.dialogForm{
+    padding: 0 20px 0 0;
+}
+//添加新商品
+.addGoods{
+    color:#333;
+    margin:1px 30px;
+    background: #fff;
+    padding: 20px 30px;
+    height:100%;
+    .addFrom{
+        overflow:scroll;
+        height:80%;
+        padding:10px 70px 0;
+        .goodsLast{
+            margin-top: 30px;
+        }
+    }
+}
+.addSpecification{
+    display: flex;
+    align-items: flex-start;
+}
+//分类
+.classGoods{
+    color:#333;
+    margin:0 30px;
+    background: #fff;
+    padding: 20px 30px;
+    .classTop{
+        div{
+            width: 200px;
+        }
+    }
+    .classButton,.classTable{
+        margin-top: 20px;
+    }
+}
+.merchantsPricing{
+    padding-right: 45px;
+}
+.pricingList{
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    p:nth-child(2){
+        width: 70px;
+    }
+    p{
+        margin-right: 20px;
+    }
+}
+.pricingList1{
+    font-size: 12px;
+}
+.skudia{
+    @color:#d7d7d7;
+    .el-dialog--small{
+        width: 38%;
+    }
+    .el-dialog{
+        padding: 0 40px;
+    }
+    .el-dialog__header{
+        border-bottom: 1px solid @color;
+    }
+    .el-tag + .el-tag {
+    margin-left: 10px;
+  }
+  .button-new-tag {
+    margin-left: 10px;
+    height: 32px;
+    line-height: 30px;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+  .input-new-tag {
+    width: 90px;
+    margin-left: 10px;
+    vertical-align: bottom;
+  }
+  .el-dialog__body{
+      padding: 30px 0px;
+  }
+  .prve,.next,.skutag{
+      display: inline-block;
+  }
+  .prve,.next{
+      position: relative;
+      width: 30px;
+      height: 24px;
+  }
+  .prve{
+      position: absolute;
+      left: 0;
+  }
+  .next{
+      position: absolute;
+        right: 0;
+      text-align: right
+  }
+  .skutag{
+      width: 304px;
+      height: 24px;
+      margin-left: 30px;
+      white-space:nowrap;
+      overflow: hidden;
+      position: relative; 
+      .skumain{
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
+      .el-input--small .el-input__inner{
+          height: 24px;
+          width: 50px;
+      }
+  }
+  .mainwrap{
+      margin-top: 40px;
+      padding-bottom: 40px;
+       .el-tag{
+           background-color: #ffffff; 
+            border: 1px solid @color;
+          color: #333;
+          margin-right: 60px;
+          margin-bottom: 15px;
+      }
+      .addbbtn{
+          height: 24px;
+          line-height: normal;
+         &:hover{
+             color: #ffffff;
+         } 
+         &:focus{
+             color: #ffffff;
+         } 
+      }
+      .button-new-tag{
+          margin-left: 0;
+      }
+  }
+  .contentwrap{
+    position: relative;
+      .editbtn{
+          position: absolute;
+          right: 30px;
+          top: 0;
+          height: 24px;
+          line-height: normal;
+         &:hover{
+             color: #ffffff;
+         } 
+         &:focus{
+             color: #ffffff;
+         }
+      }
+      .el-tag{
+          background-color: #ffffff;
+          border-bottom: 1px solid @color;
+          color: #333;
+      }
+  }
+}
+
+

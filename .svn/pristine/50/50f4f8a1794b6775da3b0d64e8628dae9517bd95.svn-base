@@ -1,0 +1,334 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/webStoreOrderSalesBuy"}'>网店订单</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/purchaseRequireBuy"}'>采购需求</router-link>
+            </li>
+            <li class="menuIndex2">
+                <router-link :to='{path:"/orderPurchaseBuy"}'>采购订单</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/addShop"}'>绑定店铺</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/packageDetails"}'>包裹管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/salesForecast"}'>采购统计</router-link>
+            </li>
+        </ul>
+        <div class="startProcurement">
+            <div>
+                <div class="salesOrderTop">
+                    <div class="block left">
+                        <el-date-picker
+                            v-model="searchTime"
+                            size="small"
+                            type="daterange"
+                            placeholder="选择日期范围">
+                        </el-date-picker>
+                    </div>
+                    <div class="topSearch">
+                        <el-input
+                            placeholder="档口名称搜索"
+                            icon="search"
+                            size="small"
+                            v-model="searchStallName"
+                            :on-icon-click="handleIconClick">
+                        </el-input>
+                        <el-input
+                            placeholder="订单编号搜索"
+                            icon="search"
+                            size="small"
+                            v-model="searchOrderCode"
+                            :on-icon-click="handleIconClick">
+                        </el-input>
+                        <!--
+                        <el-input
+                            placeholder="采购人搜索"
+                            icon="search"
+                            size="small"
+                            v-model="input2"
+                            :on-icon-click="handleIconClick">
+                        </el-input>-->
+                    </div>
+                </div>
+                <el-col :span="24" class="radioRed">
+                    <el-radio-group v-model="radio" size="small"  @change="change">
+                        <el-radio-button :label="item.label" v-for="item in statusList">{{item.value}}</el-radio-button>
+                    </el-radio-group>
+                </el-col>
+                <div class="orderTable">
+                    <el-table
+                        :data="tableData"
+                        style="width: 100%;">
+                        <el-table-column
+                            prop="orderCode"
+                            label="订单编号"
+                            width="300">
+                        </el-table-column>
+                        <el-table-column
+                            prop="stallName"
+                            label="档口名称"
+                            >
+                        </el-table-column>
+                        <el-table-column
+                            prop="totalNum"
+                            label="采购数" width="80">
+                             <template scope="scope">
+                                <p style="">{{scope.row.totalNum}}</p>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            prop="totalFee"
+                            label="采购金额" width="80">     
+                            <template scope="scope">
+                                <p style="text-align: right;margin-right: 12px;">{{scope.row.totalFee}}</p>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            prop="orderTime"
+                            label="下单时间"
+                            :formatter="mydateFormat" width="200">
+                        </el-table-column>
+                        <el-table-column
+                            prop="status"
+                            label="状态"
+                            :formatter="formatScale" width="80">
+                        </el-table-column>
+                        <el-table-column
+                            label="操作">
+                            <template scope="scope">
+                                <router-link :to='{path:"/orderPurchaseBuyDetails" ,query:{id:scope.row.id,busiCompId:scope.row.busiCompId,stallName:scope.row.stallName,orderId:scope.row.id,orderCode:scope.row.orderCode,totalFee:scope.row.totalFee,totalNum:scope.row.totalNum,status:scope.row.status,orderTime:scope.row.orderTime}}' class="red">查看详情</router-link>   
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </div>
+                <el-pagination
+                    small
+                    class="right"
+                    style="margin-top: 20px;"
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :current-page="currentPage"
+                    :page-sizes="[10, 20, 30, 40]"
+                    :page-size="pageSize"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    :total="totalCount">
+                </el-pagination>
+                <a href="javascript:void(0)" class="export_excle" @click="exportTableData">导出excel</a>
+            </div>
+        </div>
+        <!--dialog-->
+        <el-dialog
+            id="purchaseDialog"
+            title="是否确定生成采购需求"
+            :visible.sync="purchaseDialogVisible"
+            size="tiny">
+            <span>是否确定生成采购需求？</span>
+            <span slot="footer" class="dialog-footer">
+            <el-button @click="purchaseDialogVisible = false">取 消</el-button>
+            <el-button type="primary" @click="addPurchaserequire">确 定</el-button>
+          </span>
+        </el-dialog>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {setStore,getStore} from  '../config/mUtils'
+    import {queryOrder} from '@/api/getData'
+    import {formatDate,timeZoneCovertDay} from '../utils/date.js'
+    import {export_json_to_excel} from '../vendor/Export2Excel.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+
+        data() {
+            return {
+                radio:0,
+                checked:false,
+                searchTime:'',
+                searchStallName:'',
+                searchOrderCode:'',
+                purchaseDialogVisible: false,
+                roleForm: {
+                    userId: '',
+                    roleId: '',
+                    compId:''
+                },
+                tableData: [],
+                statusList:[
+                    {
+                        value:'全部',
+                        label:0
+                    },
+                    {
+                        value:'未完成',
+                        label:1
+                    },
+                    {
+                        value:'已完成',
+                        label:2
+                    }
+                ],
+                //默认每页数据量
+                pageSize:10,
+
+                //默认高亮行数据id
+                highlightId: -1,
+
+                //当前页码
+                currentPage: 1,
+
+                //查询的页码
+                start: 1,
+
+
+
+                //默认数据总数
+                totalCount: 0,
+
+                //用户登录信息暂时写死
+                //  currentComp: getStore("curCompany")
+                currentComp:{id:'1'}
+            }
+        },
+        mounted(){
+            var userInfo=getStore("userInfo");
+            var vjson = JSON.parse(userInfo);
+            this.roleForm.userId=vjson.id;
+            var currentComp=getStore("curCompany");
+            var vcom = JSON.parse(currentComp);
+            this.roleForm.compId=vcom.id;
+            //测试代码
+            //this.roleForm.compId='1000';
+            this.initloadData();
+        },
+        methods: {
+            formatScale: function (row, column) {
+                var scale = row.status;
+                if (scale == '1') {
+                    return "待配货";
+                } else if (scale == '2') {
+                    return "待拿货";
+                } else if (scale == '3') {
+                    return "待拿货";
+                } else if (scale == '4') {
+                    return "已完成";
+                } else if (scale == '5') {
+                    return "待配货";
+                } else if (scale == '6') {
+                    return "部分配货";
+                } else if (scale == '99') {
+                    return "已完成";
+                }
+            },
+            mydateFormat:function(row, column) {
+                var time = row[column.property];
+                if (time == undefined||time=='') {
+                    return "";
+                }
+                let date = new Date(time);
+                return formatDate(date,'yyyy-MM-dd hh:mm');
+            },
+
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+                this.pageSize = val;
+                this.initloadData();
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+                this.currentPage = val;
+                this.initloadData();
+            },
+            handleIconClick(){
+                this.initloadData();
+            },
+            change(){
+                console.log(this.radio);
+                this.initloadData();
+            },
+            initloadData(){
+                var startDate='';
+                var endDate='';
+                if(this.searchTime !=null && this.searchTime!='' && this.searchTime!=',' ){
+                    var start=this.searchTime[0];
+                    var end=this.searchTime[1];
+                    startDate=timeZoneCovertDay(start,true);
+                    endDate=timeZoneCovertDay(end,false);
+                }
+                var status=this.radio;
+                if(this.radio==0){
+                    this.status = 0
+                }else if(this.radio==1){
+                    this.status = -1
+                }else if(this.radio==2){
+                    this.status = 99
+                }
+                let  param = {
+                    "companyId":this.roleForm.compId,
+                    "orderCode": this.searchOrderCode,
+                    "stallName": this.searchStallName,
+                    "status":this.status,
+                    "startDate": startDate,
+                    "endDate": endDate,
+                    "pageSize": this.pageSize,
+                    "pageIndex": this.currentPage,
+                    "orderType":1
+                    // "roleName":this.queryName
+                };
+                this.loadDataWithCondition(param);
+            },
+            handleIconClick(){
+                this.handleCurrentChange(1);
+            },
+            //页码变更
+            handleCurrentChange: function(val) {
+                this.currentPage = val;
+                var startDate='';
+                var endDate='';
+                if(this.searchTime !=null && this.searchTime!='' && this.searchTime!=',' ){
+                    var start=this.searchTime[0];
+                    var end=this.searchTime[1];
+                    startDate=timeZoneCovertDay(start,true);
+                    endDate=timeZoneCovertDay(end,false);
+                }
+                 this.initloadData();
+            },
+            async loadDataWithCondition(param) {
+                const res = await queryOrder(param);
+                if (res.isSuccess == true) {
+                    this.tableData = res.result.results;
+                    this.totalCount = res.result.totalCount;  
+                                     
+                }else{
+                    if(res.errorCode=='01'){
+                        this.tableData ='';
+                    	this.totalCount = 0;
+                        return;
+                    }
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+            exportTableData(){},
+            addPurchaserequire(){},
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/startProcurement';
+</style>

@@ -1,0 +1,227 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/fastShipping2"}'>快速出货</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/indentManagement"}'>订单管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/sellerSettlement"}'>客户结算</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/customerManagement"}'>客户管理</router-link>
+            </li>
+            <li class="menuIndex">
+                <router-link :to='{path:"/statisticalStatement"}'>销售统计</router-link>
+            </li>
+        </ul>
+        <div class="commodityStatistics">
+            <ul class="radioGreen">
+                <el-radio-group v-model="saleState" size="small">
+                    <el-radio-button label="0">今日</el-radio-button>
+                    <el-radio-button label="1">本周</el-radio-button>
+                    <el-radio-button label="2">本月</el-radio-button>
+                </el-radio-group>
+            </ul>
+            <div class="commodityList">
+            <ul class="lists purLists">
+                <li v-for="(obj,index) in items" @click="tabs(index)" class="flex3">
+                    <div class="flex3 purList1">
+                        <div>
+                            {{obj.type == 1?'采购量（件）':
+                                obj.type == 2?'采购金额（元）':
+                                obj.type == 3?'退货量（件）':
+                                obj.type == 4?'销售订单量（个）':''}}</div>
+                        <div>{{obj.amount}}</div>
+                        <div class="riseAndFall flex2">
+                            {{obj.riseAndFall ==1?'日升':obj.riseAndFall ==2?'日降':obj.riseAndFall ==3?'日持平':''}}
+                            <span v-if="obj.percent > 0">{{obj.percent}}%</span>
+                            <img src="../image/descend01.png" alt="" v-if="obj.riseAndFall == 2">
+                            <img src="../image/descend02.png" alt="" v-if="obj.riseAndFall == 1">
+                            <p v-if="obj.riseAndFall == 3">&nbsp;--</p>
+                        </div>
+                    </div>
+                    <div>{{obj.title}}</div>
+                    <div class="down"  v-show="obj.Checked">
+                        <!--向下的三角-->
+                    </div>
+                </li>
+            </ul>
+        </div>
+            <div class="commodityContent">
+                <!--柱状图-->
+                <el-col :span="12">
+                    <histogram :figureList="figureList" :figureData="figureData" :histogramUnit="histogramUnit"></histogram>
+                </el-col>
+                <el-col :span="12">
+                    <el-table
+                        :data="tableData"
+                        max-height="451"
+                        style="width: 100%;">
+                        <el-table-column
+                            prop="number"
+                            label="序号"
+                            width="180">
+                        </el-table-column>
+                        <el-table-column
+                            width="200"
+                            label="主图/货号">
+                            <template scope="scope">
+                                <div class="contentImg flex">
+                                    <img class="masterDrawing" src="../image/111.png" alt="">
+                                    <p>MG110</p>
+                                </div>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            prop="salesVolume"
+                            label="销售数量">
+                        </el-table-column>
+                        <el-table-column
+                            prop="salesAmount"
+                            label="销售金额">
+                        </el-table-column>
+                    </el-table>
+                </el-col>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    import histogram from '../components/histogram'
+
+    export default {
+        components: {
+            histogram,
+        },
+        data() {
+            return {
+                saleState:0,
+                items:[
+                    {
+                        type:1,
+                        riseAndFall:1,
+                        percent:'5',
+                        amount:3210,
+                        Checked:1,
+                    },{
+                        type:2,
+                        riseAndFall:2,
+                        percent:'6',
+                        amount:32100,
+                        Checked:0,
+                    },{
+                        type:3,
+                        riseAndFall:2,
+                        percent:'6',
+                        amount:32100,
+                        Checked:0,
+                    },{
+                        type:4,
+                        riseAndFall:3,
+                        percent:'0',
+                        amount:32100,
+                        Checked:0,
+                    }],
+                tableData:[
+                    {
+                        number:1,
+                        salesVolume:1000,
+                        salesAmount:1800
+                    },{
+                        number:2,
+                        salesVolume:1000,
+                        salesAmount:1800
+                    },{
+                        number:3,
+                        salesVolume:1000,
+                        salesAmount:1800
+                    },{
+                        number:4,
+                        salesVolume:1000,
+                        salesAmount:1800
+                    },{
+                        number:5,
+                        salesVolume:1000,
+                        salesAmount:1800
+                    },{
+                        number:6,
+                        salesVolume:1000,
+                        salesAmount:1800
+                    },{
+                        number:7,
+                        salesVolume:1000,
+                        salesAmount:1800
+                    },{
+                        number:8,
+                        salesVolume:1000,
+                        salesAmount:1800
+                    },{
+                        number:9,
+                        salesVolume:1000,
+                        salesAmount:1800
+                    },{
+                        number:10,
+                        salesVolume:1000,
+                        salesAmount:1800
+                    }],
+                figureList:[{
+                    value:20,
+                },{
+                    value:200,
+                },{
+                    value:120,
+                },{
+                    value:320,
+                },{
+                    value:520,
+                },{
+                    value:150,
+                }],
+                figureData:[{
+                    value:'2017-11-11',
+                },{
+                    value:'2017-11-12',
+                },{
+                    value:'2017-11-13',
+                },{
+                    value:'2017-11-14',
+                },{
+                    value:'2017-11-15',
+                },{
+                    value:'2017-11-16',
+                }],
+                histogramUnit:'单位/件',
+
+            }
+        },
+        methods: {
+            tabs(obj){
+                console.log(obj)
+                for(let i =0;i<this.items.length;i++){
+                    let obj1 = this.items[i];
+                    if(obj1!=obj){
+                        obj1.Checked = false;
+                    }
+                }
+                this.items[obj].Checked = true;
+                if(obj == 2){
+                    this.singleItem = true;
+                    this.purchased = false;
+                }else if( obj == 1 || obj == 0){
+                    this.singleItem = false;
+                    this.purchased = true;
+                }
+            },
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/commodityStatistics';
+</style>

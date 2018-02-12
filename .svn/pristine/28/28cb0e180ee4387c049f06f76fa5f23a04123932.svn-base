@@ -1,0 +1,52 @@
+<template>
+    <div class="fillcontain">
+        <div class="WeChatPay flex2">
+           <div class="flex3">
+               <div class="WeChatTop flex">
+                   <img src="../image/weixin.png" alt="">
+                   <p>微信支付</p>
+               </div>
+               <div>
+                   <img src="../image/weichatewm.jpg" alt="">
+               </div>
+               <div class="WeChatFoot flex3">
+                   <p v-if="whether">支付成功，页面将在4s后跳转！</p>
+                   <p>交易金额：50.00元</p>
+                   <p>请使用手机微信扫二维码，完成支付</p>
+               </div>
+           </div>
+        </div>
+    </div>
+</template>
+
+<script>
+
+    export default {
+
+        data() {
+            return {
+//                是否支付成功
+                whether:true,
+            }
+        },
+        mounted(){
+        },
+        methods:{
+
+        },
+//        created () {
+//            this.weChatPay = setInterval(() => {
+//                this.dialogVisible = false;
+//            }, 1000)
+//        },
+//        beforeDestroy(){
+//            clearInterval(this.weChatPay)
+//        },
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/WeChatPay';
+</style>

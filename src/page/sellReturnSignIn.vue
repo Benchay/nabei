@@ -1,0 +1,279 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('returnManagement2')">
+                <router-link :to='{path:"/returnManagement2"}'>快速退货</router-link>
+            </li>
+            <li class="menuIndex" v-if="getMenuAuthFun('sellReturn')">
+                <router-link :to='{path:"/sellReturn"}'>销售退货</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('returnManagement2')">
+                <router-link :to='{path:"/returnManagement2"}'>退货统计</router-link>
+            </li>
+        </ul>
+        <div class="returns-content">
+            <div class="returnsAll">
+                <div class="right">
+                    <router-link :to='{path:"/sellReturn"}' class="comeBack">返回</router-link>
+                </div>
+                <div class="left">
+                    <a href="javascript:void(0)" class="buttonColor" @click="signIn">签收</a>
+                </div>
+                <div class="orderDetails" style="margin: 40px 0 0;">
+                    <div class="flex detailsLeft">
+                        <img :src="image" alt="">
+                        <div>
+                            <p>订单编号：{{orderCode}}</p>
+                            <p>卖家名称：{{busiName}}</p>
+                            <p>共计金额：￥{{totalFee}}</p>
+                        </div>
+                    </div>
+                    <div  class="detailsCenter">
+                        <p></p>
+                        <p>下单时间：{{formateDataInfo(orderTime)}}</p>
+                        <p>商品数量：{{totalNum}}</p>
+                    </div>
+                    <div class="flex detailsRight" >
+                        <a href="javascript:void(0)" @click="salesDialog">
+                            <div>
+                                <p class="blue2">订单动态</p>
+                                <p>（{{status==7?'待签收':status==8?'待确认':status==9?'待卸货':status==99?'已完成':''}}）</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                <div class="returnsRemark">
+                    退货原因：商品质量问题！
+                </div>
+                <div class="returnsTable">
+                    <el-table
+                        :data="tableData"
+                        height="360"
+                        style="width: 100%">
+                        <el-table-column
+                            width="230"
+                            label="主图/货号">
+                            <template scope="scope">
+                                <div class="flex">
+                                    <img :src="scope.row.imgUrl_main" alt=""  class="tableImg">
+                                    <p>{{scope.row.productCode}}</p>
+                                </div>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            prop="productName"
+                            width="230"
+                            label="商品名称">
+                        </el-table-column>
+                        <el-table-column
+                            prop="color"
+                            label="颜色">
+                            <template scope="scope">
+                                <p v-for="item in scope.row.details">{{item.color}}</p>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            prop="size"
+                            label="尺码">
+                            <template scope="scope">
+                                <p v-for="item in scope.row.details">{{item.size}}</p>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            prop="orderNum"
+                            label="数量">
+                            <template scope="scope">
+                                <p v-for="item in scope.row.details">{{item.orderNum}}</p>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            prop="unitPrice"
+                            label="单价">
+                            <template scope="scope">
+                                <p v-for="item in scope.row.details">{{item.price}}</p>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </div>
+                <el-pagination
+                    small
+                    class="right"
+                    style="margin-top: 20px;"
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :current-page="currentPage"
+                    :page-size="pageSize"
+                    layout="total, prev, pager, next, jumper"
+                    :total="totalCount">
+                </el-pagination>
+                <a href="javascript:void(0)" class="export_excle left">导出excel</a>
+            </div>
+            <el-dialog
+                title="订单动态"
+                :visible.sync="dialog1"
+                size="small">
+                <div class="dynamic">
+                    <el-col :span="12">卖家名称：{{busiName}}</el-col>
+                    <el-col :span="12">{{status==7?'待签收':status==8?'待确认':status==9?'待卸货' :status==11?'待入库' :status==99?'已完成':''}}</el-col>
+                    <el-col :span="12">订单编号：{{orderCode}}</el-col>
+                </div>
+                <el-col class="dynamicList">
+                    <div class="track-rcol">
+                        <div class="track-list">
+                            <ul>
+                                <li v-for="list in salesList">
+                                    <i class="node-icon"></i>
+                                    <span class="time">{{list.createTime | mydateFormat}}</span>
+                                    <div class="txt">
+                                        <p>{{list.description}}</p>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </el-col>
+            </el-dialog>
+        </div>
+    </div>
+</template>
+<script>
+    import {queryOrderDetailByOrderId,auditOrder,queryOrderLog} from '@/api/getData'
+    import {formatDate} from '../utils/date.js'
+    import {userInfo}   from '../config/mUtils'
+    import {getMenuAuth,haveMenuAuth} from  '../utils/AuthMenu.js'
+    export default {
+        data() {
+            return {
+                roleForm: {
+                    userId: '',
+                    roleId: '',
+                    compId:''
+                },
+                tableData: [],
+                pageSize:10,
+                currentPage:1,
+                totalCount:0,
+                orderId:'',
+                totalFee:0.00,
+                busiName:'',
+                stallName:'',
+                orderCode:'',
+                totalNum:0,
+                orderTime:'',
+                status:0,
+                orderId2:'',
+                dialog1:false,
+                salesList:[],
+                image:''
+
+            }
+        },
+        watch:{
+            '$route':function (route) {
+                this.orderId = this.$route.query.orderId;
+                this.orderId2 = this.orderId;
+                this.initloadData();//加载订单详情
+                },
+        },
+        mounted(){
+            this.roleForm.compId = userInfo().companyId;
+            this.roleForm.userId = userInfo().userId;
+
+            this.orderId = this.$route.query.orderId;
+            this.orderId2 = this.orderId;
+
+            this.initloadData();//加载订单详情
+        },
+        filters: {
+            mydateFormat(time) {
+                if (time == undefined || time == '') {
+                    return "";
+                }
+                let date = new Date(time);
+                return formatDate(date, 'yyyy-MM-dd hh:mm');
+            },
+        },
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            //加载订单详情
+            async initloadData(){
+                this.tableData = [];
+                let param = {
+                    "companyId":this.roleForm.compId,
+                    "orderId":this.orderId2,
+                    "pageSize": this.pageSize,
+                    "pageIndex": this.currentPage,
+                    "getHeader":1
+                };
+                const res = await queryOrderDetailByOrderId(param);
+                if(res.isSuccess){
+                    this.tableData = res.result.data.results;
+                    let order = res.result.order;
+                    this.busiName = order.busiName;
+                    this.orderCode = order.orderCode;
+                    this.totalFee = order.totalFee;
+                    this.totalNum = order.totalNum;
+                    this.orderTime = order.orderTime;
+                    this.image = res.result.data.results[0].imgUrl_main;
+                    this.status = order.status;
+                    this.totalCount = res.result.data.totalCount;
+                }
+            },
+            //签收
+            async signIn(){
+              let param = {
+                  "orderId":this.orderId,
+                  "auditFlag":50
+              }
+                const res = await auditOrder(param);
+                if(res.isSuccess){
+                    this.$message({
+                        type: 'success',
+                        message: '已签收！'
+                    });
+                    this.$router.push('/sellReturn');
+                }
+                return
+            },
+            //订单动态
+            async salesDialog(){
+                this.dialog1 = true;
+                let param = {
+                    "companyId":this.roleForm.compId,
+                    "orderId":this.orderId,
+                    "pageIndex":1,
+                    "pageSize":10,
+                };
+                const res = await queryOrderLog(param);
+                if(res.isSuccess == true){
+                    this.salesList = res.result.results;
+                }
+            },
+            //数据格式化
+            formateDataInfo(val){
+                if(val==undefined||val==''){
+                    return '';
+                }
+                return formatDate(val*1,'yyyy-MM-dd hh:mm:ss');
+            },
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+                this.pageSize = val;
+                this.initloadData();
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+                this.currentPage = val;
+                this.initloadData();
+            },
+        }
+    }
+</script>
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/salesReturn';
+</style>

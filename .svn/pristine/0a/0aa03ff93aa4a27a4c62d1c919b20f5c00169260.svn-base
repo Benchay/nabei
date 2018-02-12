@@ -1,0 +1,239 @@
+.purchasingManage-menu {
+    background: #f4f4f4;
+    height: 50px;
+    margin-left: 30px;
+    li{
+        display: inline-block;
+        line-height: 50px;
+        width: 160px;
+        text-align: center;
+        font-size: 16px;
+        float: left;
+        a{
+            display: inline-block;
+            width: 160px;
+            background: #f4f4f4;
+            color:#333;
+        }
+    }
+}
+/*全部*/
+.purchasing-content{
+    height: 100%;
+    overflow-y: scroll;
+    background:#fff;
+    margin:2px 30px;
+    padding-bottom: 20px;
+    .purchasingAll{
+        padding:20px 40px;
+        .purTable{
+            width:100%;
+            background: #f4f4f4;
+            border:1px solid #d7d7d7;
+            margin-bottom:15px ;
+            .purTableTit{
+                display:flex;
+                justify-content: space-between;
+                border-bottom:1px solid #d7d7d7;
+                li{
+                    display: flex;
+                    align-items: center;
+                    font-size: 14px;
+                    height:36px;
+                    line-height: 36px;
+                    padding: 0 40px;
+                    img{
+                        margin-right: 5px;
+                    }
+                }
+            }
+            .purTableTit2{
+                display: flex;
+                justify-content: flex-start;
+            }
+        }
+        .pm21Top{
+            height: 40px;
+            a{
+                color:@blue;
+                border-bottom:1px solid @blue;
+                font-size: 12px;
+            }
+        }
+    }
+    .purchasingAll-top{
+        padding:20px 40px;
+        margin-bottom: 15px;
+        .topDate{
+            float: left;
+        }
+        .topInput{
+            float: right;
+            width:200px;
+        }
+    }
+}
+.purTableContent{
+    background: #fff;
+    font-size:14px;
+    img{
+        width:66px;
+        height:66px;
+        border-radius: 50%;
+        float: left;
+        margin: 0 60px 0 40px;
+
+    }
+    li{
+        width:28%;
+        height:100px;
+        display: flex;
+        align-items: center;
+        border-left: 1px solid #d7d7d7;
+        text-align: center;
+        justify-content:center;
+    }
+    li:first-child{
+        width:44%;
+        border-left:none;
+        justify-content: flex-start;
+        color:#333;
+    }
+}
+.purContentCor{
+    color:@orange;
+    float: right;
+    margin-left:50px;
+    margin-top: 10px;
+}
+.purContentName{
+    float: left;
+    margin-top: 10px;
+    color:#333;
+}
+.purContentNameHover{
+    color:#333;
+}
+.purContentNameHover:hover{
+    color:@red;
+
+}
+.purContentCor2{
+    color: @blue;
+}
+.purContentCor3{
+    color: @red;
+}
+.purCargo{
+    margin-bottom: 10px;
+}
+/*待处理事务*/
+.purPendingButton{
+    margin-bottom: 20px;
+}
+.purTableContent2{
+    background: #fff;
+    font-size:14px;
+    img{
+        width:66px;
+        height:66px;
+        border-radius: 50%;
+    }
+    li{
+        width:28%;
+        height:100px;
+        display: flex;
+        align-items: center;
+        justify-content:center;
+    }
+    li:first-child{
+        width:15%;
+    }
+}
+.moneyColor1{
+    color:@orange;
+}
+.moneyColor2{
+    color: @red;
+}
+.numberColor{
+    color: @blue;
+}
+.purTable2{
+     ul{
+         li{
+             display: flex;
+             align-items: center;
+             justify-content:center;
+             width:14.2%;
+             height:46px;
+             color:#333;
+         }
+     }
+     .purTableUl1{
+         border-bottom:1px solid #d7d7d7;
+         font-weight: 600;
+         font-size: 15px;
+     }
+     .purTableUl2{
+         background: #fff;
+         font-size:14px;
+         li{
+             height:60px;
+         }
+         img{
+             width:50px;
+             height:50px;
+         }
+     }
+
+ }
+.add-dialog{
+    width:250px;
+}
+.dialog-footer{
+    text-align: center;
+}
+.back{
+    a{
+        color:@blue;
+        border-bottom: 1px solid @blue;
+        font-size: 12px;
+    }
+
+}
+.ConfirmInventory{
+    height: 110px;
+    border-top: 1px solid #d4d4d4;
+    border-bottom: 1px solid #d4d4d4;
+
+}
+.dialogEvaluate1{
+    .evaluateContent>p{
+        margin: 10px 0;
+    }
+    .evaluateContent{
+        flex-direction: column;
+        img{
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+        }
+        .evalCheched{
+            color:#999;
+            margin-bottom: 20px;
+        }
+        .star{
+            margin-top: 10px;
+        }
+    }
+    .evaluateContent .star{
+     margin-top: 0;
+    }
+    .flex2{
+        margin-bottom: 10px;
+        p{
+            margin-right: 10px;
+        }
+    }
+}

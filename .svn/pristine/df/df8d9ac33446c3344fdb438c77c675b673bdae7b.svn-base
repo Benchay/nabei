@@ -1,0 +1,107 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/fastShipping2"}'>快速出货</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/returnManagement2"}'>快速退货</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/orderPurchaseStall"}'>订单管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/sellerSettlement"}'>客户结算</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/customerManagement"}'>客户管理</router-link>
+            </li>
+            <li class="menuIndex">
+                <router-link :to='{path:"/statisticalStatement"}'>销售统计</router-link>
+            </li>
+        </ul>
+        <div class="statisticalStatement">
+            <ul class="statisticalPattern">
+                <li>
+                    <el-button v-for="(obj,index) in items" @click="tabs(index)"  :class="{'change':index === clickIndex}" size="small" >{{obj.title}}</el-button>
+                </li>
+            </ul>
+            <div class="statisticalList">
+                <el-col :span="7" class="list1">
+                   <div class="flex">
+                       <div>
+                           <img src="../image/d01.png" alt="">
+                       </div>
+                       <div class="listContent">
+                           <p class="title1">14,440</p>
+                           <p class="title2">日订单（件）</p>
+                       </div>
+                   </div>
+                </el-col>
+                <el-col :span="7" class="list2">
+                   <div class="flex">
+                       <div>
+                           <img src="../image/d02.png" alt="">
+                       </div>
+                       <div class="listContent">
+                           <p class="title1">14,440</p>
+                           <p class="title2">已收入金额（元）</p>
+                       </div>
+                   </div>
+                </el-col>
+                <el-col :span="7" class="list3 flex2">
+                    <div>
+                        <el-progress type="circle" :percentage="80" width="60"></el-progress>
+                    </div>
+                    <div class="listContent">
+                        <p class="title3">今日指标完成进度</p>
+                    </div>
+                </el-col>
+                <el-col :span="7" class="list4">
+                   <div class="flex">
+                       <div>
+                           <img src="../image/d03.png" alt="">
+                       </div>
+                       <div class="listContent">
+                           <p class="title1">14/￥2783</p>
+                           <p class="title2">日退货订单/ 日退货金额</p>
+                       </div>
+                   </div>
+                </el-col>
+                <el-col :span="7" class="list5">
+                    111
+                </el-col>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                clickIndex:0,
+                items:[
+                    {title:'今日统计'},
+                    {title:'本周统计'},
+                    {title:'本月统计'},
+                ],
+            }
+        },
+        methods: {
+            tabs(index){
+                this.clickIndex = index;
+            },
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/statisticalStatement';
+</style>

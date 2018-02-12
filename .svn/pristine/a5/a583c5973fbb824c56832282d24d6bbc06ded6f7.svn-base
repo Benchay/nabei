@@ -1,0 +1,236 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/fastShipping2"}'>快速出货</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/indentManagement"}'>订单管理</router-link>
+            </li>
+            <li class="menuIndex">
+                <router-link :to='{path:"/sellerSettlement"}'>客户结算</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/customerManagement"}'>客户管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/statisticalStatement"}'>销售统计</router-link>
+            </li>
+        </ul>
+        <div class="sellerSettlement">
+            <div class="details" v-for="list in info">
+                <el-col :span="24">
+                    <el-col :span="24">电商卖家名称：{{busiName}}</el-col>
+                    <el-col :span="6">当前总欠款：{{totalFee}}</el-col>
+                    <el-col :span="18">
+                        <div  class="flex">
+                            <p v-bind:class="[list.state == 0?'style1':list.state ==1?'style1':list.state ==2?'style2':'']">{{list.state==0?'现结':list.state == 1?'周结':list.state == 2?'月结':''}}</p>
+                            <p>{{list.date}}</p>
+                        </div>
+                    </el-col>
+                    <el-col :span="6">已到期：{{expireFee}}</el-col>
+                    <el-col :span="18">未到期：{{undueFee}}</el-col>
+                </el-col>
+            </div>
+            <div class="detailsTable">
+                <p class="tableTop">结算记录：</p>
+                <el-table
+                    :data="tableData6"
+                    style="width: 100%">
+                    <el-table-column
+                        prop="reciveAcountType"
+                        label="支付类型">
+                    </el-table-column>
+                    <el-table-column
+                        prop="payAcount"
+                        label="支付账户">
+                    </el-table-column>
+                    <el-table-column
+                        prop="actualPayFee"
+                        label="结算金额">
+                    </el-table-column>
+                    <el-table-column
+                        prop="createTime"
+                        label="结算时间"
+                       :formatter="formatDateInfo">
+                    </el-table-column>
+                    <el-table-column
+                        prop="status"
+                        label="结算状态">
+                        <template scope="scope">
+                            <p>{{scope.row.status == 0? '等待付款':scope.row.status ==1?'付款成功':scope.row.status ==2?'付款失败':scope.row.status ==3?'已关闭':scope.row.status==4?'付款中':''}}</p>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                    label="操作">
+                        <template scope="scope" >
+                            <el-button v-if="scope.row.status==0" type="small" @click="confirmSettlementOrder(scope.row.id)">审核通过</el-button>
+                            <el-button v-if="scope.row.status==0" type="small" @click="confirmNSettlementOrder(scope.row.id)">审核不通过</el-button>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {userInfo} from  '../config/mUtils'
+    import {formatDate} from '../utils/date.js'
+    import {mydateFormat} from '../utils/dataFormater.js'
+    import {queryFinanceRecord,querySettlementOrder,confirmSettlementOrder} from '@/api/getData'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                checked:false,
+                info:[],
+                tableData6:[],
+                busiName:'',
+                saleCompanyId:'',
+                totalFee:0,
+                expireFee:0,
+                undueFee:0,
+                settlementDay:'',
+                settlementType:'',
+            }
+        },
+        watch:{
+            '$route': function (route) {
+//                this.saleCompanyId = this.$route.query.saleCompanyId;
+//                this.totalFee = this.$route.query.totalFee;
+//                this.expireFee = this.$route.query.expireFee;
+//                if(this.expireFee==undefined){
+//                    this.expireFee = 0;
+//                }
+//                this.undueFee = this.totalFee - this.expireFee;
+//                this.busiName = this.$route.query.busiName;
+//                this.settlementType = this.$route.query.settlementType;
+//                this.settlementDay = this.$route.query.settlementDay;
+//
+//                let param = {
+//                    state:this.settlementType,
+//                    date:this.settlementDay
+//                };
+//                this.info.push(param);
+//                this.querySettlementOrderInfo();//获取结算单记录
+                this.$route.go(0);
+            }
+        },
+        mounted(){
+           this.saleCompanyId = this.$route.query.saleCompanyId;
+           this.totalFee = this.$route.query.totalFee;
+           this.expireFee = this.$route.query.expireFee;
+           if(this.expireFee==undefined){
+               this.expireFee = 0;
+           }
+           this.undueFee = this.totalFee - this.expireFee;
+           this.busiName = this.$route.query.busiName;
+           this.settlementType = this.$route.query.settlementType;
+           this.settlementDay = this.$route.query.settlementDay;
+           let param = {
+               state:this.settlementType,
+               date:this.settlementDay
+           };
+           this.info.push(param);
+           this.querySettlementOrderInfo();//获取结算单记录
+
+        },
+        methods: {
+            async loadData(param) {
+                if(!userInfo().companyId)
+                    return ;
+
+                    param.pageSize =  this.pagesize
+                    param.pageIndex = this.currentPage
+                const res = await queryFinanceRecord(param);
+                if (res.isSuccess == true) {
+                    this.$message({
+                       type: 'success',
+                       message: '加载数据成功'
+                    });
+                    this.tableData6 = res.result.results;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+            //加载结算单记录
+            async querySettlementOrderInfo(){
+                this.tableData6 = [];
+                let param = {
+                    "companyId":userInfo().companyId,
+                    "otherSideCompanyId":this.saleCompanyId,
+                    "pageIndex":1,
+                    "pageSize":9999
+                };
+                const res = await querySettlementOrder(param);
+                if(res.isSuccess){
+                    let table = res.result.results;
+                    table.forEach((obj)=>{
+                        this.tableData6.push(obj);
+                    });
+                }
+            },
+            //确认订单
+            async confirmSettlementOrder(val){
+                let param = {
+                    "id":val,
+                    "status":1
+                };
+                const res = await confirmSettlementOrder(param);
+                if(res.isSuccess){
+                    this.$message({
+                        type:'info',
+                        message:'已确认'
+                    });
+                }else{
+                    this.$message({
+                        type:'error',
+                        message:'操作失败'
+                    });
+                }
+            },
+            //审核不通过
+            async confirmNSettlementOrder(val){
+                let param = {
+                    "id":val,
+                    "status":2
+                };
+                const res = await confirmSettlementOrder(param);
+                if(res.isSuccess){
+                    this.$message({
+                        type:'info',
+                        message:'已确认'
+                    });
+                }else{
+                    this.$message({
+                        type:'error',
+                        message:'操作失败'
+                    });
+                }
+            },
+            //格式化时间
+            formatDateInfo:function(row,column){
+                let data = row[column.property];
+                if(data==undefined||data==''){
+                    return '';
+                }
+                return formatDate(data*1,'yyyy-MM-dd hh:mm:ss');
+            },
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/sellerSettlement';
+</style>

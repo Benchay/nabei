@@ -1,0 +1,285 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('stallProductManagement')">
+                <router-link :to='{path:"/stallProductManagement"}'>商品管理</router-link>
+            </li>
+            <li class="menuIndex" v-if="getMenuAuthFun('classificationGoods')">
+                <router-link :to='{path:"/classificationGoods"}'>商品分类</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('commodityStatistics')">
+                <router-link :to='{path:"/commodityStatistics"}'>商品统计</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('bindstallshop')">
+                <router-link :to='{path:"/bindstallshop"}'>绑定店铺</router-link>
+            </li>
+        </ul>
+        <div class="classGoods">
+            <div class="classTop">
+                <el-input
+                    placeholder="分类搜索"
+                    icon="search"
+                    size="small"
+                    v-model="catalogName"
+                    :on-icon-click="initloadData">
+                </el-input>
+            </div>
+            <div class="classButton">
+                <a href="javascript:void(0)" class="buttonColor" @click="dialogVisible = true">添加分类</a>
+                <a href="javascript:void(0)" class="buttonColor" @click="batchDeleteConfig">删除</a>
+            </div>
+            <div class="classTable">
+                <el-table
+                    :data="tableData"
+                    show-summary
+                    @selection-change="handleSelectionChange"
+                    style="width: 100%">
+                    <el-table-column
+                        type="selection"
+                        width="55">
+                    </el-table-column>
+                    <el-table-column
+                        prop="name"
+                        label="全部分类">
+                    </el-table-column>
+                    <el-table-column
+                        prop="num"
+                        label="商品数量">
+                    </el-table-column>
+                    <el-table-column
+                        width="250"
+                        label="操作">
+                        <template scope="scope">
+                            <div class="tableFoot">
+                                <router-link :to='{path:"/classificationGoodsDetails",query:{catalogId:tableData[scope.$index].id,catalogName:tableData[scope.$index].name}}' class="blue2">查看</router-link>
+                            </div>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+            <el-pagination
+                small
+                class="right"
+                style="margin-top: 20px;"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :page-sizes="[10, 20, 30, 40 ,50]"
+                :current-page="currentPage"
+                :page-size="pageSize"
+                layout="total, sizes,prev, pager, next, jumper"
+                :total="totalCount">
+            </el-pagination>
+            <a href="javascript:void(0)" @click="exportClassData" class="export_excle">导出excel</a>
+            <div style="height:160px;">
+                &nbsp;
+            </div>
+        </div>
+        <el-dialog
+            title="添加分类"
+            :visible.sync="dialogVisible"
+            size="tiny"
+            >
+            <div>
+            	<el-form ref="addCatalogForm" :model="addCatalogForm" :rules="addCatalogFormRule" label-width="120px">
+            		<el-form-item label="分类名称：" prop="name">
+                        <el-input v-model="addCatalogForm.name" placeholder="请输入分类名称"></el-input>
+                    </el-form-item>
+            	</el-form>
+            </div>
+            <span slot="footer" class="dialog-footer flex2">
+                <a href="javascript:void(0)" @click="addProductCatalog('addCatalogForm')" class="buttonColor">确 定</a>
+                <a href="javascript:void(0)" @click="dialogVisible = false" class="buttonColor2">取 消</a>
+              </span>
+        </el-dialog>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {queryProductCatalog,addProductCatalog,batchDeleteProductCatalog} from '@/api/getData'
+    import {userInfo} from  '../config/mUtils'
+    import {getMenuAuth,haveMenuAuth} from  '../utils/AuthMenu.js'
+    import {export_json_to_excel} from '../vendor/Export2Excel.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+        	var validateCatalogName = (rule, value, cb) => {
+        		if(value.length>8){
+        			cb(new Error('分类名称最多8个汉字！'))
+        		}else{
+        			cb();
+        		}
+        	}
+            return {
+            	catalogName:'',
+            	//默认每页数据量
+                pageSize: 10,
+                //当前页码
+                currentPage: 1,
+
+                totalCount:0,
+                
+                addCatalogForm:{},
+
+                dialogVisible:false,
+                tableData:[],
+                addCatalogFormRule:{
+                	name:[
+                		{ required: true, message: '请输入分类名称', trigger: 'blur' },
+                		{ validator: validateCatalogName, trigger: 'blur' }
+                	]
+                },
+            }
+        },
+        watch: {
+            '$route': function (route) {
+                this.initloadData();
+            }
+        },
+        mounted(){
+            this.initloadData();
+        },
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+                this.currentPage = 1;
+                this.pageSize = val;
+                this.initloadData();
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+                this.currentPage = val;
+                this.initloadData();
+            },
+
+            //从服务器获取数据
+            async initloadData() {
+            	this.tableData = [];
+            	let param ={
+            		name:this.catalogName,
+            		companyId:userInfo().companyId,
+            		pageIndex:this.currentPage,
+    				pageSize:this.pageSize
+            	}
+                const res = await queryProductCatalog(param);
+                if (res.isSuccess == true) {
+                	this.tableData = res.result.results;
+                	this.totalCount =  res.result.totalCount;
+                    this.pageSize = res.result.pageSize;
+                    this.currentPage = res.result.currentPage;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+            //
+			async addProductCatalog(formName){
+				this.$refs[formName].validate(async (valid) => {
+					if (valid) {
+						this.addCatalogForm.companyId = userInfo().companyId;
+						const res = await addProductCatalog(this.addCatalogForm);
+		                if (res.isSuccess == true) {
+		                    this.$message({
+		                        type: 'success',
+		                        message: res.result.msg
+		                    });
+		                     this.dialogVisible = false;
+		                     this.initloadData();
+		                }else{
+		                    this.$message({
+		                        type: 'error',
+		                        message: res.errorMsg
+		                    });
+		                }
+					}
+				})
+          },
+
+          async batchDeleteProductCatalog(array){
+            	let param = {
+            		productCatalogIds:array
+            	}
+            	const res = await batchDeleteProductCatalog(param);
+            	if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: res.result.msg
+                    });
+                    this.initloadData();
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+          //多选响应
+            handleSelectionChange: function(val) {
+                this.multipleSelection = val;
+            },
+
+			batchDeleteConfig() {
+              if(this.multipleSelection == undefined || this.multipleSelection.length==0){
+                  this.$message({
+                        type: 'error',
+                        message: '请先勾选要删除的商品分类！'
+                    });
+                    return;
+              }
+                var array = [];
+                this.multipleSelection.forEach((item) => {
+                    array.push(item.id);
+                })
+                if(array.length <1){
+                  this.$message({
+                        type: 'error',
+                        message: '请先勾选要删除的商品分类！'
+                    });
+                    return;
+                }
+              this.$confirm('是否确认删除选中的商品分类?', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+              }).then(() => {
+                this.batchDeleteProductCatalog(array);
+              }).catch(() => {
+
+              });
+          },
+          
+          exportClassData(){
+          	  const tHeader = ['分类', '商品数量'];
+		　　　  const filterVal = ['name', 'num'];
+		　　　  const list = this.tableData;
+		　　　  const data = this.formatJson(filterVal, list);
+		　　　  export_json_to_excel(tHeader, data, '商品分类数据');
+          },
+          
+          formatJson(filterVal, jsonData) {
+		　　　　　　return jsonData.map(v => filterVal.map(j => v[j]));
+		　　　},
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/stallProductManagement';
+</style>

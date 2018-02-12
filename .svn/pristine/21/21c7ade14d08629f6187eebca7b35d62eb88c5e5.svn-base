@@ -1,0 +1,186 @@
+@loginBule:#1883e5;
+.login_page{
+    background-color: #fff;
+    .loginTop{
+        border-bottom:2px solid @loginBule;
+        height: 70px;
+        color:#333;
+        .logo{
+           img{
+
+           }
+            p{
+                line-height: 28px;
+            }
+            p:first-child{
+                line-height: 35px;
+                font-size: 30px;
+            }
+        }
+        .logoTitle{
+            margin-left: 10px;
+            color: @loginBule;
+            p{
+                text-align: center;
+            }
+            p:first-child{
+                font-size: 21px;
+                font-weight: 600;
+            }
+        }
+        .loginAPP{
+            margin-right: 35px;
+            font-size: 12px;
+            img{
+                width: 36px;
+                height: 36px;
+                margin-left: 10px;
+            }
+        }
+        .loginTelphone{
+            margin-top: 20px;
+        }
+    }
+}
+.manage_tip{
+    margin-bottom: 35px;
+    p{
+        font-size: 28px;
+        color: @loginBule;
+    }
+}
+.form_contianer{
+    .wh(300px, 400px);
+    .ctp(-370px, 450px);
+    padding:25px 35px;
+    border-radius: 5px;
+    text-align: center;
+    background-color: #fff;
+    box-shadow: 1px 1px 7px 2px  #ddd;
+    .submit_btn{
+        width: 100%;
+        font-size: 16px;
+    }
+    .manage_tip1{
+        margin:10px 0 35px;
+        p{
+            font-size: 28px;
+            color: @loginBule;
+        }
+    }
+}
+.form_contianer3{
+    .wh(320px, 610px);
+    .ctp(0, 590px);
+    .lr;
+    padding:25px 35px;
+    border-radius: 5px;
+    text-align: center;
+    background-color: #fff;
+    box-shadow: 1px 1px 7px 2px  #ddd;
+    .submit_btn{
+        width: 100%;
+        font-size: 16px;
+    }
+    .submitBtn{
+        width:100%;
+        background: @loginBule;
+    }
+    .refisterFoot{
+        a{
+            font-size: 12px;
+            color:#333;
+            span{
+                color:@loginBule;
+            }
+        }
+    }
+    .protocol{
+        font-size: 12px;
+        .protocolColor{
+            color:@loginBule;
+            font-size: 12px;
+        }
+    }
+}
+.form_contianer2{
+    .wh(300px, 410px);
+    .ctp(0, 400px);
+    .lr;
+    padding:25px 35px;
+    border-radius: 5px;
+    text-align: center;
+    background-color: #fff;
+    box-shadow: 1px 1px 7px 2px  #ddd;
+    .submit_btn{
+        width: 100%;
+        font-size: 16px;
+    }
+    .submitBtn2{
+        margin-top: 10px;
+        width:100%;
+        background: @loginBule;
+    }
+    .refisterFoot{
+        a{
+            font-size: 12px;
+            color:#333;
+            span{
+                color:@loginBule;
+            }
+        }
+    }
+    .protocol{
+        font-size: 12px;
+        .protocolColor{
+            color:@loginBule;
+        }
+    }
+}
+.tip{
+    font-size: 12px;
+    color: red;
+}
+.form-fade-enter-active, .form-fade-leave-active {
+    transition: all 1s;
+}
+.form-fade-enter, .form-fade-leave-active {
+    transform: translate3d(0, -50px, 0);
+    opacity: 0;
+}
+.loginSub{
+    button{
+        width:100%;
+        background: @loginBule;
+    }
+}
+.loginPwd{
+    text-align: left;
+    .findpwd{
+        margin-left: 30px;
+        color:@loginBule;
+    }
+}
+.loginContent{
+    height:85%;
+    display: flex;
+    align-items: center;
+}
+.Copyright{
+    position: fixed;
+    bottom: 0;
+    left: 42%;
+    font-size: 12px;
+}
+.loginRegister{
+    float: right;
+    a{
+        border-right: 1px solid #333;
+        font-size: 12px;
+        color:@loginBule;
+        padding: 0 10px;
+    }
+    a:last-child{
+        border-right: none;
+    }
+}

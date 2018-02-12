@@ -1,0 +1,184 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('webStoreOrderSalesBuy')">
+                <router-link :to='{path:"/webStoreOrderSalesBuy"}'>网店订单</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('purchaseRequireBuy')">
+                <router-link :to='{path:"/purchaseRequireBuy"}'>采购需求</router-link>
+            </li>
+            <li class="menuIndex2" v-if="getMenuAuthFun('orderPurchaseBuy')">
+                <router-link :to='{path:"/orderPurchaseBuy"}'>采购订单</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('addShop')">
+                <router-link :to='{path:"/addShop"}'>绑定店铺</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('packageDetails')">
+                <router-link :to='{path:"/packageDetails"}'>包裹管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('salesForecast')">
+                <router-link :to='{path:"/salesForecast"}'>采购统计</router-link>
+            </li>
+        </ul>
+        <div class="sellerSettlement">
+            <router-link :to='{path:"/orderPurchaseBuyDetails"}' class="right comeBack2">返回</router-link>
+            <!-- <div class="details">
+                <el-col :span="24" v-for="list in info">
+                    <el-col :span="6">档口名称：{{stallName}}</el-col>
+                    <el-col :span="6">
+                        <div  class="flex">
+                            <p v-bind:class="[settleDay.settlementType ==1?'style1':settleDay.settlementType ==2?'style2':'']">{{settleDay.settlementType== 1?'周结':settleDay.settlementType == 2?'月结':''}}</p>
+                            <p>{{settleDay.settlementDay}}</p>
+                        </div>
+                    </el-col>
+                    <el-col :span="6">状态：财务未结清</el-col>
+                </el-col>
+                <el-col :span="24">
+                    <el-col :span="6">当前总欠款金额：4000</el-col>
+                    <el-col :span="6">已结金额：2000</el-col>
+                    <el-col :span="6" class="colorText">待结金额：2000</el-col> -->
+                    <!--已结算状态 无此按钮-->
+                    <!-- <el-col :span="6"><router-link :to='{path:"/stallSettlementImmediately"}' class="buttonColor3">立即付款</router-link></el-col> -->
+                    <!---->
+                <!-- </el-col>
+            </div> -->
+            <div class="detailsTable">
+                <p class="tableTop">付款记录：</p>
+                <el-table
+                    :data="tableData6"
+                    style="width: 100%">
+                    <el-table-column
+                        prop="createTime"
+                        :formatter="mydateFormat"
+                        label="结算时间"
+                        width="180">
+                    </el-table-column>
+                    <el-table-column
+                        prop="orderFee"
+                        label="本次结算金额（￥）">
+                    </el-table-column>
+                    <el-table-column
+                        prop="createUserId"
+                        :formatter="createUserIdFormat"
+                        label="结算方式">
+                    </el-table-column>
+                    <el-table-column
+                        prop="sellementFee"
+                        label="实际付款金额（￥）">
+                    </el-table-column>
+                    <el-table-column
+                        label="操作">
+                        <template scope="scope">
+                            <router-link :to='{path:"/orderFinancialDetails",query:{settlementOrderId:scope.row.settlementOrderId}}' class="red">查看详情</router-link>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+            <el-pagination
+                small
+                class="right"
+                style="margin-top: 20px;"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :current-page="currentPage"
+                :page-size="pagesize"
+                layout="total, prev, pager, next, jumper"
+                :total="totalCount">
+            </el-pagination>
+        </div>
+    </div>
+</template>
+<script>
+    import headTop from '../components/headTop'
+    import {setStore, getStore} from  '../config/mUtils'
+    import {formatDate} from '../utils/date.js'
+    import {querySettlementDetail} from '@/api/getData'
+    import {getMenuAuth} from  '../utils/AuthMenu.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                roleForm: {
+                    userId: '',
+                    roleId: '',
+                    compId:''
+                },
+                info:[{
+                    state:1,
+                    date:'1号',
+                }],
+                tableData6:[],
+                orderId:'',
+                orderTime:'',
+                stallName:'',
+                pagesize:10,
+                currentPage:1,
+                settleDay:'',
+                totalCount:'0',
+            }
+        },
+        watch:{
+            '$router':function(router){
+                this.orderId = this.$route.query.orderId;
+            }
+        },
+        mounted(){
+            var userInfo = getStore("user_info_user");
+            var vjson = JSON.parse(userInfo);
+            //console.log(vjson)
+            this.roleForm.userId = vjson.id;
+            this.roleForm.userName = vjson.userName;
+            var currentComp = getStore("curCompany");
+            var vcom = JSON.parse(currentComp);
+            this.roleForm.compId = vcom.id;
+
+             this.orderId = this.$route.query.orderId;
+            // console.log(this.busiCompId)
+            this.initSettleDay();
+        },
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            mydateFormat:function(row, column) {
+                var time = row[column.property];
+                if (time == undefined||time=='') {
+                    return "";
+                }
+                let date = new Date(time);
+                return formatDate(date,'yyyy-MM-dd hh:mm');
+            },
+            createUserIdFormat:function(row,column){
+                 var num = row.createUserId;
+                 if(num == "1"){
+                      return "线上支付";
+                 }else{
+                      return "线下支付";
+                 }
+            },
+            async initSettleDay(){
+                this.tableData6 = [];
+                let param = {
+                "orderId":this.orderId,
+                 "pageSize": this.pagesize,
+                 "pageIndex": this.currentPage,
+                };
+                console.log(param);
+                const res = await querySettlementDetail(param);
+                if (res.isSuccess == true){
+                    this.tableData6 = res.result.results;
+                    this.totalCount = res.result.totalCount;
+                }
+            },
+        }
+    }
+</script>
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/sellerSettlement';
+</style>

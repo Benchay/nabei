@@ -1,0 +1,205 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/fastShipping2"}'>快速出货</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/returnManagement2"}'>快速退货</router-link>
+            </li>
+            <li class="menuIndex">
+                <router-link :to='{path:"/indentManagement"}'>订单管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/sellerSettlement"}'>客户结算</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/customerManagement"}'>客户管理</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/statisticalStatement"}'>销售统计</router-link>
+            </li>
+        </ul>
+        <div class="returns-content">
+            <div class="returnsAll">
+                <div class="right">
+                    <router-link :to='{path:"/indentManagement"}' class="comeBack">返回</router-link>
+                </div>
+                <div class="orderDetails">
+                    <div class="flex detailsLeft">
+                        <img src="../image/111.png" alt="">
+                        <div>
+                            <p>订单编号：</p>
+                            <p>商家名称：</p>
+                            <p>共计金额：</p>
+                        </div>
+                    </div>
+                    <div  class="detailsCenter">
+                        <p>配货时间：</p>
+                        <p>商品总数：123</p>
+                    </div>
+                    <div class="flex detailsRight">
+                        <a href="javascript:void(0)" @click="dialog1 = true">
+                            <div>
+                                <p class="blue2">订单动态</p>
+                                <!--部分配货 已配货 待配货 三种状态-->
+                                <p>（待配货）</p>
+                            </div>
+                        </a>
+                        <router-link :to='{path:"/indentManagementCompleteAccount",query:{orderId:orderId}}'>
+                            <div>
+                                <p class="blue2">财务结算</p>
+                                <!--(已结算)（未结算）两种状态-->
+                                <p>（未结算）</p>
+                            </div>
+                        </router-link>
+                    </div>
+                </div>
+                <div class="indentPicking">
+                    <div class="left">
+                        <ul class="flex2">
+                            <li v-for="(obj,index) in items" @click="salesTabs(index)"  :class="{'change6':index === clickIndex}" class="flex2"><a href="javascript:void(0);">{{obj}}</a></li>
+                        </ul>
+                    </div>
+                    <div class="right">
+                        <p>当前包裹编号：20171110123453156454564654</p>
+                    </div>
+                </div>
+                <div class="returnsTable">
+                    <el-table
+                        :data="tableData"
+                        height="330"
+                        style="width: 100%">
+                        <el-table-column
+                            width="230"
+                            label="主图/货号">
+                            <template scope="scope">
+                                <div class="flex2">
+                                    <img src="../image/111.png" alt=""  class="tableImg">
+                                    <p>MG110</p>
+                                </div>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            prop="productName"
+                            width="230"
+                            label="商品名称">
+                        </el-table-column>
+                        <el-table-column
+                            prop="color"
+                            label="颜色">
+                        </el-table-column>
+                        <el-table-column
+                            prop="size"
+                            label="尺码">
+                        </el-table-column>
+                        <el-table-column
+                            prop="pickingNum"
+                            label="配货数量">
+                        </el-table-column>
+                        <el-table-column
+                            prop="unitPrice"
+                            label="单价">
+                        </el-table-column>
+                    </el-table>
+                </div>
+                <el-col :span="24" class="pickingButton" v-if="clickIndex == 0">
+                    <router-link :to='{path:"/indentManagementReturnDetails2"}' class="buttonColor right">继续打包</router-link>
+                </el-col>
+                <el-col :span="24" class="pickingButton"  v-if="clickIndex != 0">
+                    <a href="javascript:void(0)" class="buttonColor right" @click="dialog = true">通知取货</a>
+                    <a href="javascript:void(0)" class="buttonColor right" @click="dialogErweima = true">打印二维码</a>
+                </el-col>
+                <el-pagination
+                    small
+                    class="right"
+                    style="margin-top: 20px;"
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :current-page="currentPage4"
+                    :page-sizes="[10, 20, 30, 40]"
+                    :page-size="100"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    :total="400">
+                </el-pagination>
+                <a href="javascript:void(0)" class="export_excle left">导出excel</a>
+                <el-dialog
+                    title="通知取货"
+                    :visible.sync="dialog"
+                    size="tiny">
+                    <div class="flex2" style="margin-bottom: 20px">
+                        <p>取货通知已发送给商家！</p>
+                    </div>
+                </el-dialog>
+                <el-dialog
+                    title="打印二维码"
+                    :visible.sync="dialogErweima"
+                    size="tiny">
+                    <div class="flex2" style="margin-bottom: 20px">
+                        <div>
+                            <img src="../image/erweima1.png" alt="">
+                        </div>
+                        <div style="margin-left: 15px">
+                            打印数量：<el-input v-model="input" style="width: 60px;"></el-input>
+                        </div>
+                    </div>
+                    <span slot="footer" class="dialog-footer flex2">
+                        <a href="javascript:void(0)" @click="dialogErweima = false" class="buttonColor">确 定</a>
+                        <a href="javascript:void(0)" @click="dialogErweima = false" class="buttonColor2">取 消</a>
+                      </span>
+                </el-dialog>
+            </div>
+        </div>
+    </div>
+</template>
+<script>
+    import headTop from '../components/headTop'
+    import {queryOrderInfo,queryStallOrderDetail} from '@/api/getData'
+    import {formatDate} from '../utils/date.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                dialogErweima:false,
+                dialog:false,
+                currentPage4: 4,
+                memo:'',
+                orderId:'',
+                orderVo:'',
+                status:0,
+                tableData: [],
+                pageSize:10,
+                currentPage:1,
+                items:['未打包', '包裹1','包裹2','包裹3'],
+                clickIndex:0,
+            }
+        },
+        mounted(){
+            this.orderId = this.$route.query.orderId;
+            let param = {
+                "orderId":this.orderId
+            };
+            this.loadBasicInfo(param);
+        },
+
+        methods: {
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+            },
+            salesTabs(index){
+                this.clickIndex = index;
+            },
+        }
+    }
+</script>
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/salesReturn';
+</style>

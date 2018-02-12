@@ -1,0 +1,106 @@
+<template>
+    <div class="fillcontain">
+        <div class="createCompany">
+            <div class="createHead flex2">
+                <img src="../image/join.png" alt="">
+                <p>加入公司</p>
+            </div>
+            <div class="JoinCompany">
+                <div class="joinSearch flex2">
+                    <el-input v-model="input1" class="joinInput" placeholder="请输入要查找的公司名称..."></el-input>
+                    <a href="javascript:void(0)" class="flex2" @click="searchBlock">搜 索</a>
+                </div>
+                <div class="joinTable flex2" v-if="companyList">
+                    <div style="width: 700px;">
+                        <el-table
+                            :data="tableData"
+                            style="width: 100%">
+                            <el-table-column
+                                prop="name"
+                                label="公司名称">
+                            </el-table-column>
+                            <el-table-column
+                                prop="compCode"
+                                label="公司代码">
+                            </el-table-column>
+                            <el-table-column
+                                label="公司LOGO">
+                                <template scope="scope">
+                                    <img src="../image/shops@3x.png" alt="">
+                                </template>
+                            </el-table-column>
+                            <el-table-column
+                                prop="compScale"
+                                label="公司规模">
+                            </el-table-column>
+                            <el-table-column
+                                label="">
+                                <template scope="scope">
+                                    <el-button
+                                        size="small"
+                                        @click="dialogJoinCompany = true"
+                                    >+加入公司
+                                    </el-button>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                        <div class="joinFoot flex2">
+                            <router-link :to='{path:"/guidance"}' class="confirm1 flex2">返回上一页</router-link>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <el-dialog title="加入公司" :visible.sync="dialogJoinCompany" size="tiny">
+            <div class="companyList">
+                <div class="flex"><img src="../image/shops@3x.png" alt="">海麦金</div>
+                <div class="companyInfo">
+                    <p>公司规模： <span>25</span></p>
+                    <!--<p>管理员：<span>李四</span></p>-->
+                </div>
+            </div>
+            <div class="joinVerify flex">
+                <span class="tit">验证信息：</span>
+                <el-input v-model="input1" placeholder="请输入验证信息"></el-input>
+            </div>
+            <div slot="footer" class="dialog-footer companyListFoot flex2">
+                <el-button type="primary" @click="dialogJoinCompany = false" class="confirm">确 定</el-button>
+                <el-button @click="dialogJoinCompany = false">取 消</el-button>
+            </div>
+        </el-dialog>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                dialogJoinCompany:false,
+                companyList:false,
+                input1:'',
+                tableData:[{
+                    name:'1',
+                    compCode:'DF123',
+                    compScale:'120'
+                }]
+            }
+        },
+        methods: {
+            searchBlock(){
+                this.companyList = true;
+            }
+        },
+
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/createCompany';
+</style>

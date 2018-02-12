@@ -1,0 +1,302 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('bindWebstoreForPlatform')">
+                <router-link :to='{path:"/bindWebstoreForPlatform"}'>绑定店铺管理</router-link>
+            </li>
+            <li class="menuIndex3" v-if="getMenuAuthFun('webStoreOrderForPlatform')">
+                <router-link :to='{path:"/webStoreOrderForPlatform"}'>网店订单</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('orderForPlatform')">
+                <router-link :to='{path:"/orderForPlatform"}'>采购订单</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('productManagement')">
+                <router-link :to='{path:"/productManagement"}'>商品管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('reportquery')">
+                <router-link :to='{path:"/reportquery"}'>报表查询</router-link>
+            </li>
+        </ul>
+        <div class="verify-menu-search">
+            <div class="block left">
+                <el-input
+                    size="small"
+                    class="topInput dropdown-menu"
+                    placeholder="订单编号"
+                    icon="search"
+                    v-model="searchOrderId"
+                    :on-icon-click="initloadData">
+                </el-input>
+                <el-input
+                    size="small"
+                    class="topInput dropdown-menu"
+                    placeholder="买家昵称"
+                    icon="search"
+                    v-model="searchBuyerNick"
+                    :on-icon-click="initloadData">
+                </el-input>
+                <el-input
+                    size="small"
+                    class="topInput dropdown-menu"
+                    placeholder="卖家"
+                    icon="search"
+                    v-model="searchSeller"
+                    :on-icon-click="initloadData">
+                </el-input>
+                <el-select v-model="searchStatus" @change="initloadData" placeholder="选择订单状态" class="dropdown-menu" size="small">
+                    <el-option label="全部" value="null"></el-option>
+                    <el-option label="等待买家付款" value="WAIT_BUYER_PAY"></el-option>
+                    <el-option label="卖家部分发货" value="SELLER_CONSIGNED_PART"></el-option>
+                    <el-option label="买家已付款，等待卖家发货" value="WAIT_SELLER_SEND_GOODS"></el-option>
+                    <el-option label="卖家已发货，等待买家确认收货" value="WAIT_BUYER_CONFIRM_GOODS"></el-option>
+                    <el-option label="买家已签收" value="TRADE_BUYER_SIGNED"></el-option>
+                    <el-option label="交易成功" value="TRADE_FINISHED"></el-option>
+                    <el-option label="付款以后用户退款成功，交易自动关闭" value="TRADE_CLOSED"></el-option>
+                    <el-option label="付款以前，卖家或买家主动关闭交易" value="TRADE_CLOSED_BY_TAOBAO"></el-option>
+                </el-select>
+            </div>
+        </div>
+        <div class="webStoreOrderForPlatform">
+            <div class="shopList" style="padding-bottom: 80px;">
+                <el-table
+                    ref="multipleTable"
+                    :data="tableData3"
+                    tooltip-effect="dark"
+                    @selection-change="handleSelectionChange"
+                    style="width: 100%">
+                    <el-table-column
+                        prop="orderCode"
+                        label="订单编号"
+                        width="200">
+                    </el-table-column>
+                    <el-table-column
+                        prop="statusShow"
+                        label="订单状态"
+                        width="150">
+                        <template scope="scope">
+                            <div class="flex2" v-show="tableData3[scope.$index].statusShow.length<6">
+                                <a>{{scope.row.statusShow}}</a>
+                            </div>
+                            <div class="flex2" v-show="tableData3[scope.$index].statusShow.length>=6">
+                                <el-tooltip placement="top">
+                                                                  <div slot="content" style="max-width: 300px; word-wrap:break-word;word-break:break-all;">{{scope.row.statusShow}}</div>
+                                                                  <a>{{scope.row.statusShow.substring(0,6)}}...</a>
+                                                                </el-tooltip>
+                            </div>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="buyerNick"
+                        label="买家"
+                        width="120">
+                    </el-table-column>
+                    <el-table-column
+                        prop="sellerNick"
+                        label="卖家"
+                        width="170">
+                    </el-table-column>
+                    <el-table-column
+                        prop="receiverMobile"
+                        label="收货人电话"
+                        width="100">
+                    </el-table-column>
+                    <el-table-column
+                        prop="num"
+                        label="数量"
+                        width="80">
+                    </el-table-column>
+                    <el-table-column
+                        prop="price"
+                        label="商品价格"
+                        width="100">
+                    </el-table-column>
+                    <el-table-column
+                        prop="orderTime"
+                        label="交易创建时间"
+                        width="140"
+                        :formatter="mydateFormat">
+                    </el-table-column>
+                    <el-table-column
+                        prop="payTime"
+                        label="付款时间"
+                        width="140"
+                        :formatter="mydateFormat">
+                    </el-table-column>
+                </el-table>
+                <el-pagination
+                small
+                class="right"
+                style="margin-top: 20px;"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :current-page="currentPage"
+                :page-sizes="[10, 20, 30, 40]"
+                :page-size="pagesize"
+                layout="total, sizes, prev, pager, next, jumper"
+                :total="totalCount">
+            </el-pagination>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {queryRecordByParams,findCompanysByName} from '@/api/getData'
+    import {userInfo} from  '../config/mUtils'
+    import {mydateFormat} from '../utils/dataFormater.js'
+    import {getMenuAuth,haveMenuAuth} from  '../utils/AuthMenu.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        computed: {
+            classObject: function () {
+                return {
+                    active: this.isActive && !this.error,
+                    'text-danger': this.error && this.error.type === 'fatal',
+                }
+            }
+        },
+        data() {
+            return {
+                rotate:false,
+                bindWebStoreUrl:'www.bai',
+                tableData3: [],
+                //默认每页数据量
+                pagesize: 8,
+
+                //默认高亮行数据id
+                highlightId: -1,
+
+                //当前页码
+                currentPage: 1,
+
+                //查询的页码
+                start: 1,
+
+                //默认数据总数
+                totalCount: 0,
+
+                searchOrderId:'',
+                                searchBuyerNick:'',
+                                searchSeller:'',
+                                searchStatus:''
+            }
+        },
+        async mounted(){
+            this.initloadData();
+        },
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+            },
+            deleteRow(index, rows) {
+                rows.splice(index, 1);
+            },
+
+            async initloadData() {
+                let param ={
+                        pageIndex:1,
+                        pageSize:this.pagesize,
+                        orderCode:this.searchOrderId,
+                        buyerNick:this.searchBuyerNick,
+                        sellerNick:this.searchSeller,
+                        status:this.searchStatus
+                }
+                this.tableData3 = [];
+                const res = await queryRecordByParams(param);
+                if (res.isSuccess == true) {
+                    this.tableData3 = res.result.data.results;
+                    this.totalCount = res.result.data.totalCount;
+                    for(let i=0;i<this.tableData3.length;i++){
+                        let data1 = this.tableData3[i];
+                        if(data1.status){
+                                data1.statusShow = this.formatOrderStatus(data1.status);
+                        }
+                    }
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+            async initloadData2() {
+                let param ={
+                        pageIndex:this.currentPage,
+                        pageSize:this.pagesize,
+                        orderCode:this.searchOrderId,
+                        buyerNick:this.searchBuyerNick,
+                        sellerNick:this.searchSeller,
+                        status:this.searchStatus
+                }
+                this.tableData3 = [];
+                const res = await queryRecordByParams(param);
+                if (res.isSuccess == true) {
+                    this.tableData3 = res.result.data.results;
+                    for(let i=0;i<this.tableData3.length;i++){
+                        let data1 = this.tableData3[i];
+                        if(data1.status){
+                                data1.statusShow = this.formatOrderStatus(data1.status);
+                        }
+                    }
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            gotobindwebstore(){
+                window.open(this.bindWebStoreUrl);
+            },
+            //多选响应
+            handleSelectionChange: function(val) {
+                this.multipleSelection = val;
+            },
+            async handleCurrentChange(val){
+                this.currentPage = val;
+                this.initloadData2();
+            },
+
+            mydateFormat,
+            formatOrderStatus:function(status){
+                if(status == "TRADE_NO_CREATE_PAY"){
+                        return "没有创建支付宝交易";
+                }else if(status == "WAIT_BUYER_PAY"){
+                        return "等待买家付款";
+                }else if(status == "SELLER_CONSIGNED_PART"){
+                        return "卖家部分发货";
+                }else if(status == "WAIT_SELLER_SEND_GOODS"){
+                        return "买家已付款，等待卖家发货";
+                }else if(status == "WAIT_BUYER_CONFIRM_GOODS"){
+                        return "卖家已发货，等待买家确认收货";
+                }else if(status == "TRADE_BUYER_SIGNED"){
+                        return "买家已签收";
+                }else if(status == "TRADE_FINISHED"){
+                        return "交易成功";
+                }else if(status == "TRADE_CLOSED"){
+                        return "付款以后用户退款成功，交易自动关闭";
+                }else if(status == "TRADE_CLOSED_BY_TAOBAO"){
+                        return "付款以前，卖家或买家主动关闭交易";
+                }
+            },
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/webStoreOrderForPlatform';
+</style>

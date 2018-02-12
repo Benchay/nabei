@@ -1,0 +1,197 @@
+.homeSeller{
+    color:#333;
+    background: #fff;
+    margin: 15px 30px;
+    padding: 10px 14px;
+    height:100%;
+    .isLeft {
+        .leftStatistics{
+            border:1px solid #d7d7d7;
+            box-shadow: 1px 1px 3px 1px rgba(153,153,153,.3);
+            padding: 15px;
+            margin-top: 10px;
+            img{
+                margin-right: 10px;
+            }
+            ul{
+                margin-top: 5px;
+            }
+            ul>li{
+                width: 80px;
+            }
+            .title{
+                color:#000;
+                margin-right: 50px;
+            }
+            .leftFunction{
+                ul{
+                    border-top: 1px solid #d4d4d4;
+                    margin-top: 10px;
+                    padding-top: 10px;
+                    li{
+                        font-size: 12px;
+                        display: flex;
+                        align-items: center;
+                        flex-direction: column;
+                        justify-content: center;
+                        text-align: center;
+                        width:25%;
+                        .icon{
+                            margin-bottom: 10px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            width: 70px;
+                            height: 70px;
+                            border-radius: 50%;
+                            background:#7ec857;
+                            img{
+                                width: 48px;
+                                height: 48px;
+                                margin-right: 0;
+                            }
+                        }
+                        .icon1{
+                            background:#7ec857;
+                        }
+                        .icon2{
+                            background:#fabf01
+                        }
+                        .icon3{
+                            background:#7f89c4;
+                        }
+                        .icon4{
+                            background:#ff9a66;
+                        }
+                        .icon5{
+                            background:#2db7f5;
+                        }
+                    }
+                }
+            }
+            .leftStatisticsList{
+                margin-top: 15px;
+                padding: 10px 25px;
+                font-size: 12px;
+                justify-content: space-between;
+                li{
+                    width:22%;
+                    div{
+                        margin-bottom: 10px;
+                        .up{
+                            color:#46cfc5;
+                            margin-right: 5px;
+                        }
+                        .descend{
+                            color:#f85618;
+                            margin-right: 5px;
+                        }
+                    }
+                }
+                .bigText{
+                    font-size: 20px;
+                }
+            }
+        }
+
+    }
+    .isRight{
+        padding:5px 20px 0 40px ;
+        .newNotice{
+            border:1px solid #d7d7d7;
+            box-shadow: 1px 1px 3px 1px rgba(153,153,153,.3);
+            padding: 15px 15px 40px 15px;
+            img{
+                margin-right: 10px;
+            }
+            .noticeList{
+                margin-top: 10px;
+                border-top: 1px solid #d4d4d4;
+                padding-top: 10px;
+                li{
+                    font-size: 12px;
+                    width: 80%;
+                    display:block;
+                    white-space:nowrap;
+                    overflow:hidden;
+                    text-overflow:ellipsis;
+                    margin: 15px 0;
+                }
+            }
+        }
+        .newDynamic{
+            border:1px solid #d7d7d7;
+            box-shadow: 1px 1px 3px 1px rgba(153,153,153,.3);
+            padding: 15px;
+            overflow:hidden;
+            margin-top: 20px;
+            .title{
+                margin-left:10px;
+            }
+            .DynamicList{
+                margin-top: 10px;
+                border-top: 1px solid #d4d4d4;
+                padding-top: 10px;
+                li{
+                    font-size: 12px;
+                    margin-bottom: 10px;
+                    .listState{
+                        display: inline-block;
+                        width: 110px;
+                        margin-left: 20px;
+                    }
+                }
+                .state{
+                    margin-left: 10px;
+                    p:first-child{
+                        margin-bottom: 10px;
+                    }
+                    .listNum{
+                        white-space:nowrap;
+                        overflow:hidden;
+                        text-overflow:ellipsis;
+                        width: 200px;
+                    }
+                }
+            }
+        }
+        .greenHand{
+            border:1px solid #d7d7d7;
+            box-shadow: 1px 1px 3px 1px rgba(153,153,153,.3);
+            padding: 15px;
+            margin-top: 20px;
+            display: block;
+            color:#333;
+            .greenHandImg{
+                margin-top: 10px;
+                border-top: 1px solid #d4d4d4;
+                padding-top: 10px;
+                img{
+                    width:100%;
+                }
+            }
+
+        }
+        .noticeButton{
+            margin-top: 10px;
+            font-size: 14px;
+            a{
+                color:@blue;
+            }
+        }
+        .title{
+            font-weight: 600;
+        }
+    }
+}
+.cheked1{
+    color:#666;
+    border:1px solid #666;
+    border-radius: 5px;
+    padding: 2px 12px;
+    font-size: 12px;
+}
+.checked{
+    color:@red;
+    border:1px solid @red;
+}

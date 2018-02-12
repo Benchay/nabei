@@ -1,0 +1,134 @@
+<template>
+    <div class="fillcontain">
+       <div class="moreDynamic">
+            <p>更多动态</p>
+           <ul :class="identity ==1?'moreList2':identity ==2?'moreList':''">
+               <li v-for="item in listData">
+                   <!--<p :class="[
+                       list.status == 0?'MoreSprite':
+                       list.status == 1?'MoreSprite1':
+                       list.status == 2?'MoreSprite2':
+                       list.status == 3?'MoreSprite3':
+                       list.status == 10?'MoreSprite10':
+                       list.status == 11?'MoreSprite11':
+                       list.status == 12?'MoreSprite12':
+                       list.status == 99?'MoreSprite99':
+                       '']" class="moreImg"></p>-->
+                    <p class="moreImg"></p>
+                   <p class="ListTitle">{{item.tempOrderStatus}}</p>
+                   <p>{{item.title}}</p>
+                   <p>{{item.companyName}}</p>
+                   <p>{{item.tempOrderTitle}}：{{item.tempOrderId}}</p>
+               </li>
+           </ul>
+           <el-pagination
+               small
+               class="right"
+               style="margin-top: 20px;"
+               @size-change="handleSizeChange"
+               @current-change="handleCurrentChange"
+               :current-page="currentPage4"
+               :page-sizes="[10, 20, 30, 40]"
+               :page-size="pageSize"
+               layout="total, sizes, prev, pager, next, jumper"
+               :total="totalCount">
+           </el-pagination>
+       </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {queryWorkMessage} from '@/api/getData'
+    import {formatDate} from '../utils/date.js'
+
+    export default {
+        data(){
+            return {
+                //1为档口、2为卖家身份
+                identity:1,
+                listData:[],
+                currentPage:1,
+                pageSize:10,
+                orderLogList:[],
+                totalCount:0,
+                companyId:'',
+
+            }
+        },
+        mounted(){
+            this.initWorkMessage();
+        },
+        methods: {
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+                this.pageSize = val;
+				this.currentPage = 1;
+                this.initWorkMessage();
+
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+            },
+
+            //初始化公告信息
+            async initWorkMessage(){
+            	this.bulletinData = [];
+            	let param = {
+            		toUserId:"402880fb5fc42799015fc8f254bf016f",
+            		type:"WORK_NEWS",
+            		//operateIn:"STALL_RETURN_ORDER_CONFIRM",
+            		state:'VALID',
+            		pageIndex:this.currentPage,
+            		pageSize:this.pageSize
+            	}
+            	const res = await queryWorkMessage(param);
+                if (res.isSuccess == true) {
+                    this.listData = [];
+                    res.result.results.forEach(obj => {
+                    	let content = JSON.parse(obj.content)
+                    	obj.companyName = content.companyName;
+                    	obj.tempOrderTitle = '订单id';
+                    	if(content.orderCode){
+                    		obj.tempOrderId = content.orderCode;
+                    	}
+                    	if(obj.sendTime){
+                    		obj.tempOrderTime = formatDate(obj.sendTime,"yyyy-MM-dd");
+                    	}
+                    	if(obj.operate && obj.operate == 'SELLER_CREATE_ORDER'){
+                    		obj.tempOrderStatus = "已下单";
+                    	}else if(obj.operate && obj.operate == 'SELLER_RETURN_ORDER_APPLY'){
+                    		obj.tempOrderStatus = "已提交退货申请";
+                    	}else if(obj.operate && obj.operate == 'STALL_RETURN_ORDER_SIGN'){
+                    		obj.tempOrderStatus = "已签收";
+                    	}else if(obj.operate && obj.operate == 'STALL_RETURN_ORDER_CONFIRM'){
+                    		obj.tempOrderStatus = "已确认";
+                    	}else if(obj.operate && obj.operate == 'SELLER_CREATE_OUTSETTLEMENTORDER_APPLY'){
+                    		obj.tempOrderStatus = "提交付款结算申请";
+                    		obj.tempOrderTitle = '结算单id';
+                    	}else if(obj.operate && obj.operate == 'SELLER_CREATE_INSETTLEMENTORDER_APPLY'){
+                    		obj.tempOrderStatus = "提交收款结算申请";
+                    		obj.tempOrderTitle = '结算单id';
+                    	}else if(obj.operate && obj.operate == 'STALL_CREATE_STOCKORDER'){
+                    		obj.tempOrderStatus = "已提交采购订单";
+                    		obj.tempOrderTitle = '采购订单id';
+                    	}
+                    	this.listData.push(obj);
+                    });
+                    this.totalCount = res.result.totalCount;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.isSuccess
+                    });
+                }
+            },
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import "../style/common";
+    @import "../style/moreDynamic";
+</style>

@@ -1,0 +1,561 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('verifyManage')">
+            	<router-link :to='{path:"/verifyManage"}'>审核管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('financeSerial')">
+            	<router-link :to='{path:"/financeSerial"}'>财务流水</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('walletInit')">
+            	<router-link :to='{path:"/walletInit"}'>钱包初始化</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('rechangeConfig')">
+            	<router-link :to='{path:"/rechangeConfig"}'>充值配置</router-link>
+            </li>
+            <li class="menuIndex3" v-if="getMenuAuthFun('setmealConfig')">
+            	<router-link :to='{path:"/setmealConfig"}'>套餐配置</router-link>
+            </li>
+        </ul>
+        <div class="setmealConfig" v-show="tableData3.length>0">
+            <div>
+                <el-button type="info" @click="addDialogClick" size="small">添加</el-button>
+                <el-button type="info" @click="configbatchDelete" size="small">删除</el-button>
+            </div>
+            <div class="shopList">
+                <el-table
+                    ref="multipleTable"
+                    :data="tableData3"
+                    tooltip-effect="dark"
+                    @selection-change="handleSelectionChange"
+                    style="width: 100%">
+                    <el-table-column
+                        type="selection"
+                        width="55">
+                    </el-table-column>
+                    <el-table-column
+                        label="套餐名称"
+                        width="140">
+                        <template scope="scope">
+                            <div class="flex2" v-show="tableData3[scope.$index].name.length<7">
+                                <a>{{scope.row.name}}</a>
+                            </div>
+                            <div class="flex2" v-show="tableData3[scope.$index].name.length>=7">
+                                <el-tooltip placement="top">
+								  <div slot="content" style="max-width: 300px; word-wrap:break-word;word-break:break-all;">{{scope.row.name}}</div>
+								  <a>{{scope.row.name.substring(0,7)}}...</a>
+								</el-tooltip>
+                            </div>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="consumeFee"
+                        label="所需金额"
+                        width="120">
+                    </el-table-column>
+                    <el-table-column
+                        prop="beanTotal"
+                        label="客户获得金币数">
+                    </el-table-column>
+                    <el-table-column
+                        prop="status"
+                        label="套餐状态"
+                        :formatter="stutasFormat">
+                    </el-table-column>
+                    <el-table-column label="充值描述">
+                        <template scope="scope">
+                            <div class="flex2" v-show="tableData3[scope.$index].memo.length<8">
+                                <a>{{scope.row.memo}}</a>
+                            </div>
+                            <div class="flex2" v-show="tableData3[scope.$index].memo.length>=8">
+                                <el-tooltip placement="top">
+								  <div slot="content" style="max-width: 300px; word-wrap:break-word;word-break:break-all;">{{scope.row.memo}}</div>
+								  <a>{{scope.row.memo.substring(0,8)}}...</a>
+								</el-tooltip>
+                            </div>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="money"
+                        label="操作"
+                        show-overflow-tooltip>
+                        <template scope="scope">
+                            <a href="javascript:void(0);" class="blue" @click="editdialog(tableData3[scope.$index])">编辑</a>｜
+                            <a href="javascript:void(0);" class="blue" @click="configDelete(tableData3[scope.$index].id)">删除</a>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+            <el-pagination
+                small
+                class="right"
+                style="margin-top: 20px;"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :current-page="currentPage"
+                :page-sizes="[10, 20, 30, 40]"
+                :page-size="pagesize"
+                layout="total, sizes, prev, pager, next, jumper"
+                :total="totalCount">
+            </el-pagination>
+            <a href="javascript:void(0)" class="export_excle" @click="exportTableData">导出excle</a>
+        </div>
+        <el-dialog title="添加套餐" :visible.sync="dialogFormAdd">
+            <el-form :model="addform" :rules="addformRule" ref="addform">
+                <el-form-item label="套餐名称：" prop="name" :label-width="formLabelWidth">
+                    <el-input v-model="addform.name" auto-complete="off" class="add-dialog"></el-input>
+                </el-form-item>
+                <el-form-item label="所需金额：" prop="consumeFee" :label-width="formLabelWidth">
+                    <el-input v-model.number="addform.consumeFee" onkeypress="return event.keyCode!=32" auto-complete="off" class="add-dialog"></el-input>
+                </el-form-item>
+                <el-form-item label="客户获得金币数：" prop="beanTotal" :label-width="formLabelWidth">
+                    <el-input v-model.number="addform.beanTotal" onkeypress="return event.keyCode!=32" auto-complete="off" class="add-dialog"></el-input>
+                </el-form-item>
+                <el-form-item label="套餐状态：" :label-width="formLabelWidth">
+                    <el-select v-model="addform.status" placeholder="选择状态">
+                        <el-option label="启用" value="1" selected></el-option>
+                        <el-option label="禁用" value="2"></el-option>
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="充值描述：" prop="memo" :label-width="formLabelWidth">
+                    <el-input v-model="addform.memo" auto-complete="off" class="add-dialog"></el-input>
+                </el-form-item>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="dialogFormAdd = false">取 消</el-button>
+                <el-button type="primary" @click="submitFormAdd('addform')">确 定</el-button>
+            </div>
+        </el-dialog>
+        <el-dialog title="编辑套餐" :visible.sync="editdialogFormAdd">
+            <el-form :model="editform" :rules="editformRule" ref="editform">
+            	<el-form-item label="编号：" :label-width="formLabelWidth" style="display: none;">
+                    <el-input v-model="editform.id" auto-complete="off" class="add-dialog"></el-input>
+                </el-form-item>
+                <el-form-item label="套餐名称：" prop="name" :label-width="formLabelWidth">
+                    <el-input v-model="editform.name" auto-complete="off" class="add-dialog"></el-input>
+                </el-form-item>
+                <el-form-item label="所需金额：" prop="consumeFee" :label-width="formLabelWidth">
+                    <el-input v-model.number="editform.consumeFee" onkeypress="return event.keyCode!=32" auto-complete="off" class="add-dialog"></el-input>
+                </el-form-item>
+                <el-form-item label="客户获得金币数：" prop="beanTotal" :label-width="formLabelWidth">
+                    <el-input v-model.number="editform.beanTotal" onkeypress="return event.keyCode!=32" auto-complete="off" class="add-dialog"></el-input>
+                </el-form-item>
+                <el-form-item label="套餐状态：" :label-width="formLabelWidth">
+                    <el-select v-model="editform.status" placeholder="选择状态">
+                        <el-option label="启用" value="1"></el-option>
+                        <el-option label="禁用" value="2"></el-option>
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="充值描述：" prop="memo" :label-width="formLabelWidth">
+                    <el-input v-model="editform.memo" auto-complete="off" class="add-dialog"></el-input>
+                </el-form-item>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="editdialogFormAdd = false">取 消</el-button>
+                <el-button type="primary" @click="submitFormEdit('editform')">确 定</el-button>
+            </div>
+        </el-dialog>
+
+    </div>
+
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    import {findBeanRechargePackage,createBeanRechargePackage,updateBeanRechargePackage,deleteBeanRechargePackage,batchDeleteBeanRechargePackage} from '@/api/getData'
+    import {userInfo,setStore} from  '../config/mUtils'
+    import timerBtn from '../components/timerBtn'
+    import {export_json_to_excel} from '../vendor/Export2Excel.js'
+    import {getMenuAuth,haveMenuAuth} from  '../utils/AuthMenu.js'
+
+    export default {
+        components: {
+            headTop,
+        },
+        computed: {
+            classObject: function () {
+                return {
+                    active: this.isActive && !this.error,
+                    'text-danger': this.error && this.error.type === 'fatal',
+                }
+            }
+        },
+
+        data() {
+        	//校验所需金额
+        	var validateConsumeFee = (rule, value, cb) => {
+                var pattern = /^(-?\d+)(\.\d+)?$/;
+                var pattern2 = /^-?\d+\.?\d{0,2}$/;
+                if (!pattern.test(value)) {
+                    cb(new Error('所需金额必须为数字'))
+                }else if(value <0){
+                	cb(new Error('所需金额必须为正数'))
+                }else if(!pattern2.test(value)){
+                	cb(new Error('所需金额不能超过两位小数'))
+                }else{
+                	cb();
+                }
+            }
+        	//校验所需金额
+        	var validateBeanTotal = (rule, value, cb) => {
+                var pattern = /^(-?\d+)(\.\d+)?$/;
+                var pattern2 = /^-?\d+\.?\d{0,2}$/;
+                if (!pattern.test(value)) {
+                    cb(new Error('客户获得金币数必须为数字'))
+                }else if(value <0){
+                	cb(new Error('客户获得金币数必须为正数'))
+                }else if(!pattern2.test(value)){
+                	cb(new Error('客户获得金币数不能超过两位小数'))
+                }else{
+                	cb();
+                }
+            }
+            return {
+                rotate:false,
+                addformRule: {
+                    name: [
+                        { required: true, message: '请输入套餐名称', trigger: 'blur' },
+                        { max: 60, message: '套餐名称长度不能超过60 个字符', trigger: 'blur' }
+                    ],
+                    consumeFee:[
+                    	{ required: true, message: '所需金额不能为空'},
+                    	{ validator: validateConsumeFee, trigger: 'blur' }
+                    ],
+                    beanTotal:[
+                         { required: true, message: '客户获得金币数不能为空'},
+                         { validator: validateBeanTotal, trigger: 'blur' }
+                     ],
+                    memo:[
+                    	{ max: 50, message: '充值描述长度不能超过50 个字符', trigger: 'blur' }
+                    ]
+                },
+                editformRule:{
+                	name: [
+                        { required: true, message: '请输入套餐名称', trigger: 'blur' },
+                        { max: 60, message: '套餐名称长度不能超过60 个字符', trigger: 'blur' }
+                    ],
+                    consumeFee:[
+                    	{ required: true, message: '所需金额不能为空'},
+                    	{ validator: validateConsumeFee, trigger: 'blur' }
+                    ],
+                    beanTotal:[
+                         { required: true, message: '客户获得金币数不能为空'},
+                         { validator: validateBeanTotal, trigger: 'blur' }
+                     ],
+                    memo:[
+                    	{ max: 50, message: '充值描述长度不能超过50 个字符', trigger: 'blur' }
+                    ]
+                },
+                tableData3: [],
+
+                //默认每页数据量
+                pagesize: 8,
+
+                //默认高亮行数据id
+                highlightId: -1,
+
+                //当前页码
+                currentPage: 1,
+
+                //查询的页码
+                start: 1,
+
+                //默认数据总数
+                totalCount: 0,
+
+                dialogFormAdd: false,
+                addform: {
+                    setmealName: '',
+                   	needBean: '',
+                    commission:'',
+                    state:'',
+                    message:''
+                },
+                formLabelWidth: '120px',
+                dialogFormCompile: false,
+
+                editdialogFormAdd: false,
+                editform: {
+                    setmealName: '',
+                   	needBean: '',
+                    commission:'',
+                    state:'',
+                    message:''
+                },
+            }
+        },
+        async mounted(){
+            this.initloadData();
+
+            const s = document.createElement('script');
+			s.type = 'text/javascript';
+			s.src = 'http://oss.sheetjs.com/js-xlsx/xlsx.full.min.js';
+			document.body.appendChild(s);
+        },
+
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+            },
+            clickRotate(index){
+                this.tableData3[index].member = !this.tableData3[index].member ;
+            },
+            editdialog(rows){
+            	this.editform = {
+            	    id:rows.id,
+            	    name:rows.name,
+            	    consumeFee:rows.consumeFee,
+            	    beanTotal:rows.beanTotal,
+            	    status:rows.status+'',
+            	    memo:rows.memo
+            	};
+            	this.editdialogFormAdd = true;
+            },
+            //从服务器获取数据
+            async initloadData() {
+            	let param ={
+            		pageIndex:1,
+            		pageSize:this.pagesize,
+            		companyId:userInfo().companyId
+            	}
+                const res = await findBeanRechargePackage(param);
+                if (res.isSuccess == true) {
+                    this.tableData3 = res.result.data.results;
+                    this.totalCount = res.result.data.totalCount;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            async initloadData2() {
+            	let param ={
+            		pageIndex:this.currentPage,
+            		pageSize:this.pagesize,
+            		companyId:userInfo().companyId
+            	}
+                const res = await findBeanRechargePackage(param);
+                if (res.isSuccess == true) {
+                    this.tableData3 = res.result.data.results;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+             async submitFormEdit(formName){
+                    this.$refs[formName].validate(async (valid) => {
+                        if (valid) {
+                            const res = await updateBeanRechargePackage(this.editform);
+                            if (res.isSuccess == true) {
+                                this.$message({
+                                    type: 'success',
+                                    message: res.result.msg
+                                });
+                                 this.editdialogFormAdd = false;
+                                 this.initloadData();
+                            }else{
+                                this.$message({
+                                    type: 'error',
+                                    message: res.errorMsg
+                                });
+                            }
+                        } else {
+
+                            return false;
+                        }
+                    });
+              },
+
+            async submitFormAdd(formName){
+            	this.$refs[formName].validate(async (valid) => {
+					if (valid) {
+                        const res = await createBeanRechargePackage(this.addform);
+                        if (res.isSuccess == true) {
+                            this.$message({
+                                type: 'success',
+                                message: res.result.msg
+                            });
+                             this.dialogFormAdd = false;
+                             this.initloadData();
+                        }else{
+                            this.$message({
+                                type: 'error',
+                                message: res.errorMsg
+                            });
+                        }
+					} else {
+
+						return false;
+					}
+				});
+           },
+
+          async deleteRow(id) {
+            	let param ={
+            		id:id
+            	}
+            	const res = await deleteBeanRechargePackage(param);
+            	if (res.isSuccess == true) {
+                    this.initloadData();
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+            async exportTableData() {
+            	let param ={
+            		pageIndex:1,
+            		pageSize:this.pagesize*this.totalCount,
+            		companyId:userInfo().companyId
+            	}
+                const res = await findBeanRechargePackage(param);
+                const list = [];
+                if (res.isSuccess == true) {
+                	for(let i=0;i<res.result.data.results.length;i++){
+						let data1 = res.result.data.results[i];
+						let name = '';
+						let money = 0;
+						let bean = 0;
+						let status = '';
+						let memo = '';
+						if(data1.name){
+							name = data1.name;
+						}
+						if(data1.consumeFee){
+							money = data1.consumeFee;
+						}
+						if(data1.beanTotal){
+							bean = data1.beanTotal;
+						}
+						if(data1.status && data1.status == 1){
+							status = '启用';
+						}else{
+							status = '停用';
+						}
+						if(data1.memo){
+							memo = data1.memo;
+						}
+						let row = {
+		            		name : name,
+							money : money,
+							bean : bean,
+							status : status,
+							memo : memo
+		            	}
+		            	list.push(row);
+                	}
+                	const tHeader = ['套餐名称', '所需金额','客户获得金币数','套餐状态','充值描述'];
+			　　　　const filterVal = ['name', 'money','bean','status','memo'];
+			　　　　const data = this.formatJson(filterVal, list);
+			　　　　export_json_to_excel(tHeader, data, '套餐配置列表');
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+            //多选响应
+            handleSelectionChange: function(val) {
+                this.multipleSelection = val;
+            },
+
+            async batchDelete(){
+				if(this.multipleSelection.length==0)
+                    return;
+                var array = [];
+                this.multipleSelection.forEach((item) => {
+                    array.push(item.id);
+                })
+                let param = {
+                	ids:array
+                }
+                const res = await batchDeleteBeanRechargePackage(param);
+            	if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: res.result.msg
+                    });
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+                this.initloadData();
+            },
+
+            //数据格式化
+            stutasFormat:function(row, column) {
+                let data = row[column.property];
+                if (data == undefined||data=='') {
+                    return "";
+                }
+                if(data ==1 ){
+                    return '启用';
+                }else if(data == 2){
+                    return '禁用';
+                }
+            },
+            memoFormat:function(row, column){
+            	alert(3);
+            },
+            addDialogClick(){
+                this.addform = {
+                    status:"1"
+                }
+                this.dialogFormAdd = true;
+            },
+            handleCurrentChange:function(val) {
+                this.currentPage = val;
+                this.initloadData2();
+            },
+            formatJson(filterVal, jsonData) {
+	　　　　　　return jsonData.map(v => filterVal.map(j => v[j]))
+	　　　　},
+			configDelete(id) {
+		        this.$confirm('是否确认删除该信息?', '提示', {
+		          confirmButtonText: '确定',
+		          cancelButtonText: '取消',
+		          type: 'warning'
+		        }).then(() => {
+		          this.deleteRow(id);
+		        }).catch(() => {
+
+		        });
+		    },
+		    configbatchDelete() {
+		        this.$confirm('是否确认删除选中的信息?', '提示', {
+		          confirmButtonText: '确定',
+		          cancelButtonText: '取消',
+		          type: 'warning'
+		        }).then(() => {
+		          this.batchDelete();
+		        }).catch(() => {
+
+		        });
+		    },
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/setmealConfig';
+</style>

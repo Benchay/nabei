@@ -1,0 +1,246 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li class="menuIndex2">
+                <router-link :to='{path:"/salesReturn"}'>退货管理</router-link>
+            </li>
+        </ul>
+        <div class="returnsAffirm">
+            <router-link :to='{path:"/promptlyReturns"}' class="right comeBack2">返回</router-link>
+            <div class="affirmButtom">
+                <a href="javascript:void(0)"  class="buttonColor3" @click="returnsAffirm">确认退货</a>
+            </div>
+            <div class="returnsAffirmTable">
+                <table width="100%" border="0" cellpadding="0" cellspacing="0" class="tableFirst">
+                    <tr>
+                        <td class="firstLi">
+                            <!--<input type="checkbox" class="checkbox" @click="checkAllClick">多选-->
+                            <!--<el-checkbox :indeterminate="isIndeterminate" v-model="checkAll" @change="checkAllClick">全选</el-checkbox>-->
+                        </td>
+                        <td>主图/货号</td>
+                        <td>颜色</td>
+                        <td>尺码</td>
+                        <td>单价</td>
+                        <td>数量</td>
+                    </tr>
+                </table>
+                <div class="tableHead">
+                    <div v-for="(item,key,index) in tableData">
+                    <table width="100%" border="0" cellpadding="0" cellspacing="0" class="buyTable">
+                        <tr>
+                            <th class="flex unfinisdhedFirst">
+                                <!--<input type="checkbox" :ref="item.stallId" :value="item.orderDetailId" v-model="selectArr" @click="handleCheckBox"/>-->
+                                    <el-checkbox  @change="checkAllClick(item,value)" v-model="checkedStall" :label="item.stallId" :key="item.stallId">档口名称:{{item.stallName}}</el-checkbox>
+                            </th>
+                            <th>采购数量:{{item.requireCnt}}</th>
+                            <th>总额:{{item.totalFee}}</th>
+                            <th colspan="2" class="flex2" style="width:100%;">退货原因：
+                                <el-select v-model="value" placeholder="请选择" size="mini">
+                                <el-option
+                                    v-for="list in options"
+                                    :key="list.value"
+                                    :label="list.label"
+                                    :value="list.value">
+                                </el-option>
+                            </el-select></th>
+                        </tr>
+                    </table>
+                    <!--表格内容-->
+                    <div class="tableContent2">
+                        <table width="100%" border="0" cellpadding="0" cellspacing="0" class="buyTable2"  v-for="items in item.requires">
+                            <tr>
+                            	<td class="firstLi"></td>
+                                <td>
+                                    <div class="tdFirst">
+                                        <img class="buyImg1" :src="items.imgUrl_main" alt="">
+                                        <div>{{items.productCode}}</div>
+                                    </div>
+                                </td>
+                                <td>{{items.color}}</td>
+                                <td>{{items.size}}</td>
+                                <td>{{items.price}}</td>
+                                <td>{{items.requireCnt}}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    </div>
+                </div>
+            </div>
+            <el-pagination
+                small
+                class="right"
+                style="margin-top: 20px;"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :current-page="currentPage"
+                :page-size="pageSize"
+                layout="total, prev, pager, next, jumper"
+                :total="totalCount">
+            </el-pagination>
+            <a href="javascript:void(0)" class="export_excle1">导出excel</a>
+        </div>
+        <el-dialog
+            title=""
+            :visible.sync="returnsAffirmDialog"
+            size="tiny">
+            <div class="flex2 returnsAffirmDialog">
+                <img src="../image/correct.png" alt="">
+                <p>退货成功，等待档口签收！</p>
+            </div>
+        </el-dialog>
+    </div>
+</template>
+<script>
+    import {createByReturnRequire,salesReturnListEnter,queryReturnRequire} from '@/api/getData'
+    import {userInfo,getStore,setStore} from  '../config/mUtils'
+    import {linkArrayFormatId} from '../utils/common.js'
+    export default {
+        data() {
+            return {
+                checkAll: true,
+                isIndeterminate: false,
+                checkedStall:[],
+                textarea:'',
+                currentPage4:1,
+                totalCount:'',
+                returnsAffirmDialog:false,
+                tableData:[],
+                selectArr:[],
+                options: [{
+                    value: '1',
+                    label: '商品与描述不符'
+                }, {
+                    value: '2',
+                    label: '商品发错'
+                }, {
+                    value: '3',
+                    label: '商品质量问题'
+                }, {
+                    value: '4',
+                    label: '其他原因'
+                }, {
+                    value: '5',
+                    label: '收到商品破损'
+                }],
+                value: '1',
+                roleForm: {
+                    userId: '',
+                    roleId: '',
+                    compId:''
+                },
+            }
+        },
+        mounted(){
+            this.initData()
+        },
+        watch:{
+            '$route':function (route) {
+                this.stallId = this.$route.query.stallId;
+            }
+        },
+        methods: {
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+                this.pageSize = val;
+                this.initData();
+
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+                this.currentPage = val;
+                this.initData();
+            },
+            async initData(){
+                this.roleForm.userId=userInfo().userId;
+                this.roleForm.compId = userInfo().companyId;
+                let param = {
+                    "stallId":this.stallId,
+                    "companyId":this.roleForm.compId,
+                    "resultCfg":{"groupbystall":"1"},
+                    "pageIndex":1,
+                    "pageSize":10,
+                };
+                const res = await queryReturnRequire(param);
+                if (res.isSuccess == true){
+                    this.tableData = [];
+                    console.log(res.result.results);
+                    var temp=res.result.results;
+                    this.tableData = temp;
+                    this.totalCount = res.result.totalCount;
+                }
+            },
+             async returnsAffirm(){
+                 if(this.checkedStall == undefined || this.checkedStall.length==0){
+                    this.$message({
+                        type: 'error',
+                        message: '请先勾选要退货的行！'
+                    });
+                    return;
+                }
+                 var purchaseIds=linkArrayFormatId(this.checkedStall);
+             	let param = {
+            		"requireIds": purchaseIds,
+            		"companyId": userInfo().companyId,
+                    "model":"1",
+
+            	};
+            	const res = await createByReturnRequire(param);
+        		if (res.isSuccess == true) {
+	                this.returnsAffirmDialog = true;
+                    this.initData()
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+//            checkAllClick(event){
+//            	var _this = this;
+//			      if (!event.currentTarget.checked) {
+//			        _this.selectArr = [];
+//			      } else { //实现全选
+//			        _this.selectArr = [];
+//			        _this.tableData.forEach((obj)=>{
+//			            this.$refs[obj.stallId][0].checked =true;
+//                        console.log(this.$refs[obj.stallId])
+//                      })
+//			      }
+//            },
+            checkAllClick(event,item,value) {
+                this.isIndeterminate = !this.isIndeterminate;
+                var Table = this.tableData;
+                Table.forEach((obj)=>{
+                this.checkedStall = event.target.checked ?  obj.stallId : [];
+                this.isIndeterminate = false;
+
+//                this.tableData.forEach(function(item, i) {
+//                })
+
+                    this.checkedStall.push(obj.stallId);
+                    console.log(this.checkedStall)
+                })
+
+            }
+//            handleCheckedCitiesChange(value) {
+//                let checkedCount = value.length;
+//                this.checkAll = checkedCount === this.cities.length;
+//                this.isIndeterminate = checkedCount > 0 && checkedCount < this.cities.length;
+//            },
+        },
+
+        created () {
+            this.intervalid1 = setInterval(() => {
+                this.returnsAffirmDialog = false;
+            }, 5000)
+        },
+        beforeDestroy(){
+            clearInterval(this.intervalid1)
+        },
+    }
+</script>
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/salesReturn';
+</style>

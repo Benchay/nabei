@@ -1,0 +1,34 @@
+.siteConfig{
+    color:#666;
+    font-size: 14px;
+    margin:2px 30px;
+    background: #fff;
+    padding: 20px 30px;
+    height:100%;
+    overflow: auto;
+    .siteTop{
+        padding-bottom: 10px;
+    }
+    .siteTable{
+        .siteOperation{
+            p{
+                margin-right: 8px;
+            }
+            button{
+                margin-left: 35px;
+                color:#fff;
+                background: @red;
+                border: 1px solid @red;
+            }
+        }
+    }
+}
+.addDialog{
+    .choseRegion{
+        p{
+            border:1px solid  rgb(191, 203, 217);
+            padding: 0 9px;
+            margin-right: 10px;
+        }
+    }
+}

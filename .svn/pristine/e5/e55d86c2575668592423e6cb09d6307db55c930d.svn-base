@@ -1,0 +1,461 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <div v-for="(authitem,index) in authMenu">
+                <li :class='authitem.css'>
+                    <router-link :to='authitem.method'>{{authitem.name}}</router-link>
+                </li>
+            </div>
+            <!--
+            <li  v-if="getMenuAuthFun('transportDetail')">
+                <router-link :to='{path:"/transportDetail"}'>运输明细</router-link>
+            </li>
+            <li class="menuIndex2" v-if="getMenuAuthFun('sellerCarConfig')">
+                <router-link :to='{path:"/sellerCarConfig"}'>车辆配置</router-link>
+            </li>-->
+        </ul>
+       <div class="siteConfig">
+       		<div class="siteTop">
+               <el-input
+                   placeholder="车牌号搜索"
+                   icon="search"
+                   size="small"
+                   style="width: 180px;"
+                   v-model="licensePlateSearch"
+                   :on-icon-click="initFirstPage">
+               </el-input>
+           </div>
+           <div class="siteTop">
+               <el-button class="buttonColor3" @click="addCarClick">+添加车辆</el-button>
+               <el-button class="buttonColor3" @click="batchUpdateSellerCarValidStatusClick(2)">禁用</el-button>
+           </div>
+           <div class="siteTable">
+               <el-table
+                   :data="tableData"
+                   @selection-change="handleSelectionChange"
+                   style="width: 100%"
+                   max-height="500">
+                   <el-table-column
+                        type="selection"
+                        width="55">
+                    </el-table-column>
+                   <el-table-column
+                       prop="licensePlate"
+                       label="车牌号"
+                       width="180">
+                   </el-table-column>
+                   <el-table-column
+                       prop="carBrand"
+                       label="品牌"
+                       width="180">
+                   </el-table-column>
+                   <el-table-column
+                       prop="model"
+                       label="型号">
+                   </el-table-column>
+                   <el-table-column
+                       prop="colour"
+                       label="颜色">
+                   </el-table-column>
+                   <el-table-column
+                       prop="status"
+                       label="状态"
+                       :formatter="formatStatus">
+                   </el-table-column>
+                   <el-table-column
+                       prop="validStatus"
+                       label="有效状态"
+                       :formatter="formatValidStatus">
+                   </el-table-column>
+                   <el-table-column
+                       label="操作">
+                       <template scope="scope">
+                          <div class="flex siteOperation">
+                              <a href="javascript:void(0)" @click="editCarClick(scope.$index)">修改</a>
+                              <a v-if="scope.row.validStatus == 1" href="javascript:void(0)" @click="updateSellerCarValidStatusClick(scope.row.id,2)">禁用</a>
+                              <a v-if="scope.row.validStatus == 2" href="javascript:void(0)" @click="updateSellerCarValidStatusClick(scope.row.id,1)">启用</a>
+                          </div>
+                       </template>
+                   </el-table-column>
+               </el-table>
+               <el-pagination
+                   small
+                   class="right"
+                   style="margin-top: 20px;"
+                   @size-change="handleSizeChange"
+                   @current-change="handleCurrentChange"
+                   :current-page="currentPage"
+                   :page-sizes="[10, 20, 30, 40,50]"
+                   :page-size="pageSize"
+                   layout="total, sizes, prev, pager, next, jumper"
+                   :total="totalCount">
+               </el-pagination>
+           </div>
+       </div>
+        <el-dialog
+            title="添加车辆"
+            :visible.sync="addCarDialogVisible"
+            size="tiny">
+            <div class="addDialog">
+                <el-form ref="carForm" :model="carForm" label-width="110px" :rules="carFormRule">
+                    <el-form-item label="车牌号" prop="licensePlate">
+                        <el-input v-model="carForm.licensePlate"  placeholder="请填写车牌号"></el-input>
+                    </el-form-item>
+                    <el-form-item label="品牌" prop="carBrand">
+                        <el-input v-model="carForm.carBrand"  placeholder="请填写品牌"></el-input>
+                    </el-form-item>
+                    <el-form-item label="型号" prop="model">
+                        <el-input v-model="carForm.model" placeholder="请填写型号"></el-input>
+                    </el-form-item>
+                    <el-form-item label="颜色" prop="colour">
+                        <el-input v-model="carForm.colour" placeholder="请填写车辆颜色"></el-input>
+                    </el-form-item>
+                    <!--<el-form-item label="驾驶员" prop="driver">
+                        <el-input v-model="carForm.driver" placeholder="请填写驾驶员"></el-input>
+                    </el-form-item>-->
+                </el-form>
+            </div>
+            <span slot="footer" class="dialog-footer flex2">
+                <el-button @click="addCarFormSubmit('carForm')" class="buttonColor3">确 定</el-button>
+                <el-button @click="addCarDialogVisible = false" class="buttonColor2">取 消</el-button>
+            </span>
+        </el-dialog>
+        <el-dialog
+            title="修改车辆"
+            :visible.sync="editCarDialogVisible"
+            size="tiny">
+            <div class="addDialog">
+                <el-form ref="carForm" :model="carForm" label-width="110px" :rules="carFormRule">
+                    <el-form-item label="车牌号" prop="licensePlate">
+                        <el-input v-model="carForm.licensePlate" :disabled="true" placeholder="请填写车牌号"></el-input>
+                    </el-form-item>
+                    <el-form-item label="品牌" prop="carBrand">
+                        <el-input v-model="carForm.carBrand"  placeholder="请填写品牌"></el-input>
+                    </el-form-item>
+                    <el-form-item label="型号" prop="model">
+                        <el-input v-model="carForm.model" placeholder="请填写型号"></el-input>
+                    </el-form-item>
+                    <el-form-item label="颜色" prop="colour">
+                        <el-input v-model="carForm.colour" placeholder="请填写车辆颜色"></el-input>
+                    </el-form-item>
+                    <!--<el-form-item label="驾驶员" prop="driver">
+                        <el-input v-model="carForm.driver" placeholder="请填写驾驶员"></el-input>
+                    </el-form-item>-->
+                </el-form>
+            </div>
+            <span slot="footer" class="dialog-footer flex2">
+                <el-button @click="editCarFormSubmit('carForm')" class="buttonColor3">确 定</el-button>
+                <el-button @click="editCarDialogVisible = false" class="buttonColor2">取 消</el-button>
+            </span>
+        </el-dialog>
+    </div>
+</template>
+
+<script>
+    import {queryCompanyCars,createCompanyCars,updateCompanyCars,batchUpdateCompanyCarsValidStatus} from '@/api/getData'
+    import {mapActions, mapState} from 'vuex'
+    import {formatDate} from '../utils/date.js'
+    import {getMenuAuth,haveMenuAuth,getSubMenuByMothod} from  '../utils/AuthMenu.js'
+    import { regionData ,CodeToText,TextToCode} from 'element-china-area-data'
+    import {userInfo} from '../config/mUtils.js'
+
+    export default {
+        components: {
+        },
+        data() {
+            var validateLicense = (rule, value, cb) => {
+                if(value.length>15){
+                    cb(new Error('车牌号不能超过15个字符'));
+                } else {
+                    cb()
+                }
+            }
+            var validateCarBrand = (rule,value,cb) =>{
+                if(value.length>20){
+                    cb("品牌不能超过20个字符")
+                }else{
+                    cb()
+                }
+            }
+            var validateModel = (rule,value,cb) =>{
+                if(value.length>15){
+                    cb("型号不能超过15个字符")
+                }else{
+                    cb()
+                }
+            }
+            var validateColour = (rule,value,cb) =>{
+                if(value.length>10){
+                    cb("颜色不能超过10个字符")
+                }else{
+                    cb()
+                }
+            }
+            var validateDriver = (rule,value,cb) =>{
+                if(value.length>20){
+                    cb("驾驶员不能超过20个字符")
+                }else{
+                    cb()
+                }
+            }
+            return {
+                tableData:[],
+                licensePlateSearch:'',
+                addCarDialogVisible:false,
+                editCarDialogVisible:false,
+                carForm : {
+            		licensePlate:'',
+            		carBrand:'',
+            		model:'',
+            		colour:'',
+            		driver:''
+            	},
+                currentPage:1,
+                pageSize:10,
+                totalCount:0,
+                authMenu:[],
+                routerPath:'transportDetail',
+                carFormRule:{
+                    licensePlate: [
+                    	{ required: true, message: '请填写车牌号', trigger: 'blur' },
+                    	{ validator: validateLicense, trigger: 'blur' }
+                    ],
+                    carBrand:[
+                    	{ required: true, message: '请填写品牌', trigger: 'blur' },
+                    	{ validator: validateCarBrand, trigger: 'blur' }
+                    ],
+                    model:[
+                    	{ required: true, message: '请填写型号', trigger: 'blur' },
+                    	{ validator: validateModel, trigger: 'blur' }
+                    ],
+                    colour:[
+                    	{ required: true, message: '请填写车辆颜色', trigger: 'blur' },
+                    	{ validator: validateColour, trigger: 'blur' }
+                    ],
+                    /*driver:[
+                    	{ required: true, message: '请填写驾驶员', trigger: 'blur' },
+                    	{ validator: validateDriver, trigger: 'blur' }
+                    ]*/
+                }
+            }
+        },
+        mounted(){
+            this.routerPath=this.$route.path;
+            this.authMenu=getSubMenuByMothod('munu_mj_008',new Array("drawingOut"),this.routerPath);
+            this.initFirstPage();
+        },
+        methods:{
+            getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+
+            handleSizeChange(val){
+            	this.currentPage = 1;
+                this.pageSize = val;
+                this.initloadData();
+            },
+
+            addCarClick(){
+            	this.carForm = {
+            		licensePlate:'',
+            		carBrand:'',
+            		model:'',
+            		colour:'',
+            		driver:''
+            	}
+                this.addCarDialogVisible =true;
+            },
+
+            editCarClick(index){
+            	this.carForm = this.tableData[index];
+            	this.editCarDialogVisible = true;
+            },
+
+            handleCurrentChange(val){
+                this.currentPage = val;
+                this.initloadData();
+            },
+
+            initFirstPage(){
+            	this.currentPage = 1;
+            	this.initloadData();
+            },
+
+			//从服务器获取数据
+            async initloadData() {
+            	this.tableData = [];
+            	let param ={
+            		pageIndex:this.currentPage,
+    				pageSize:this.pageSize,
+    				licensePlate:this.licensePlateSearch,
+    				companyId:userInfo().companyId
+            	}
+                const res = await queryCompanyCars(param);
+                if (res.isSuccess == true) {
+                	this.tableData = res.result.results;
+                	this.totalCount =  res.result.totalCount;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+			async addCarFormSubmit(formName){
+            	this.$refs[formName].validate(async (valid) => {
+				if (valid) {
+					this.carForm.companyId = userInfo().companyId;
+                    const res = await createCompanyCars(this.carForm);
+                    if (res.isSuccess == true) {
+                        this.$message({
+                            type: 'success',
+                            message: res.result.msg
+                        });
+                         this.addCarDialogVisible = false;
+                         this.initFirstPage();
+                    }else{
+                        this.$message({
+                            type: 'error',
+                            message: res.errorMsg
+                        });
+                    }
+                  } else {
+                      return false;
+                  }
+              });
+            },
+
+            async editCarFormSubmit(formName){
+            	this.$refs[formName].validate(async (valid) => {
+				if (valid) {
+                    const res = await updateCompanyCars(this.carForm);
+                    if (res.isSuccess == true) {
+                        this.$message({
+                            type: 'success',
+                            message: res.result.msg
+                        });
+                         this.editCarDialogVisible = false;
+                         this.initloadData();
+                    }else{
+                        this.$message({
+                            type: 'error',
+                            message: res.errorMsg
+                        });
+                    }
+                  } else {
+                      return false;
+                  }
+              });
+            },
+
+            //多选响应
+            handleSelectionChange: function(val) {
+                this.multipleSelection = val;
+            },
+
+            //行启用禁用
+            updateSellerCarValidStatusClick(id,validStatus){
+            	let message = "禁用";
+            	if(validStatus == 1){
+            		message = "启用";
+            	}
+                var array = [];
+                array.push(id);
+                this.$confirm('是否确认'+message+'选中的车辆?', '提示', {
+                  confirmButtonText: '确定',
+                  cancelButtonText: '取消',
+                  type: 'warning'
+                }).then(() => {
+                  this.batchUpdateCompanyCarsValidStatus(array,validStatus);
+                }).catch(() => {
+
+                });
+            },
+
+            //批量启用、禁用 车辆
+            batchUpdateSellerCarValidStatusClick(validStatus){
+            	let message = "禁用";
+            	if(validStatus == 1){
+            		message = "启用";
+            	}
+              if(this.multipleSelection == undefined || this.multipleSelection.length==0){
+                  this.$message({
+                        type: 'error',
+                        message: '请先勾选要'+message+'的车辆！'
+                    });
+                    return;
+              }
+                var array = [];
+                this.multipleSelection.forEach((item) => {
+                    array.push(item.id);
+                })
+                if(array.length <1){
+                  this.$message({
+                        type: 'error',
+                        message: '请先勾选要'+message+'的车辆！'
+                    });
+                    return;
+                }
+              this.$confirm('是否确认'+message+'选中的车辆?', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+              }).then(() => {
+                this.batchUpdateCompanyCarsValidStatus(array,validStatus);
+              }).catch(() => {
+
+              });
+          },
+
+            async batchUpdateCompanyCarsValidStatus(array,validStatus){
+            	let param = {
+            		companyCarsIds:array,
+            		validStatus:validStatus
+            	}
+            	const res = await batchUpdateCompanyCarsValidStatus(param);
+            	if (res.isSuccess == true) {
+                    this.$message({
+                        type: 'success',
+                        message: res.result.msg
+                    });
+                    this.initFirstPage();
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+            formatValidStatus:function(row, column){
+            	let status = row.validStatus;
+            	if(status == 1){
+            		return "启用";
+            	}else{
+            		return "禁用";
+            	}
+            },
+
+            formatStatus:function(row, column){
+            	let status = row.status;
+            	if(status == 1){
+            		return "已返程";
+            	}else if(status == 2){
+            		return "拿货运输中";
+            	}else{
+            		return "返程运输中";
+            	}
+            },
+
+
+        },
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/siteConfig';
+</style>

@@ -1,0 +1,379 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+			<div v-for="(authitem,index) in authMenu">
+                <li :class='authitem.css'>
+                    <router-link :to='authitem.method'>{{authitem.name}}</router-link>
+                </li>
+            </div>
+            <!--<li class="menuIndex2" v-if="getMenuAuthFun('transportDetail')">
+                <router-link :to='{path:"/transportDetail"}'>运输明细</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('sellerCarConfig')">
+                <router-link :to='{path:"/sellerCarConfig"}'>车辆配置</router-link>
+            </li>-->
+
+        </ul>
+       <div class="siteConfig">
+       		<div class="siteTop">
+       			<el-date-picker
+                    size="small"
+                    v-model="outTimeBegin"
+                    class="ml-10"
+                    style="width: 150px;"
+                    type="date"
+                    placeholder="选择出车开始日期"
+                    :picker-options="outTimeBefore"
+                    format="yyyy-MM-dd"
+					value-format="yyyy-MM-dd"
+					@change="initFirstPage"
+				>
+                </el-date-picker>
+                -
+                <el-date-picker
+                    size="small"
+                    v-model="outTimeEnd"
+                    style="width: 150px;"
+                    type="date"
+                    placeholder="选择出车截止日期"
+                    :picker-options="outTimeAfter"
+					format="yyyy-MM-dd"
+					value-format="yyyy-MM-dd"
+                    @change="initFirstPage"
+                >
+                </el-date-picker>
+
+                <el-date-picker
+                    size="small"
+                    v-model="backTimeBegin"
+                    class="ml-10"
+                    style="width: 150px;"
+                    type="date"
+                    placeholder="选择返程开始日期"
+                    :picker-options="backTimeBefore"
+                    format="yyyy-MM-dd"
+					value-format="yyyy-MM-dd"
+					@change="initFirstPage"
+				>
+                </el-date-picker>
+                -
+                <el-date-picker
+                    size="small"
+                    v-model="backTimeEnd"
+                    class="ml-10"
+                    style="width: 150px;"
+                    type="date"
+                    placeholder="选择返程截止日期"
+                    :picker-options="backTimeAfter"
+                    format="yyyy-MM-dd"
+					value-format="yyyy-MM-dd"
+					@change="initFirstPage"
+				>
+                </el-date-picker>
+                <el-select v-model="companyCarsId"
+                	placeholder="请选择车辆"
+                	size="small"
+                	@change="initFirstPage"
+                	style="width:150px;">
+				    <el-option
+				        v-for="item in companyCarsData"
+				        :key="item.id"
+				        :label="item.licensePlate"
+				        :value="item.id">
+				    </el-option>
+				</el-select>
+				<!--<el-select v-model="driverId"
+                	placeholder="请选择驾驶员"
+                	size="small"
+                	@change="initFirstPage"
+                	style="width:150px;">
+				    <el-option
+				        v-for="item in driverData"
+				        :key="item.id"
+				        :label="item.name"
+				        :value="item.id">
+				    </el-option>
+				</el-select>-->
+				<el-select
+                    v-model="driverId"
+                    filterable
+                    remote
+                    reserve-keyword
+                    size="small"
+                    style="width:150px;"
+                    placeholder="驾驶员搜索"
+                    :remote-method="remoteMethod"
+                    :loading="loading"
+                    @change="handleDriverSelect">
+                    <el-option
+                    	style="width:200px;"
+                        v-for="item in driverData"
+                        :key="item.userId"
+                        :label="item.userName"
+                        :value="item.userId">
+                    </el-option>
+                </el-select>
+           </div>
+           <div class="siteTable">
+               <el-table
+                   :data="tableData"
+                   style="width: 100%"
+                   max-height="500">
+                   <el-table-column
+                       prop="outTime"
+                       label="出车时间"
+                       width="180"
+                       :formatter="mydateFormat">
+                   </el-table-column>
+                   <el-table-column
+                       prop="backTime"
+                       label="返程时间"
+                       width="180"
+                       :formatter="mydateFormat">
+                   </el-table-column>
+                   <el-table-column
+                       prop="endTime"
+                       label="结束时间"
+                       width="180"
+                       :formatter="mydateFormat">
+                   </el-table-column>
+                   <el-table-column
+                       prop="licensePlate"
+                       label="车辆">
+                   </el-table-column>
+                   <el-table-column
+                       prop="driverName"
+                       label="驾驶员">
+                   </el-table-column>
+                   <el-table-column
+                       prop="packageNum"
+                       label="包裹数量">
+                   </el-table-column>
+                   <el-table-column
+                       label="操作">
+                       <template scope="scope">
+                          <div class="flex siteOperation">
+                          	  <router-link :to='{path:"/transportpackageDetail",query:{transportDetailId:scope.row.id}}' class="red">查看包裹</router-link>
+                          </div>
+                       </template>
+                   </el-table-column>
+               </el-table>
+               <el-pagination
+                   small
+                   class="right"
+                   style="margin-top: 20px;"
+                   @size-change="handleSizeChange"
+                   @current-change="handleCurrentChange"
+                   :current-page="currentPage"
+                   :page-sizes="[10, 20, 30, 40,50]"
+                   :page-size="pageSize"
+                   layout="total, sizes, prev, pager, next, jumper"
+                   :total="totalCount">
+               </el-pagination>
+           </div>
+       </div>
+    </div>
+</template>
+
+<script>
+    import {queryCompanyCars,queryTransportDetail,loadCompanyUserInfo} from '@/api/getData'
+    import {mapActions, mapState} from 'vuex'
+    import {formatDate} from '../utils/date.js'
+    import {mydateFormat} from '../utils/dataFormater.js'
+    import {getMenuAuth,haveMenuAuth,getSubMenuByMothod} from  '../utils/AuthMenu.js'
+    import { regionData ,CodeToText,TextToCode} from 'element-china-area-data'
+    import {userInfo} from '../config/mUtils.js'
+
+    export default {
+        components: {
+        },
+        data() {
+            return {
+                tableData:[],
+                outTimeBegin:'',
+                outTimeEnd:'',
+                backTimeBegin:'',
+                backTimeEnd:'',
+                companyCarsId:'',
+                driverId:'',
+                loading:false,
+
+                companyCarsData:[],
+
+                driverData:[],
+
+                currentPage:1,
+                pageSize:10,
+                totalCount:0,
+				authMenu:[],
+				routerPath:'transportDetail',
+
+                outTimeBefore:{
+                    disabledDate: (time) => {
+                        let beginDateVal = this.outTimeEnd;
+                        if (beginDateVal) {
+                            return time.getTime() > beginDateVal;
+                        }
+                    }
+                },
+                outTimeAfter:{
+                    disabledDate: (time) => {
+                        let beginDateVal = this.outTimeBegin;
+                        if (beginDateVal) {
+                            return time.getTime() < beginDateVal;
+                        }
+                    }
+                },
+
+                backTimeBefore:{
+                    disabledDate: (time) => {
+                        let beginDateVal = this.backTimeEnd;
+                        if (beginDateVal) {
+                            return time.getTime() > beginDateVal;
+                        }
+                    }
+                },
+                backTimeAfter:{
+                    disabledDate: (time) => {
+                        let beginDateVal = this.backTimeBegin;
+                        if (beginDateVal) {
+                            return time.getTime() < beginDateVal;
+                        }
+                    }
+                },
+            }
+        },
+        watch:{
+        	'$route':function (route) {
+        		this.initCompanyCars();
+				this.routerPath=route.path;
+        	}
+        },
+        mounted(){
+			this.authMenu=getSubMenuByMothod('munu_mj_008',new Array("drawingOut"),this.routerPath);
+        	this.initCompanyCars();
+            this.initFirstPage();
+        },
+        methods:{
+            getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+
+            handleSizeChange(val){
+                this.pageSize = val;
+                this.currentPage = 1;
+                this.initloadData();
+            },
+
+            handleCurrentChange(val){
+                this.currentPage = val;
+                this.initloadData();
+            },
+
+            initFirstPage(){
+            	this.currentPage = 1;
+            	this.initloadData();
+            },
+
+            //初始化公司车辆
+            async initCompanyCars() {
+            	let param ={
+            		pageIndex:1,
+    				pageSize:15,
+    				companyId:userInfo().companyId
+            	}
+                const res = await queryCompanyCars(param);
+                if (res.isSuccess == true) {
+                	this.companyCarsData = res.result.results;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+
+			//从服务器获取数据
+            async initloadData() {
+            	this.tableData = [];
+            	let q_outTimeBegin = '';
+            	let q_outTimeEnd = '';
+            	let q_backTimeBegin = '';
+            	let q_backTimeEnd = '';
+            	if(this.outTimeBegin != ''){
+            		q_outTimeBegin = formatDate(new Date(this.outTimeBegin),'yyyy-MM-dd')
+            	}
+            	if(this.outTimeEnd != ''){
+            		q_outTimeEnd = formatDate(new Date(this.outTimeEnd),'yyyy-MM-dd')
+            	}
+            	if(this.backTimeBegin != ''){
+            		q_backTimeBegin = formatDate(new Date(this.backTimeBegin),'yyyy-MM-dd')
+            	}
+            	if(this.backTimeEnd != ''){
+            		q_backTimeEnd = formatDate(new Date(this.backTimeEnd),'yyyy-MM-dd')
+            	}
+            	let param ={
+            		pageIndex:this.currentPage,
+    				pageSize:this.pageSize,
+    				outTimeBegin:q_outTimeBegin,
+    				outTimeEnd:q_outTimeEnd,
+    				backTimeBegin:q_backTimeBegin,
+    				backTimeEnd:q_backTimeEnd,
+    				driverId:this.driverId,
+    				companyCarsId:this.companyCarsId,
+    				companyId:userInfo().companyId
+            	}
+                const res = await queryTransportDetail(param);
+                if (res.isSuccess == true) {
+                	this.tableData = res.result.results;
+                	this.totalCount =  res.result.totalCount;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+                    });
+                }
+            },
+            mydateFormat,
+
+            //远程搜索模糊查询公司信息
+	        async remoteMethod(query){
+	            if(query!=''){
+	                this.loading = true;
+					this.driverData = [];
+	                let userParams = {
+	            		CompanyUser:{
+	            			userName:query,
+	            			compId:userInfo().companyId
+	            		},
+	            		pageSize:10,
+	            		pageIndex:1
+	            	}
+	        		const res2 = await loadCompanyUserInfo(userParams);
+	            	if (res2.isSuccess == true) {
+	            		this.driverData = res2.result.CompanyUser;
+	            	}
+	                setTimeout(() => {
+	                    this.loading = false;
+	                }, 200);
+	            } else {
+	            	this.driverId = '';
+	                this.driverData = [];
+	            }
+	        },
+
+	        handleDriverSelect(){
+	        	this.initFirstPage();
+	        },
+
+        },
+
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/siteConfig';
+</style>

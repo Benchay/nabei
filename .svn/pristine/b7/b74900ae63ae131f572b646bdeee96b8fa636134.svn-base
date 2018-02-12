@@ -1,0 +1,94 @@
+.addShop{
+    margin:1px 30px;
+    background: #fff;
+    padding: 20px 40px;
+    height:100%;
+    .store{
+        margin-top: 10px;
+        .storeList,.storeList1{
+            margin-right: 4%;
+            height:110px;
+            width: 25%;
+            margin-top: 20px;
+            padding: 10px 5px 10px 20px;
+            border:1px solid @orange;
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items:flex-start;
+            position: relative;
+            .list2{
+                height: 50px;
+                font-size: 12px;
+                margin-top: 10px;
+                width:100%;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                a{
+                    display: block;
+                    margin-bottom: 10px;
+                    color:#333;
+                }
+                .leftImg{
+                    width: 50px;
+                    height: 50px;
+                }
+                .delete{
+                    display: none;
+                    position: absolute;
+                    top:0;
+                    right:0;
+                    border-radius: 0 5px 0 0;
+
+                }
+            }
+            .list3{
+                margin-left: 5px;
+            }
+            .lose_efficacy{
+                position: absolute;
+                right:20px;
+                top: 20px;
+            }
+        }
+        .storeList1{
+            border:1px solid #dedede;
+            background: #f5f5f5;
+        }
+        .storeList:hover{
+            .delete{
+                display: block;
+            }
+
+        }
+        .listLast{
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    }
+}
+.binding{
+    background: #fff;
+    margin:0 30px 20px;
+    height:70%;
+    flex-direction: column;
+    justify-content: center;
+    img{
+        width: 100px;
+        height: 100px;
+    }
+    p{
+        font-size: 13px;
+        margin: 10px 0;
+        color:#999;
+    }
+}
+.orderMenu{
+    margin:0 30px;
+    background: #fff;
+    height: 30px;
+    padding: 20px 0 0 40px;
+}

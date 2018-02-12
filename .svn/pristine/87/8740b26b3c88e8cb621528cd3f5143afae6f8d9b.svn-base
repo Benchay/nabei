@@ -1,0 +1,108 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li>
+                <router-link :to='{path:"/stallManage"}'>档口管理</router-link>
+            </li>
+            <li class="menuIndex2">
+                <router-link :to='{path:"/stallSettlement"}'>档口结算</router-link>
+            </li>
+            <li>
+                <router-link :to='{path:"/SettlementRecords"}'>结算单</router-link>
+            </li>
+        </ul>
+        <div class="sellerSettlement">
+            <router-link :to='{path:"/stallSettlement"}' class="comeBack2 right">返回</router-link>
+            <div class="details" v-for="list in info">
+                <el-col :span="24">
+                    <el-col :span="24">档口名称：哈哈哈哈哈</el-col>
+                    <el-col :span="6">当前总欠款：6000</el-col>
+                    <el-col :span="18">
+                        <div  class="flex">
+                            <p v-bind:class="[list.state ==1?'style1':list.state ==2?'style2':'']">{{list.state == 1?'周结':list.state == 2?'月结':''}}</p>
+                            <p>{{list.date}}</p>
+                        </div>
+                    </el-col>
+                    <el-col :span="6">已到期：2000</el-col>
+                    <el-col :span="18">未到期：2000</el-col>
+                </el-col>
+            </div>
+            <div class="detailsTable">
+                <p class="tableTop">结算记录：</p>
+                <el-table
+                    :data="tableData6"
+                    style="width: 100%">
+                    <el-table-column
+                        prop="payType"
+                        label="支付类型">
+                    </el-table-column>
+                    <el-table-column
+                        prop="account"
+                        label="支付账户">
+                    </el-table-column>
+                    <el-table-column
+                        prop="sum"
+                        label="结算金额">
+                    </el-table-column>
+                    <el-table-column
+                        prop="date"
+                        label="结算时间">
+                    </el-table-column>
+                    <el-table-column
+                        prop="status"
+                        label="结算状态">
+                        <template scope="scope">
+                            <p>{{scope.row.status ==1?'付款成功':scope.row.status ==2?'等待付款':scope.row.status ==3?'付款失败':''}}</p>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    import headTop from '../components/headTop'
+    export default {
+        components: {
+            headTop,
+        },
+        data() {
+            return {
+                checked:false,
+                info:[{
+                    state:1,
+                    date:'1号',
+                }],
+                tableData6:[{
+                    payType:'支付宝',
+                    account:13479896431,
+                    sum:555,
+                    status:1,
+                    date:'2017-02-11'
+                },{
+                    payType:'微信',
+                    account:'163123@163.com',
+                    sum:555,
+                    status:2,
+                    date:'2017-02-11'
+                },{
+                    payType:'网银',
+                    account:6222021302315405,
+                    sum:555,
+                    status:3,
+                    date:'2017-02-11'
+                }]
+            }
+        },
+        methods: {
+
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/sellerSettlement';
+</style>
