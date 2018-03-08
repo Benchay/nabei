@@ -116,9 +116,12 @@
                             width="180">
                         </el-table-column>
                         <el-table-column
-                            prop="companyName"
                             label="档口名称"
                             width="180">
+                            <template scope="scope">
+                                <p v-if="scope.row.companyName == null && scope.row.companyId == -1">组合包裹</p>
+                                <p v-else>{{scope.row.companyName}}</p>
+                            </template>
                         </el-table-column>
                         <el-table-column
                             prop="takeNum"
@@ -227,7 +230,7 @@
                 <el-row type="flex" justify="center" align="middle">
                     <el-col :span="4">包裹标题 :</el-col>
                     <el-col :span="12" style="padding-right: 20px;">
-                        <el-input v-model="packName" placeholder="请输入包裹标题"></el-input>
+                        <el-input v-model="packName" maxlength="8" placeholder="请输入包裹标题"></el-input>
                     </el-col>
                 </el-row>
             </div>
@@ -614,8 +617,16 @@
                             type: 'error',
                             message: "请输入正确的包裹数量"
                         });
-                    debugger;
+                    // debugger;
                         return false
+                    }else{
+                        if(this.packnum>100){
+                            this.$message({
+                                type: 'error',
+                                message: "单次新建数量不能大于100"
+                            });
+                             return false
+                        }
                     };
                 if(!this.papeSizevalue&&bprint){
                     this.$message({
@@ -645,10 +656,9 @@
                     createNum: this.packnum,
                     packageType: 1,
                 }
-                alert(1);
+                // alert(1);
                 const res = await batchCreateSelerPackage(param);
                 if(res.isSuccess){
-                    alert(2);
                     this.idlist = res.result;
                     if(bprint){
                         printPackage(this.idlist,printWidth,printHeight,packName)
@@ -659,7 +669,6 @@
                     });
                     this.initloadData();
                 }else{
-                    alert(3)
                     this.$message({
                         type: 'error',
                         message: res.errMsg

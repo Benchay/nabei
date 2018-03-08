@@ -1,0 +1,516 @@
+<template>
+    <div class="fillcontain">
+        <div class="homeSeller">
+            <el-col :span="15" class="isLeft">
+                <div class="leftStatistics">
+                    <div class="flex">
+                        <img src="../image/ssfunction.png" alt="">
+                        <p class="title">常用功能</p>
+                    </div>
+                    <div class="leftFunction">
+                        <ul class="flex2">
+                            <li :v-if="getMenuAuthFun('addShop')">
+                                <router-link :to='{path:"/addShop"}'>
+                                <div>
+                                    <div class="icon1 icon"><img src="../image/sy_icon01.png" alt=""></div>
+                                    <div>绑定店铺</div>
+                                </div>
+                                </router-link>
+                            </li>
+                            <li :v-if="getMenuAuthFun('packageDetails')">
+                                <router-link :to='{path:"/packageDetails"}'>
+                                <div>
+                                    <div class="icon2 icon"><img src="../image/sy_icon02.png" alt=""></div>
+                                    <div>包裹管理</div>
+                                </div>
+                                </router-link>
+                            </li>
+                            <li v-if="getMenuAuthFun('salesReturn')">
+                                <router-link :to='{path:"/salesReturn"}'>
+                                <div>
+                                    <div class="icon3 icon"><img src="../image/sy_icon03.png" alt=""></div>
+                                    <div>退货管理</div>
+                                </div>
+                                </router-link>
+                            </li>
+                            <li v-if="getMenuAuthFun('stallSettlement')">
+                                <router-link :to='{path:"/stallSettlement"}'>
+                                <div>
+                                    <div class="icon4 icon"><img src="../image/sy_icon04.png" alt=""></div>
+                                    <div>档口结算</div>
+                                </div>
+                                </router-link>
+                            </li>
+                            <li v-if="getMenuAuthFun('financialManagement2')">
+                                <router-link :to='{path:"/financialManagement2"}'>
+                                <div>
+                                    <div class="icon5 icon"><img src="../image/sy_icon05.png" alt=""></div>
+                                    <div>财务交易记录</div>
+                                </div>
+                                </router-link>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="leftStatistics">
+                   <div class="flex" style="border-bottom:1px solid #d7d7d7;padding-bottom: 5px">
+                       <div class="flex">
+                           <img src="../image/statistics.png" alt="">
+                           <p class="title">数据统计</p>
+                       </div>
+                       <ul class="flex">
+                           <li v-for="(obj,index) in items" @click="salesTabs(index)"><a href="javascript:void(0)" :class="{'checked':index === clickIndex}" class="cheked1">{{obj.title}}</a></li>
+                       </ul>
+                   </div>
+                    <ul class="leftStatisticsList flex">
+                        <li>
+                            <div>
+                                <div>采购量（件）</div>
+                                <div class="bigText">{{this.formatData(this.purchaseRequireVO.totalNum)}}</div>
+                                <div><img :src="formatImages(this.purchaseRequireVO.totalNumRate)" alt=""><span :class="[upDescend == 1?'up':upDescend == 2?'descend':'']">{{this.totalNumRate}}%</span>{{this.title}}</div>
+        </div>
+                        </li>
+                        <li>
+                            <div>
+                                <div>采购订单数（个）</div>
+                                <div class="bigText">{{this.formatData(this.purchaseRequireVO.orderNub)}}</div>
+                                <div><img :src="formatImages(this.purchaseRequireVO.orderNubRate)" alt=""><span :class="[upDescend == 1?'up':upDescend == 2?'descend':'']">{{this.orderNubRate}}%</span>{{this.title}}</div>
+                            </div>
+                        </li>
+                        <li>
+                            <div>
+                                <div>采购金额（元）</div>
+                                <div class="bigText">{{this.formatData(this.purchaseRequireVO.totalFee)}}</div>
+                                <div><img :src="formatImages(this.purchaseRequireVO.totalFeeRate)" alt=""><span :class="[upDescend == 1?'up':upDescend == 2?'descend':'']">{{this.totalFeeRate}}%</span>{{this.title}}</div>
+                            </div>
+                        </li>
+                        <li>
+                            <div>
+                                <div>采购单品（个）</div>
+                                <div class="bigText">{{this.formatData(this.purchaseRequireVO.goodsNub)}}</div>
+                                <div><img :src="formatImages(this.purchaseRequireVO.goodsNubRate)" alt=""><span :class="[upDescend == 1?'up':upDescend == 2?'descend':'']">{{this.goodsNubRate}}%</span>{{this.title}}</div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="stallData" style="width:96%;overflow: auto">
+                    <div class="stallDataTitle">
+                        <p class="left">销售数据</p>
+                        <el-radio-group v-model="radio3" size="small" class="right radioRed">
+                            <el-radio-button label="1">七天</el-radio-button>
+                            <el-radio-button label="2">一个月</el-radio-button>
+                            <el-radio-button label="3">三个月</el-radio-button>
+                        </el-radio-group>
+                    </div>
+                    <div class="stallDataButton">
+                        <ul class="flex">
+                            <li v-for="(obj,index) in itemss" @click="salesTabss(index)"  :class="{'change2':index === clickIndex2}">
+                                <a href="javascript:void(0)">{{obj}}</a>
+                            </li>
+                        </ul>
+                    </div>
+                    <stockedLine :lineData="lineData" :lineUnit="lineUnit" :numData="numData" :typeName="typeName" :lineColor="lineColor"></stockedLine>
+                </div>
+            </el-col>
+            <el-col :span="9" class="isRight">
+                <div class="newNotice">
+                   <div class="flex">
+                       <img src="../image/tmessage03.png" alt="">
+                       <p class="title">最新公告</p>
+                   </div>
+                    <ul class="noticeList" >
+                        <li v-for="item in bulletins">{{item.label}}</li>
+                    </ul>
+                    <div class="right noticeButton"><router-link :to='{path:"/systemNotice",query:{applicationId:"5"}}'>查看更多 》</router-link></div>
+                </div>
+                <div class="newDynamic">
+                    <div class="flex">
+                        <img src="../image/tmessage03.png" alt="">
+                        <p class="title">近期动态</p>
+                    </div>
+                    <ul class="DynamicList">
+                        <li class="flex" v-for="item in notifyInfo">
+                            <div class="listHead">
+                                <img src="../image/sprite01.png" alt="">
+                            </div>
+                            <div class="state">
+                                <p class="flex"><span class="listState">{{item.orderStatus}}</span><span class="listNum">{{item.companyName}}</span></p>
+                                <p class="flex"><span class="listState">{{item.sendTime}}</span><span class="listNum">包裹编号：{{item.code}}</span></p>
+                            </div>
+                        </li>
+                    </ul>
+                    <div class="right noticeButton"><router-link :to='{path:"/messageCenter"}'>查看更多 》</router-link></div>
+                </div>
+                <router-link :to='{path:"/sellerIntroduction"}' class="greenHand">
+                    <div>
+                        <p class="title">新手入门</p>
+                        <div class="greenHandImg">
+                            <img src="../image/timg2.png" alt="">
+                        </div>
+                    </div>
+                </router-link>
+            </el-col>
+            <el-col :span="24" style="height: 110px;">&nbsp;</el-col>
+        </div>
+    </div>
+</template>
+
+<script>
+	import {apiCount, userCount, orderCount, apiAllCount, getUserCount, getOrderCount, adminDayCount, adminCount,statisticsPurchaseInfo,queryWorkMessage,queryBulletin,queryOrderLog,queryWorkMessageLog,statisticsOrderDetail} from '@/api/getData'
+    import {getStore} from  '../config/mUtils'
+    import {formatDate} from '../utils/date.js'
+    import stockedLine from '../components/stockedLine'
+    import {isNullObject} from '../utils/common.js'
+    import {getMenuAuth} from  '../utils/AuthMenu.js'
+
+    export default {
+        components: {
+            stockedLine
+        },
+    	data(){
+    		return {
+                roleForm: {
+                    userId: '',
+                    roleId: '',
+                    compId:''
+                },
+                clickIndex:0,
+                items:[
+                    {title:'今日'},
+                    {title:'本周'},
+                    {title:'本月'},
+                ],
+                title:'',
+                upDescend:1,
+                purchaseRequireVO:'',
+                bulletins:[],
+                image_up:require("../image/up.png"),
+                image_descend:require("../image/descend.png"),
+                pageIndex:1,
+                pageSize:8,
+                requireCntChangeRate:'',
+                totalNumChangeRate:'',
+                totalFeeChangeRate:'',
+                orderNumChangeRate:'',
+                orderLogList:'',
+                clickIndex2:0,
+                radio3:1,
+                //线形图数据
+                lineData:[
+                    ['10-01'],
+                    ['10-02'],
+                    ['10-03'],
+                    ['10-04'],
+                    ['10-05'],
+                    ['10-06'],
+                    ['10-07']],
+                numData:[20, 132, 101, 134, 90, 230, 210],
+                lineUnit:'',
+                typeName:'',
+                lineColor:'#da444f',
+                itemss:['采购','退货'],
+                notifyInfo:[]
+    		}
+    	},
+        mounted(){
+            var userInfo=getStore("user_info_user");
+            var vjson = JSON.parse(userInfo);
+            this.roleForm.userId=vjson.id;
+
+			const currentComp = getStore("curCompany");
+            if(!isNullObject(currentComp)){
+                const vcom = JSON.parse(currentComp);
+                this.roleForm.compId = vcom.id;
+            }
+            this.title = '环比昨日';
+            let param = {
+                "checkedDate":'1',
+                "companyId":this.roleForm.compId,
+                "orderType":'1',
+                "model":'1'
+            };
+            this.loadPurchaseInfo(param);//采购信息统计
+
+    	    this.loadBulletinInfo();//公告信息
+
+            this.loadWorkMessage();
+
+        },
+    	methods: {
+            salesTabss(index){
+                this.clickIndex2 = index;
+            },
+            getMenuAuthFun(index){
+                return getMenuAuth(index);
+            },
+            salesTabs(index) {
+                this.clickIndex = index;
+                if(this.clickIndex==0){
+                    this.title = '环比昨日';
+                    let param = {
+                        "checkedDate":'1',
+                        "companyId":this.roleForm.compId,
+                        "orderType":'1',
+                        "model":'1'
+                    };
+                    this.loadPurchaseInfo(param);
+                }else if(this.clickIndex ==1){
+                    this.title = '环比上周';
+                    let param = {
+                        "checkedDate":'7',
+                        "companyId":this.roleForm.compId,
+                        "orderType":'1',
+                        "model":'1'
+                    };
+                    this.loadPurchaseInfo(param);
+                }else if(this.clickIndex ==2){
+                    this.title = '环比上月';
+                    let param = {
+                        "checkedDate":'30',
+                        "companyId":this.roleForm.compId,
+                        "orderType":'1',
+                        "model":'1'
+                    };
+                    this.loadPurchaseInfo(param);
+                }
+            },
+
+            async loadPurchaseInfo(param){
+//                const res = await statisticsPurchaseInfo(param);
+//                if(res.isSuccess){
+//                	if(res.result.data!=null){
+//                		this.purchaseRequireVO = res.result.data;
+//                    	this.requireCntChangeRate = this.formatNum(this.purchaseRequireVO.requireCntChangeRate);
+//	                    this.totalNumChangeRate = this.formatNum(this.purchaseRequireVO.totalNumChangeRate);
+//	                    this.totalFeeChangeRate = this.formatNum(this.purchaseRequireVO.totalFeeChangeRate);
+//	                    this.orderNumChangeRate = this.formatNum(this.purchaseRequireVO.orderNumChangeRate);
+//                	}
+//                }else{
+//                    this.$message({
+//                        type:'error',
+//                        message:res.errorMsg
+//                    });
+//                }
+                const res = await statisticsOrderDetail(param);
+                if(res.isSuccess){
+                    this.purchaseRequireVO = res.result;
+                    this.goodsNubRate = this.formatNum(this.purchaseRequireVO.goodsNubRate);
+	                this.orderNubRate = this.formatNum(this.purchaseRequireVO.orderNubRate);
+	                this.totalFeeRate = this.formatNum(this.purchaseRequireVO.totalFeeRate);
+	                this.totalNumRate = this.formatNum(this.purchaseRequireVO.totalNumRate);
+                }else{
+                    this.$message({
+                        type:'error',
+                        message:res.errorMsg
+                    });
+                }
+            },
+
+            async loadBulletinInfo(){
+                let param = {
+                    "applicationId":'5',
+                    "pageIndex":this.pageIndex,
+                    "pageSize":3
+                };
+
+                const res = await queryBulletin(param);
+                if(res.isSuccess){
+                    let data = res.result.data;
+                    if(data==undefined){
+                        return;
+                    }
+                    for(let i = 0;i<data.length;i++){
+                        let pa = {
+                            "label":'【'+ this.formatDate(data[i].createTime) + '】' + '公告标题：' + data[i].title,
+                            "value":data[i].id
+                        };
+                        this.bulletins.push(pa);
+                    }
+                }else{
+                    this.$message({
+                        type:'error',
+                        message:res.errorMsg
+                    });
+                }
+            },
+
+            //查询订单动态
+            async loadOrderLogInfo(param){
+                this.orderLogList = [];
+                const res = await queryOrderLog(param);
+                if(res.isSuccess){
+                    this.orderLogList = res.result.results;
+                }else{
+                    this.$message({
+                        type:'error',
+                        message:res.errorMsg
+                    });
+                }
+            },
+
+            //查询消息
+            async loadWorkMessage(){
+                let param = {
+                    "toUserId":"402880fb5f9ec927015f9ffac2b500e7",
+                    "type":"WORK_NEWS",
+                    "state":"VALID",
+                    "pageIndex":1,
+                    "pageSize":3
+
+                };
+                const res = await queryWorkMessage(param);
+                if(res.isSuccess){
+                    this.notifyInfo = [];
+                    let data = res.result.results;
+                    if(data==undefined){
+                        return;
+                    }
+                    for(var i= 0 ;i<data.length;i++){
+                        var obj = data[i];
+                        var item = {};
+                        let content = JSON.parse(obj.content)
+                        item.companyName = content.companyName;
+                        obj.orderTitle = '订单id';
+                        if(obj.sendTime){
+                            item.sendTime = formatDate(obj.sendTime,"yyyy-MM-dd");
+                        }
+                        if(obj.operate && obj.operate == 'STALL_CREATE_PACKAGE'){
+                            item.orderStatus = "已打包";
+                            if(content.packageCode){
+                                item.code = content.packageCode;
+                            }
+                        }else if(obj.operate && obj.operate == 'SELLER_TAKE_PACKAGE'){
+                            item.orderStatus = "已拿货";
+                            if(content.packageCode){
+                                item.code = content.packageCode;
+                            }
+                        }else if(obj.operate && obj.operate == 'SELLER_LOAD_PACKAGE'){
+                            item.orderStatus = "已装车";
+                            if(content.packageCode){
+                                item.code = content.packageCode;
+                            }
+                        }else if(obj.operate && obj.operate == 'SELLER_UNLOAD_PACKAGE'){
+                            item.orderStatus = "已卸车";
+                            if(content.packageCode){
+                                item.code = content.packageCode;
+                            }
+                        }else if(obj.operate && obj.operate == 'STALL_CREATE_OUTSETTLEMENTORDER_APPLY'){
+                            item.orderStatus = "提交付款结算申请";
+                            item.orderTitle = '结算单id';
+                            if(content.orderCode){
+                                item.code = content.orderCode;
+                            }
+                        }else if(obj.operate && obj.operate == 'STALL_CREATE_INSETTLEMENTORDER_APPLY'){
+                            item.orderStatus = "提交收款结算申请";
+                            item.orderTitle = '结算单id';
+                            if(content.orderCode){
+                                item.code = content.orderCode;
+                            }
+                        }
+                        this.notifyInfo.push(item);
+                    }
+
+                }
+
+            },
+
+            checkStatus(obj){
+                var content = JSON.parse(obj.content);
+                if(obj.operate && obj.operate == 'STALL_CREATE_PACKAGE'){
+                    obj.tempOrderStatus = "已打包";
+                    if(content.orderId){
+                        obj.tempOrderId = content.orderId;
+                    }
+                }else if(obj.operate && obj.operate == 'SELLER_RETURN_ORDER_APPLY'){
+                    obj.tempOrderStatus = "已提交退货申请";
+                    if(content.orderId){
+                        obj.tempOrderId = content.orderId;
+                    }
+                }else if(obj.operate && obj.operate == 'STALL_RETURN_ORDER_SIGN'){
+                    obj.tempOrderStatus = "已签收";
+                    if(content.orderId){
+                        obj.tempOrderId = content.orderId;
+                    }
+                }else if(obj.operate && obj.operate == 'STALL_RETURN_ORDER_CONFIRM'){
+                    obj.tempOrderStatus = "已确认";
+                    if(content.orderId){
+                        obj.tempOrderId = content.orderId;
+                    }
+                }else if(obj.operate && obj.operate == 'SELLER_CREATE_OUTSETTLEMENTORDER_APPLY'){
+                    obj.tempOrderStatus = "提交付款结算申请";
+                    obj.tempOrderTitle = '结算单id';
+                    if(content.settlementOrderId){
+                        obj.tempOrderId = content.settlementOrderId;
+                    }
+                }else if(obj.operate && obj.operate == 'SELLER_CREATE_INSETTLEMENTORDER_APPLY'){
+                    obj.tempOrderStatus = "提交收款结算申请";
+                    obj.tempOrderTitle = '结算单id';
+                    if(content.settlementOrderId){
+                        obj.tempOrderId = content.settlementOrderId;
+                    }
+                }else if(obj.operate && obj.operate == 'STALL_CREATE_STOCKORDER'){
+                    obj.tempOrderStatus = "已提交采购订单";
+                    obj.tempOrderTitle = '采购订单id';
+                    if(content.stockOrderId){
+                        obj.tempOrderId = content.stockOrderId;
+                    }
+                }
+            },
+
+            checkOrderCode(val){
+                var content = JSON.parse(val);
+
+                return '';
+            },
+
+            formatData(data){
+                if(data==''||data==undefined){
+                    return "0";
+                }else{
+                    return data;
+                }
+            },
+
+            //数据格式化
+            formatDate:function(date) {
+                if (date == undefined||date=='') {
+                    return "";
+                }
+                var date2 = new Date(date);
+                return formatDate(date2,'yyyy-MM-dd');
+            },
+
+            formatImages(param){
+                if(param==-1||param==undefined){
+                    return ;
+                }
+                if(param>0){
+                    this.upDescend = 1;
+                    return this.image_up;
+                }else if(param<0){
+                    this.upDescend = 2;
+                    return this.image_descend;
+                }
+
+            },
+
+            formatNum(param){
+                if(param==undefined||param==-1){
+                    return "0";
+                }
+                if(param<0){
+                    return -param;
+                }else{
+                    return param;
+                }
+            }
+    	}
+    }
+</script>
+
+<style lang="less">
+	@import '../style/mixin';
+	@import "../style/common";
+    @import "../style/homeSeller";
+
+</style>

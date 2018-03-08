@@ -1,0 +1,257 @@
+<template>
+    <div class="login_page fillcontain">
+        <el-col :span="24" class="loginTop flex">
+            <el-col :span="3"></el-col>
+            <el-col :span="3" class="logo flex3">
+                <img src="../image/logo1.png" alt="">
+            </el-col>
+            <el-col :span="8"></el-col>
+            <el-col :span="4" class="loginTelphone">联系电话：130-2394-6186</el-col>
+            <el-col :span="6" class="flex">
+                <div class="loginAPP flex2">
+                    <div class="flex3">
+                        <p>电商卖家</p>
+                        <p>APP下载</p>
+                    </div>
+                    <img src="../image/erweima1.png" alt="">
+                </div>
+                <div class="loginAPP flex2">
+                    <div class="flex3">
+                        <p>档口</p>
+                        <p>APP下载</p>
+                    </div>
+                    <img src="../image/erweima1.png" alt="">
+                </div>
+            </el-col>
+        </el-col>
+        <el-col :span="24"  class="loginContent">
+            <el-col :span="0">
+                <transition name="form-fade" mode="in-out">
+            <section class="form_contianer form_contianer2">
+                <div class="manage_tip">
+                    <p>忘记密码</p>
+                </div>
+                <el-form :model="changepwdForm" :rules="registerRule" ref="changepwdForm">
+				     <el-form-item prop="userName">
+                        <el-input type="userName" v-model="changepwdForm.userName" placeholder="手机号"></el-input>
+                    </el-form-item>
+                    <el-form-item prop="newPwd">
+                        <el-input v-model="changepwdForm.newPwd" placeholder="新密码" type="password"></el-input>
+                    </el-form-item>
+                    <el-form-item prop="checkPwd">
+                        <el-input v-model="changepwdForm.checkPwd" placeholder="请再次输入密码" type="password"></el-input>
+                    </el-form-item>
+                    <el-form-item prop="mobileCode">
+                        <el-input v-model="changepwdForm.mobileCode" placeholder="请输入手机验证码">
+                        </el-input>
+         <timer-btn class="btn btn-default" ref="timebtn" v-on:refCheckmobile="checkMobileForm"  v-ref:btn :second="60" :mobilehpne="this.changepwdForm.userName"></timer-btn>
+                    </el-form-item>
+                    <el-form-item>
+                        <el-button type="primary" @click="submitForm('changepwdForm')" class="submitBtn2">确认</el-button>
+                    </el-form-item>
+                </el-form>
+                <div class="refisterFoot">
+                    <router-link  :to='{path:"/"}' class="goLogin">已经有账号？<span>马上登录</span></router-link>
+                </div>
+            </section>
+        </transition>
+            </el-col>
+        </el-col>
+        <el-col :span="24" class="flex">
+            <div class="Copyright">Copyright &copy; 2017 Nabei.net 版权所有</div>
+        </el-col>
+    </div>
+</template>
+<script>
+	import {findpwdByPhone, getAdminInfo,findUserByMobile} from '@/api/getData'
+	import {mapActions, mapState} from 'vuex'
+    import {setStore} from  '../config/mUtils'
+    import timerBtn from '../components/timerBtn'
+
+    export default {
+        components: {
+            timerBtn,
+        },
+        name: 'register',
+        data () {
+			var validateUser = (rule, value, cb) => {
+                var pattern = /^1(3|4|5|7|8)\d{9}$/
+                if (value === '') {
+                    cb(new Error('请输入手机号'))
+                } else if (!pattern.test(value)) {
+                    cb(new Error('请输入11位手机号'))
+                } else {
+                    cb()
+                }
+            }
+            var validatePwd = (rule, value, cb) => {
+                value=value.trim();
+                var pattern = /^(?![0-9]+$)(?![a-zA-Z]+$)[0-9A-Za-z]{6,16}$/
+                if (value === '') {
+                    cb(new Error('请输入密码'))
+                }else if(value.indexOf(' ')>0 ){
+                    cb(new Error('密码不能有空格'))
+                } else if (!pattern.test(value)) {
+                    cb(new Error('请输入6-16位数字和字母的组合'))
+                } else {
+                    if (this.changepwdForm.checkPwd !== '') {
+                        this.$refs.changepwdForm.validateField('checkPwd')
+                    }
+                    cb()
+                }
+            }
+            var validateCheckPwd = (rule, value, cb) => {
+                value=value.trim();
+                var trimvalue=this.changepwdForm.newPwd.trim();
+                if (value === '') {
+                    cb(new Error('请再次输入密码'))
+                }else if(value.indexOf(' ') >0 ){
+                    cb(new Error('密码不能有空格'))
+                } else if (value !== trimvalue) {
+                    cb(new Error('两次输入密码不一致!'))
+                } else {
+                    cb()
+                }
+            }
+            var validateCaptcha  = (rule, value, cb) => {
+                value=value.trim();
+                var pattern = /^\s*(\S+)\s*$/;
+                if (value === '') {
+                    cb(new Error('请输入验证码'))
+                } else if (!pattern.test(value)) {
+                    cb(new Error('验证码不能有空格'))
+                } else {
+                    cb()
+                }
+            }
+            return {
+                //styles:'change',
+                changepwdForm: {
+					userName: '',
+                    newPwd: '',
+                    checkPwd: '',
+                    mobileCode: ''
+                },
+                registerRule: {
+					userName: [
+                        { validator: validateUser, trigger: 'blur' }
+                    ],
+                    newPwd: [
+                        { validator: validatePwd, trigger: 'blur' }
+                    ],
+                    checkPwd: [
+                        { validator: validateCheckPwd, trigger: 'blur' }
+                    ],
+                    mobileCode: [
+                        { validator: validateCaptcha, trigger: 'blur' }
+                    ]
+                }
+            }
+        },
+        computed: {
+            captchaMsg () {
+                return this.$store.getters.getCaptchaMsg
+            }
+        },
+        methods: {
+            async checkMobileForm(mobile){
+                this.$refs['changepwdForm'].validateField('userName', (vaild) => {
+
+                });
+                var reg = /^1[3|4|5|7|8][0-9]{9}$/; //验证规则
+                var flag = reg.test(mobile);
+                if(!flag)return false;
+                mobile=mobile.trim();
+                const res= await findUserByMobile({"mobile":mobile});
+                console.log(res)
+                if (res.isSuccess == true) {
+                    var checkmobile=res.result.user.mobile;
+                    //console.log(checkmobile)
+                    if(checkmobile ==null || checkmobile ==''){
+                        this.$message.error({
+                            title: 'error',
+                            message: '该手机号未注册',
+                            offset: 100
+                        });
+                        return false;
+                    }
+                }else{
+                    if(res.errorMsg=='用户未注册'){
+                        this.$message({
+                            type: 'error',
+                            message: '该手机号未注册'
+                        });
+                    }else{
+                        this.$message({
+                            type: 'error',
+                            message:  res.errorMsg
+                        });
+                    }
+
+                    return false;
+                }
+                this.$refs.timebtn.send();
+                //return true;
+            },
+			//...mapActions(['getAdminData']),
+			async submitForm(formName) {
+				this.$refs[formName].validate(async (valid) => {
+					if (valid) {
+                        var newpsd =this.changepwdForm.newPwd.trim();
+                        var mcode =this.changepwdForm.mobileCode.trim();
+						//const rmobile=mobile.trim();
+                        const res = await findpwdByPhone({mobile:this.changepwdForm.userName,newPwd:newpsd,mobileCode:mcode})
+						if (res.isSuccess == true) {
+							this.$message({
+		                        type: 'success',
+		                        message: '重置密码成功'
+		                    });
+							this.$router.push({path: '/',query:{}})
+                            //this.token=res.result.token;
+							//setStore("token",this.token)
+                        }else{
+							this.$message({
+		                        type: 'error',
+		                        message: res.errorMsg
+		                    });
+						}
+					} else {
+					    /*
+                        this.$message({
+                            type: 'error',
+                            message: res.errorMsg
+                        });*/
+						return false;
+					}
+				});
+			},
+            getCaptcha () {
+                this.$refs.changepwdForm.validateField('email', (vaild) => {
+                    if (!vaild) {
+                        let data = {
+                            email: this.changepwdForm.email
+                        }
+                        sendCaptcha(this, data)
+                    } else {
+                        return false
+                    }
+                })
+            }
+        }
+    }
+
+</script>
+
+<!-- Add "scoped" attribute to limit CSS to this component only -->
+
+<style lang="less" scoped>
+    @import '../style/mixin';
+    @import "../style/login";
+
+    .getCode,.waitingGetCode{
+        position: absolute;
+        right: 0;
+        top: 0;
+        height: 36px;
+    }
+</style>

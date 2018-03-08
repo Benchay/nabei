@@ -1,0 +1,575 @@
+<template>
+    <div class="fillcontain">
+        <ul class="menu">
+            <li v-if="getMenuAuthFun('webStoreOrderSalesBuy')">
+                <router-link :to='{path:"/webStoreOrderSalesBuy"}'>网店订单</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('purchaseRequireBuy')">
+                <router-link :to='{path:"/purchaseRequireBuy"}'>采购需求</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('orderPurchaseBuy')">
+                <router-link :to='{path:"/orderPurchaseBuy"}'>采购订单</router-link>
+            </li>
+            <!-- <li v-if="getMenuAuthFun('addShop')">
+                <router-link :to='{path:"/addShop"}'>绑定店铺</router-link>
+            </li> -->
+            <li class="menuIndex2" v-if="getMenuAuthFun('packageDetails')">
+                <router-link :to='{path:"/packageDetails"}'>包裹管理</router-link>
+            </li>
+            <li v-if="getMenuAuthFun('salesForecast')">
+                <router-link :to='{path:"/salesForecast"}'>采购统计</router-link>
+            </li>
+        </ul>
+        <div class="startProcurement">
+            <div>
+                <el-row>
+                    <el-col :span="22"><p>包裹详情</p></el-col>
+                    <el-col :span="2"><router-link :to='{path:"/packageDetails"}' class="comeBack2 right">返回</router-link></el-col>
+                </el-row>
+                <el-row style="margin: 30px 0 25px 0;">
+                    <el-col :span="24">
+                        <el-button style="padding: 10px;" class="buttonColor3" @click="putqrcode">打印二维码</el-button>
+                        <el-button style="padding: 10px; margin-left: -5px;" class="buttonColor3" @click="packErrorDialogVisible = true">标记处理</el-button>
+                    </el-col>
+                </el-row>
+                <div class="emptymianwrap">
+                    <div class="detailwrap">
+                        <el-row>
+                            <el-col :span="8">档口名称：{{stallName}}</el-col>
+                            <el-col :span="8">包裹编号：{{packageCode}}</el-col>
+                            <el-col :span="8">包裹状态：{{packState | formatState}}</el-col>
+                        </el-row>
+                        <el-row>
+                            <el-col :span="8">包裹类型：{{packType | formatType}}</el-col>
+                            <el-col :span="8">创建时间：{{creatTime | formatDate}}</el-col>
+                            <el-col :span="8">创建人：{{userName}}</el-col>
+                        </el-row>
+                        <el-row>
+                            <el-col :span="1" v-if="errorShow"><div class="errorimgwrap"><img src="../image/exclamatory.png" alt=""></div>
+                            </el-col>
+                            <el-col :span="23">     
+                                <div style="font-size:0px;">
+                                    <span class="errortitle" v-if="errorShow">异常包裹:</span>
+                                    <span class="errormessageDetail">{{exceptionMemo}}</span><br>
+                                    <span class="errortitle" v-if='handleExceptionMemo != null'>异常备注:</span>
+                                    <span class="errormessageDetail">{{handleExceptionMemo}}</span>
+                                </div>
+                            </el-col>
+                        </el-row>
+                    </div>
+                    <div class="qrcodewrap" id="preview">
+                        <qrcode :value="'hmj_p_info'+packId" tag="img" :options="{ size: 110 }"></qrcode>  
+                    </div>
+                    <div class="qrDetail">
+                        卖家自建包裹
+
+                        创建人：{{userName}}
+                    </div>
+                </div>
+                 <el-row style="margin: 30px 0;">
+                    <el-col :span="24"><p>包裹动态</p></el-col>
+                </el-row>
+                    <div class="goodscontent">
+                       <div class="gooditem">
+                            <div class="gooditemTop">
+                                <div class="mdimgwrap">
+                                    <img src="../image/packagec.png" alt="" v-if="creatpack">
+                                </div>
+                                <span class="describetion" :class="{'active':creatpack}">档口打包</span>
+                                <span class="line" :class="{'active':creatpack}"></span>
+                            </div>
+                            <div class="gooditemBottom" v-if="creatpack">
+                                <p><span>档口名称&nbsp;:</span><span>&nbsp;{{stallName}}</span></p>
+                                <p><span>操作时间&nbsp;:</span><span>&nbsp;{{creatpacktime | formatDate}}</span></p>
+                                <p><span>商品数量&nbsp;:</span><span>&nbsp;{{creatpacknum}}</span></p>
+                            </div>
+                        </div> 
+                        <div class="gooditem">
+                            <div class="gooditemTop">
+                                <div class="mdimgwrap">
+                                    <img src="../image/packagec.png" alt="" v-if="needTake">
+                                </div>
+                                <span class="describetion" :class="{'active':needTake}">已拿货</span>
+                                <span class="line" :class="{'active':needTake}"></span>
+                            </div>
+                            <div class="gooditemBottom" v-if="needTake">
+                                <p><span>拿货人&nbsp;:</span><span>&nbsp;{{takeUsrName}}</span></p>
+                                <p><span>拿货时间&nbsp;:</span><span>&nbsp;{{takeTime | formatDate}}</span></p>
+                                <p v-if="!creatpack"><span>商品数量&nbsp;:</span><span>&nbsp;{{takeNum}}</span></p>
+                            </div>
+                        </div>   
+                        <div class="gooditem">
+                            <div class="gooditemTop">
+                                <div class="mdimgwrap">
+                                    <img src="../image/packagec.png" alt="" v-if="needInCar">
+                                </div>
+                                <span class="describetion" :class="{'active':needInCar}">已装车</span>
+                                <span class="line" :class="{'active':needInCar}"></span>
+                            </div>
+                            <div class="gooditemBottom" v-if="needInCar">
+                                <p><span>装车人&nbsp;:</span><span>&nbsp;{{incarUsrName}}</span></p>
+                                <p><span>拿货时间&nbsp;:</span><span>&nbsp;{{inCarTime | formatDate}}</span></p>
+                            </div>
+                        </div>   
+                        <div class="gooditem">
+                            <div class="gooditemTop">
+                                <div class="mdimgwrap">
+                                    <img src="../image/packagec.png" alt="" v-if="needOutCar">
+                                </div>
+                                <span class="describetion" :class="{'active':needOutCar}">已卸货</span>
+                                <span class="line" :class="{'active':needOutCar}"></span>
+                            </div>
+                             <div class="gooditemBottom" v-if="needOutCar">
+                                <p><span>卸车人&nbsp;:</span><span>&nbsp;{{outcarUsrName}}</span></p>
+                                <p><span>拿货时间&nbsp;:</span><span>&nbsp;{{outCarTime | formatDate}}</span></p>
+                            </div>
+                        </div>   
+                        <div class="lastitem">
+                            <div class="gooditemTop">
+                                <div class="mdimgwrap">
+                                    <img src="../image/packagec.png" alt="" v-if="needInStock">
+                                </div>
+                                <span class="describetion" :class="{'active':needInStock}">已入库</span>
+                            </div>
+                            <div class="gooditemBottom" v-if="needInStock">
+                                <p><span>入库人&nbsp;:</span><span>&nbsp;{{stockUsrName}}</span></p>
+                                <p><span>拿货时间&nbsp;:</span><span>&nbsp;{{stockInTime | formatDate}}</span></p>
+                                <p><span>商品数量&nbsp;:</span><span>&nbsp;{{inStockNum}}</span></p>
+                            </div>
+                        </div>          
+                    </div>  
+            </div>
+        </div>
+        <el-dialog
+            title="异常包裹备注"
+            :visible.sync="packErrorDialogVisible"
+            size="tiny">
+            <el-row type="flex" align="top">
+                <el-col :span="5" :offset="3">异常备注:</el-col>
+                <el-col :span="14">
+                    <el-input :rows="3" v-model="errortextarea" type="textarea" placeholder="请输入异常备注信息"></el-input>
+                </el-col>
+            </el-row>
+            <span slot="footer" class="dialog-footer">
+            <a href="javascript:void(0)" class="buttonColor3" @click="savePackagestate" style="margin-right: 70px;">确 定</a>
+                <a href="javascript:void(0)" @click="packErrorDialogVisible = false" class="buttonColor2">取 消</a>
+          </span>
+        </el-dialog>
+    </div>
+</template>
+
+<script>
+
+    import {setStore,getStore} from  '../config/mUtils'
+    import {loadPackage,savePackage,getPackageFlowConfig} from '@/api/getData'
+    import {formatDate} from '../utils/date.js'
+    import {export_json_to_excel} from '../vendor/Export2Excel.js'
+    import {getMenuAuth,haveMenuAuth} from  '../utils/AuthMenu.js'
+    import qrcode from '@xkeshi/vue-qrcode'
+    import { getLodop } from '../Lodop/LodopFuncs.js'
+
+    export default {
+        components: {
+            qrcode
+        },
+        filters:{
+        	formatDate(time){
+                 if(time==undefined||time==''){
+                    return '';
+                }
+
+                var date = new Date(time);
+        		return formatDate(time,"yyyy-MM-dd hh:mm:ss");
+            },
+            formatState(status) {
+                 if(status==-1){
+                     return "空包裹";
+                }
+                else if(status==0){
+                    return "待拿货";
+                  // 0:待拿货（已打包）      1:已拿货 (待装车) 2:装车 (待入库)  3:入库 (完成 )
+               }else if(status== 1){
+                   return "待装车";
+               }else if(status== 2){
+                   return "待卸货";
+               }else if(status== 3){
+                   return "已完成";     
+               }else if(status== 21){
+                   return "卸货待入库";    
+               }
+            },
+            formatType(type){
+                if(type == null||type == 0){
+                       return "普通包裹"
+                   }else if(type == 1){
+                       return "卖家自建包裹"
+                   }
+            }
+        },
+        data() {
+            return {
+                  roleForm: {
+                    userId: '',
+                    roleId: '',
+                    compId:''
+                },
+                handleExceptionMemo:'',
+                hasException:'',
+                errorShow:false,
+                exceptionMemo:'',
+                errortextarea:'',
+                packErrorDialogVisible:false,
+                takeNum:'',
+                inStockNum:'',
+                takeUsrName:'',
+                takeTime:'',
+                incarUsrName:'',
+                inCarTime:'',
+                outCarTime:'',
+                outcarUsrName:'',
+                stockUsrName:'',
+                stockInTime:'',
+                creatpacktime:'',
+                creatpacknum:'',
+                creatpack:false,
+                needTake:false,
+                needInCar:false,
+                needOutCar:false,
+                needInStock:false,
+                needTake1:false,
+                needInCar1:false,
+                needOutCar1:false,
+                needInStock1:false,
+                packId:'',
+                stallName:'',
+                packageCode:'',
+                packState:'',
+                packType:'',
+                creatTime:'',
+                milSocend:'',
+                userName:'',
+                savestated: true,
+                //用户登录信息暂时写死
+                 currentComp: ""
+                // currentComp:{id:'1000'}
+            }
+        },
+        watch:{
+            '$route':function (route) {
+                this.packId=this.$route.query.packId;
+                if(route.path=='/emptypackage'){
+                    this.creatpack = false;
+                    this.needTake = false;
+                    this.needInCar = false;
+                    this.needOutCar = false;
+                    this.needInStock = false;
+                    this.getPackageFlowConfig();
+                    this.initData();
+                }
+            },
+        },
+        mounted(){
+            this.currentComp = getStore("curCompany");
+            var userInfo=getStore("userInfo");
+            var vjson = JSON.parse(userInfo);
+            this.roleForm.userId=vjson.id;
+            var currentComp=getStore("curCompany");
+            var vcom = JSON.parse(currentComp);
+            this.roleForm.compId=vcom.id;
+            this.packId=this.$route.query.packId;
+            this.getPackageFlowConfig();
+            this.initData();
+        },
+        methods: {
+        	getMenuAuthFun(index){
+                var b= getMenuAuth(index);
+                return b;
+            },
+            async initData(){
+                  let param ={
+                    packageId:this.packId,
+                    withLogs: true
+                }
+                const res = await loadPackage(param);
+                if(res.isSuccess){
+                    this.stallName = res.result.companyName
+                    this.packageCode = res.result.packageLog[0].packageCode
+                    this.packState = res.result.currPackageLogState
+                    this.packType = res.result.packageType
+                    this.creatTime = res.result.createTime
+                    this.exceptionMemo = res.result.exceptionMemo
+                    this.hasException = res.result.hasException
+                    this.handleExceptionMemo = res.result.handleExceptionMemo
+                
+                    this.userName = res.result.packageLog[0].createUserName
+                    if(this.hasException == 0 && this.handleExceptionMemo == null){
+                        this.errorShow = false;
+                        }else{
+                        this.errorShow = true;
+                    }               
+                    res.result.packageLog.forEach((obj)=>{
+                        if(obj.changeType == 0){
+                            this.creatpack = true;
+                            this.creatpacknum = obj.packedNum
+                            this.creatpacktime = obj.createTime
+                        }else if(obj.changeType == 1 && this.needTake1 == true){
+                            this.needTake = true;
+                            this.takeNum = obj.packedNum
+                            this.takeUsrName = obj.createUserName
+                            this.takeTime = obj.createTime
+                        }else if(obj.changeType == 2 && this.needInCar1 == true){
+                            this.needTake = true;
+                            this.needInCar = true;
+                            this.incarUsrName = obj.createUserName
+                            this.inCarTime = obj.createTime                      
+                        }else if(obj.changeType == 21 && this.needOutCar1 == true){
+                            this.needTake = true;
+                            this.needInCar = true;
+                            this.needOutCar = true;
+                            this.outcarUsrName = obj.createUserName
+                            this.outCarTime = obj.createTime                       
+                        }else if(obj.changeType == 3 && this.needInStock1 == true){
+                            this.needTake = true;
+                            this.needInCar = true;
+                            this.needOutCar = true;
+                            this.needInStock = true;
+                            this.inStockNum = obj.packedNum
+                            this.stockUsrName = obj.createUserName
+                            this.stockInTime = obj.createTime
+                        }
+                    })
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+	                });
+                }
+            },
+            async savePackagestate(){
+                let param = {
+                    "id": this.packId,
+                    "companyId":this.roleForm.compId,
+                    "packageType":1,
+                    "handleExceptionMemo": this.errortextarea
+                }
+                const res = await savePackage(param);
+                if(res.isSuccess){
+                    this.initData();
+                    this.savestated = false;
+                    this.packErrorDialogVisible = false
+                }else{
+                     this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+	                }); 
+                }
+            },
+            putqrcode(){
+                   var codeStr = document.getElementById("preview").innerHTML;
+                    var textcode = document.getElementsByClassName("qrDetail")[0].innerHTML;
+                    
+                    //console.log(document.getElementById("barCode"))
+                    this.LODOP = getLodop();
+
+                    LODOP.PRINT_INIT('打印测试');
+                    LODOP.SET_PRINT_PAGESIZE(0, '800', '1400', 0);
+                    LODOP.ADD_PRINT_HTML(0, 15, 800, 500, codeStr);
+                    LODOP.ADD_PRINT_TEXT(0,15,800,500,textcode);
+                    LODOP.PREVIEW();
+            },            
+               async getPackageFlowConfig(){
+                let param = {
+                    companyId:this.roleForm.compId
+                }
+                const res = await getPackageFlowConfig(param);
+                if(res.isSuccess){
+                    this.needInCar1 = res.result.needInCar;
+                 this.needInStock1 = res.result.needInStock;
+                 this.needOutCar1 = res.result.needOutCar;
+                 this.needTake1 = res.result.needTake;
+                }else{
+                    this.$message({
+                        type: 'error',
+                        message: res.errorMsg
+	                });
+                }
+            },
+        }
+    }
+</script>
+
+<style lang="less">
+    @import '../style/mixin';
+    @import '../style/common';
+    @import '../style/startProcurement';
+    .emptymianwrap{
+        display: flex;
+        justify-content: space-around;
+        box-sizing: border-box;
+        border: 1px solid #d8d8d8;
+        padding: 30px;
+        font-size: 14px;
+        .detailwrap{
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            margin-top: 15px;
+            .el-row{
+                margin-bottom: 40px;
+                &:last-child {
+                margin-bottom: 0;
+                }
+            }
+            .errorimgwrap{
+                display: inline-block;
+                vertical-align: top;
+                margin-top: 2px;
+            }
+            .errortitle{
+                display: inline-block;
+                vertical-align: middle;
+                color: #da444f;
+                font-weight: 600;
+                font-size:12px;
+                margin-right: 15px;
+            }
+            .errormessageDetail{
+                font-size:12px;
+                display: inline-block;
+                vertical-align: middle;
+            }
+        }
+        .qrcodewrap{
+            width: 110px;
+            height: 110px;
+            background-color: red;
+            box-sizing: border-box;
+        }
+        .qrDetail{
+            display: none;
+        }
+    }
+    .goodscontent{
+    display: flex;
+    margin: 50px 20px;
+    .gooditem{
+        flex: 1;
+        // min-width: 200px;
+        font-size: 0;
+        margin-right: 10px;
+        text-align: center;
+        padding-top: 25px;
+        .gooditemBottom{
+            margin-top: 20px;
+            p{
+                text-align: left;
+                margin-bottom: 5px;
+                span{
+                    display: inline-block;
+                    min-width:65px; 
+                    height: 16px;
+                    font-size: 14px;
+                    text-align: right;
+                     &:last-child{
+                        text-align: left;
+                    }
+                }
+            }
+        }
+        .mdimgwrap{
+            display: inline-block;
+            vertical-align: top;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            box-sizing: border-box;
+            border: 1px solid #dcdcdc;
+            margin-right: 10px;
+            position: relative;
+            img{
+                position: absolute;
+                top: -1px;
+                left: -1px;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+            }
+        }
+        .describetion{
+            font-size: 14px;
+            display: inline-block;
+            vertical-align: top;
+            margin-top: 9px;
+        }
+        .line{
+            display: inline-block;
+            vertical-align: top;
+            margin-top: 16px;
+            width: 130px;
+            margin-left: 10px;
+            box-sizing: border-box;
+            border-bottom: 1px dashed #dcdddc;
+        }
+        .active{
+            border-color: #da444f;
+            color: #da444f;
+        }
+    }
+    .lastitem{
+        width: 113px;
+        padding-top: 25px;
+        padding-right: 50px;
+        font-size: 0;
+        .gooditemBottom{
+            margin-top: 20px;
+            p{
+                white-space: nowrap;
+                text-align: left;
+                margin-bottom: 5px;
+                span{
+                    display: inline-block;
+                    min-width:65px; 
+                    height: 16px;
+                    font-size: 14px;
+                    text-align: right;
+                    &:last-child{
+                        text-align: left;
+                    }
+                }
+            }
+        }
+           .mdimgwrap{
+            display: inline-block;
+            vertical-align: top;
+            width: 40px;
+            height: 40px;
+            box-sizing: border-box;
+            border-radius: 50%;
+            border: 1px solid #dcdcdc;
+            margin-right: 10px;
+            position: relative;
+            img{
+                position: absolute;
+                top: -1px;
+                left: -1px;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+            }
+        }
+        .describetion{
+            font-size: 14px;
+            display: inline-block;
+            vertical-align: top;
+            margin-top: 9px;
+        }
+         .active{
+            color: #da444f;
+        }
+    }
+}
+    .el-dialog__footer{
+      text-align: center;
+  }
+</style>

@@ -52,6 +52,7 @@ compiler.plugin('compilation', function(compilation) {
 
 var context = config.dev.context
 
+<<<<<<< .mine
 switch (process.env.NODE_ENV) {
     case 'local':
         var proxypath = 'http://localhost:8001';
@@ -61,6 +62,20 @@ switch (process.env.NODE_ENV) {
         break;
         //    case 'online': var proxypath = 'http://192.168.0.123:8002'; break;
         //    case 'online': var proxypath = 'http://192.168.0.216:8002'; break;
+||||||| .r31331
+switch(process.env.NODE_ENV){
+    case 'local': var proxypath = 'http://localhost:8001'; break;
+    case 'online': var proxypath = 'http://cws.nabei.net:8106'; break;
+//    case 'online': var proxypath = 'http://192.168.0.123:8002'; break;
+//    case 'online': var proxypath = 'http://192.168.0.216:8002'; break;
+=======
+switch(process.env.NODE_ENV){
+    case 'local': var proxypath = 'http://localhost:8001'; break;
+//  case 'online': var proxypath = 'http://192.168.0.157'; break;
+    case 'online': var proxypath = 'https://wx.nabei.net'; break;
+//  case 'online': var proxypath = 'http://192.168.0.123:8002'; break;
+//  case 'online': var proxypath = 'http://192.168.0.216:8002'; break;
+>>>>>>> .r31809
 }
 console.log("=====================" + proxypath);
 
